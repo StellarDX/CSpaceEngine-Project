@@ -1,0 +1,2 @@
+include(${CMAKE_CURRENT_LIST_DIR}/CSE-CSEBase-version.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/CSE-CSEBase-targets.cmake)
