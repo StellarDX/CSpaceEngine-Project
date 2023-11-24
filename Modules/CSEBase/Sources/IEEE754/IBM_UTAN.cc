@@ -30,6 +30,8 @@ _EXTERN_C
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+// Unnoteworthy code. (不值一提的代码)
+
 const __Float64 __IBM_TANF64_XFGTBL[186][4]
 {                             /* xi,Fi,Gi,FFi, i=16..201 */
     {__Float64::FromBytes(0x3fb000001e519d60),

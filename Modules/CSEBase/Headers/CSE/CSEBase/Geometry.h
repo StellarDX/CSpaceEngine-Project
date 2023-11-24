@@ -1,3 +1,9 @@
+/************************************************************
+  CSpaceEngine Geometry.
+  Copyright (C) StellarDX Astronomy
+  SPDX-License-Identifier: GPL-2.0
+***********************************************************/
+
 #pragma once
 
 #ifndef _CSE_MATH_GEOMETRY

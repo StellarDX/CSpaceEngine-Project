@@ -21,6 +21,8 @@
    License along with the GNU C Library; if not, see
    <https://www.gnu.org/licenses/>.  */
 
+// Average code. (中规中矩的代码)
+
 #include "CSE/CSEBase/CSEBase.h"
 #include "CSE/CSEBase/MathFuncs.h"
 

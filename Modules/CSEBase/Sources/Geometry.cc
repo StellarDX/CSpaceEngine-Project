@@ -1,7 +1,7 @@
 /************************************************************
   CSpaceEngine Geometry Algorithms.
   Copyright (C) StellarDX Astronomy
-  SPDX-License-Identifier: GPL-3.0
+  SPDX-License-Identifier: GPL-2.0
 ***********************************************************/
 
 #include "CSE/CSEBase/Geometry.h"

@@ -1,7 +1,7 @@
 /************************************************************
   CSpaceEngine Custom math functions.
   Copyright (C) StellarDX Astronomy
-  SPDX-License-Identifier: GPL-3.0
+  SPDX-License-Identifier: GPL-2.0
 ***********************************************************/
 
 #pragma once

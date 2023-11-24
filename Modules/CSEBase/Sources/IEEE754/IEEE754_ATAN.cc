@@ -26,6 +26,8 @@ _EXTERN_C
     License along with this library; if not, see
     <https://www.gnu.org/licenses/>.  */
 
+// Numbers-got nerfed code. (数值受害的代码)
+
 const __Float64 __ArctanF128_table_deg[]
 {
     0.0000000000000000000000000000000L,
@@ -203,7 +205,7 @@ const __Float64 __ArctanF128_table_rad[84] =
 };
 
 /*
- *	Inverse circular tangent for quaduple precision based on angle
+ *	Inverse circular tangent for quaduple precision based on degrees
  *      (arctangent)
  *
  * DESCRIPTION:

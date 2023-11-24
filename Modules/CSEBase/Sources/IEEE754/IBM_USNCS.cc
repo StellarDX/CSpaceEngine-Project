@@ -42,6 +42,8 @@ _EXTERN_C
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+// Lackluster code. (乏善可陈的代码)
+
 static const float64 s1    = -0x1.5555555555555p-03; /* -0.16666666666666666     */
 static const float64 s2    = +0x1.1111111110ECEp-07; /*  0.0083333333333323288   */
 static const float64 s3    = -0x1.A01A019DB08B8p-13; /* -0.00019841269834414642  */
@@ -67,6 +69,8 @@ static const float64
     cs4 = -4.16666666666666666666666666666667E-02,
     cs6 = +1.38888888888888888888888888888889E-03;
 
+// StellarDL: IBM really like to split a number into two parts and process
+// them separately. Obviously, they are "carrying coals to Newcastle"
 const union __IBM_Table_Type440 { uint32_t i[880]; float64 x[440]; } __IBM_sincostab
 {
     .i =
@@ -897,7 +901,7 @@ __Float64 __cdecl __IBM_COSF64(__Float64 x)
 //    controled.
 
 #if 0
-float64 __cdecl __QUAD_PRECISION_SNCS_FUNC(float64 _X)
+__Float128 __cdecl __QUAD_PRECISION_SNCS_FUNC(__Float128 _X)
 {
 	// Quaduple precision trigonometric function based on angle.
 }

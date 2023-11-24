@@ -34,6 +34,8 @@ _EXTERN_C
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+// Swarthy code. (黑不溜秋的代码)
+
 const union __IBM_Table_Type2568 { uint32_t i[5136]; float64 x[2568]; } __IBM_asncs_table
 { 
     .i = 

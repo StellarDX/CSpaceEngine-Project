@@ -9,6 +9,7 @@
 #include <CSE/CSEBase/Algorithms.h>
 #include <CSE/CSEBase/MathFuncs.h>
 #include <CSE/CSEBase/Geometry.h>
+#include <CSE/CSEBase/AdvMath.h>
 
 #ifdef _USE_CSE_DEFINES
 #include <CSE/CSEBase/ConstLists.h>

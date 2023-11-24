@@ -1,4 +1,10 @@
-﻿#pragma once
+﻿/************************************************************
+  CSpaceEngine Internal algorithms.
+  Copyright (C) StellarDX Astronomy
+  SPDX-License-Identifier: GPL-2.0
+***********************************************************/
+
+#pragma once
 
 #ifndef _CSE_MATH_ALGORITHMS
 #define _CSE_MATH_ALGORITHMS
@@ -423,6 +429,5 @@ _STL_RESTORE_CLANG_WARNINGS
 #pragma warning(pop)
 #pragma pack(pop)
 #endif
-
 
 #endif

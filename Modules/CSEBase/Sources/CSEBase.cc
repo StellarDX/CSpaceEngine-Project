@@ -1,4 +1,8 @@
-// Implementions of CSEBase functions
+/************************************************************
+  Implementions of CSEBase functions
+  Copyright (C) StellarDX Astronomy
+  SPDX-License-Identifier: GPL-2.0
+***********************************************************/
 
 #include <CSE/CSEBase/CSEBase.h>
 #include <CSE/CSEBase/DateTime.h>

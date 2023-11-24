@@ -43,6 +43,8 @@ _EXTERN_C
  * along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+// Common code. (稀松平常的代码)
+
 const double __IBM_inroot_table[128] =
 {
     1.40872145012100,  1.39792649065766,  1.38737595123859,  1.37706074531819,
