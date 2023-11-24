@@ -1,7 +1,5 @@
 ﻿/************************************************************
   CSpaceEngine Internal algorithms.
-  Copyright (C) StellarDX Astronomy
-  SPDX-License-Identifier: GPL-2.0
 ***********************************************************/
 
 #pragma once
@@ -29,7 +27,7 @@ _STL_DISABLE_CLANG_WARNINGS
 _CSE_BEGIN
 
 /**
- * @details Returns the absolute value of x.
+ * @brief Returns the absolute value of x.
  */
 _NODISCARD float64 abs(float64 _Xx)noexcept;
 _NODISCARD int64 abs(int64 _Xx)noexcept;
@@ -50,7 +48,7 @@ _NODISCARD genIType __cdecl abs(genIType _Xx)noexcept
 }
 
 /**
- * @details Returns -1.0 if x is less than 0.0, 0.0 if x is equal to 0.0, and +1.0 if x is greater than 0.0.
+ * @brief Returns -1.0 if x is less than 0.0, 0.0 if x is equal to 0.0, and +1.0 if x is greater than 0.0.
  */
 _NODISCARD float64 sgn(float64 _Xx)noexcept;
 _NODISCARD int64 sgn(int64 _Xx)noexcept;
@@ -70,7 +68,7 @@ _NODISCARD genIType __cdecl sgn(genIType _Xx)noexcept
 }
 
 /**
- * @details Returns a value equal to the nearest integer that is less than or equal to x.
+ * @brief Returns a value equal to the nearest integer that is less than or equal to x.
  */
 _NODISCARD int64 floor(float64 _Xx)noexcept;
 
@@ -82,7 +80,7 @@ _NODISCARD genType floor(genType _Xx)noexcept
 }
 
 /**
- * @details Returns a value equal to the nearest integer that is greater than or equal to x.
+ * @brief Returns a value equal to the nearest integer that is greater than or equal to x.
  */
 _NODISCARD int64 ceil(float64 x)noexcept;
 
@@ -94,7 +92,7 @@ _NODISCARD genType ceil(genType _Xx)noexcept
 }
 
 /**
- * @details Returns the fractional part of x.
+ * @brief Returns the fractional part of x.
  */
 _NODISCARD float64 FractionalPart(float64 _Xx)noexcept;
 
@@ -115,7 +113,7 @@ _NODISCARD genType fract(genType _Xx)noexcept
 }
 
 /**
- * @details Returns the value of x modulo y.
+ * @brief Returns the value of x modulo y.
  */
 _NODISCARD float64 mod(float64 _Left, float64 _Right)noexcept;
 
@@ -134,7 +132,7 @@ _NODISCARD genType mod(genType _Left, genType _Right)noexcept
 }
 
 /**
- * @details returns the minimum of the two parameters or array.
+ * @brief returns the minimum of the two parameters or array.
  */
 _NODISCARD constexpr float64 min(float64 _Left, float64 _Right) noexcept(noexcept(_Left < _Right));
 _NODISCARD constexpr int64 min(int64 _Left, int64 _Right) noexcept(noexcept(_Left < _Right));
@@ -201,7 +199,7 @@ _NODISCARD constexpr genType min(std::initializer_list<genType> _Ilist)noexcept
 }
 
 /**
- * @details returns the maximum of the two parameters or array.
+ * @brief returns the maximum of the two parameters or array.
  */
 _NODISCARD constexpr float64 max(float64 _Left, float64 _Right) noexcept(noexcept(_Right < _Left));
 _NODISCARD constexpr int64 max(int64 _Left, int64 _Right) noexcept(noexcept(_Right < _Left));
@@ -268,7 +266,7 @@ _NODISCARD constexpr genType max(std::initializer_list<genType> _Ilist)noexcept
 }
 
 /**
- * @details Returns the value of x constrained to the range minVal to maxVal.
+ * @brief Returns the value of x constrained to the range minVal to maxVal.
  * @param x - Specify the value to constrain.
  * @param MinVal - Specify the lower end of the range into which to constrain x.
  * @param MaxVal - Specify the upper end of the range into which to constrain x.
@@ -317,7 +315,7 @@ genUType clamp(genUType x, uint64 MinVal, uint64 MaxVal)
 }
 
 /**
- * @details Performs a linear interpolation between x and y using a to weight between them.
+ * @brief Performs a linear interpolation between x and y using a to weight between them.
  * @param x - Specify the start of the range in which to interpolate.
  * @param y - Specify the end of the range in which to interpolate.
  * @param a - Specify the value to use to interpolate between x and y.
@@ -370,7 +368,7 @@ genBType mix(genBType x, genBType y, genBType a)
 }
 
 /**
- * @details Generates a step function by comparing x to edge.
+ * @brief Generates a step function by comparing x to edge.
  * @param edge - Specifies the location of the edge of the step function.
  * @param x - Specify the value to be used to generate the step function.
  */
@@ -390,8 +388,8 @@ genType step(float64 edge, genType x)
 }
 
 /**
- * @details Performs smooth Hermite interpolation between 0 and 1 when x is between edge0 and edge1.
- * @ref https://en.wikipedia.org/wiki/Smoothstep
+ * @brief Performs smooth Hermite interpolation between 0 and 1 when x is between edge0 and edge1.
+ * @link https://en.wikipedia.org/wiki/Smoothstep
  * @param edge0 - Specifies the value of the lower edge of the Hermite function.
  * @param edge1 - Specifies the value of the upper edge of the Hermite function.
  * @param x

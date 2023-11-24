@@ -1,7 +1,5 @@
 /************************************************************
   CSpaceEngine Geometry.
-  Copyright (C) StellarDX Astronomy
-  SPDX-License-Identifier: GPL-2.0
 ***********************************************************/
 
 #pragma once
@@ -20,7 +18,7 @@ _CSE_BEGIN
 // No base functions, all the definations are in templates.
 
 /**
- * @details Returns the length of the vector
+ * @brief Returns the length of the vector
  */
 template<typename genType> requires vecType<genType>
 float64 Length(genType x)
@@ -34,7 +32,7 @@ float64 Length(genType x)
 }
 
 /**
- * @details Returns the distance between the two points p0 and p1.
+ * @brief Returns the distance between the two points p0 and p1.
  * @param p0 - Specifies the first of two points
  * @param p1 - Specifies the second of two points
  */
@@ -49,7 +47,7 @@ inline float64 DistancePolar(vec2 p0, vec2 p1);
 inline float64 AngularSeparation(vec3 p0, vec3 p1, float64 RABase = 24);
 
 /**
- * @details Returns the dot product of two vectors
+ * @brief Returns the dot product of two vectors
  * @param x - Specifies the first of two vectors
  * @param y - Specifies the second of two vectors
  */
@@ -65,20 +63,20 @@ float64 dot(genType x, genType y)
 }
 
 /**
- * @details Returns the cross product of two vectors
+ * @brief Returns the cross product of two vectors
  * @param x - Specifies the first of two vectors
  * @param y - Specifies the second of two vectors
  */
 inline vec3 cross(vec3 x, vec3 y);
 
 /**
- * @details Corss product on 4-dimension, using 3 vectors
- * @ref https://www.researchgate.net/publication/318543243_Vector_Cross_Product_in_4D_Euclidean_Space_A_Maple_worksheet
+ * @brief Corss product on 4-dimension, using 3 vectors
+ * @link https://www.researchgate.net/publication/318543243_Vector_Cross_Product_in_4D_Euclidean_Space_A_Maple_worksheet
  */
 inline vec4 cross(vec4 u, vec4 v, vec4 t);
 
 /**
- * @details Returns a vector with the same direction as its parameter, v, but with length 1.
+ * @brief Returns a vector with the same direction as its parameter, v, but with length 1.
  */
 template<typename genType> requires vecType<genType>
 genType normalize(genType v)
@@ -87,7 +85,7 @@ genType normalize(genType v)
 }
 
 /**
- * @details If dot(Nref, I) less than 0 faceforward returns N, otherwise it returns -N.
+ * @brief If dot(Nref, I) less than 0 faceforward returns N, otherwise it returns -N.
  * @param N - Specifies the vector to orient.
  * @param I - Specifies the incident vector.
  * @param Nref - Specifies the reference vector.
@@ -100,7 +98,7 @@ genType faceforward(genType N, genType I, genType Nref)
 }
 
 /**
- * @details For a given incident vector I and surface normal N reflect returns the reflection direction.
+ * @brief For a given incident vector I and surface normal N reflect returns the reflection direction.
  * N should be normalized in order to achieve the desired result.
  * @param I - Specifies the incident vector.
  * @param N - Specifies the normal vector.
@@ -124,7 +122,7 @@ genType reflect(genType I, genType N)
 }
 
 /**
- * @details For a given incident vector I, surface normal N and ratio of indices of refraction, eta, returns the refraction vector, R.
+ * @brief For a given incident vector I, surface normal N and ratio of indices of refraction, eta, returns the refraction vector, R.
  * The direction of normal vector is the upper media.
  * @param I - Specifies the incident vector.
  * @param N - Specifies the normal vector.

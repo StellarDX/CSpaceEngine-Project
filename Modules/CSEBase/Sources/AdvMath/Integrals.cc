@@ -8,6 +8,98 @@ using namespace std;
 _CSE_BEGIN
 
 /**
+ * Numerical implementation of Trapezoidal rule
+ *
+ * @param _Min: lower limit
+ * @param _Max: upper limit
+ * @param _First - _Last: Begin and end iterator of
+ * sampling points for the function values, end iterator is not contained
+ *
+ * @return: approximation for the integral
+ *
+ * @link See https://en.wikipedia.org/wiki/Trapezoidal_rule
+ * for a more performant implementation.
+ */
+
+float64 __Trapezoidal_Engine::operator()(float64 _Xx)
+{
+    return this->operator()(0, _Xx);
+}
+
+float64 __Trapezoidal_Engine::operator()(float64 _Min, float64 _Max)
+{
+    switch (_M_Method)
+    {
+    default:
+    case NonUniform:
+    {
+        _Sample_Type _Samples;
+        size_t _M_Steps = llround(pow(10, _M_LogSteps));
+        float64 _Step = (_Max - _Min) / (_M_Steps - 1);
+        float64 i = _Min;
+        while (i <= _Max)
+        {
+            _Samples.push_back(i);
+            i += _Step;
+        }
+        return _E_NonUniform(_Samples);
+    }
+    case Uniform:
+        return _E_Uniform(_Min, _Max);
+    }
+}
+
+float64 __Trapezoidal_Engine::_E_NonUniform(_Sample_Type _Samples, bool IsInterval)
+{
+    _Sample_Type _SamplePoints, _SubIntervals;
+
+    if (IsInterval) // Construct sample points
+    {
+        _SubIntervals = _Sample_Type(_Samples.begin() + 1, _Samples.end());
+        float64 _Sum = _Samples.front();
+        _SamplePoints.push_back(_Sum);
+        for (size_t i = 1; i < _Samples.size(); ++i)
+        {
+            _Sum += _Samples[i];
+            _SamplePoints.push_back(_Sum);
+        }
+    }
+    else // Construct sub-intevals
+    {
+        _SamplePoints = _Samples;
+        sort(_SamplePoints.begin(), _SamplePoints.end());
+        for (size_t i = 1; i < _Samples.size(); ++i)
+        {
+            _SubIntervals.push_back(_Samples[i] - _Samples[i - 1]);
+        }
+    }
+
+    size_t _N = _SubIntervals.size();
+    float64 _Sum = 0;
+    for (size_t k = 1; k <= _N; ++k)
+    {
+        _Sum += (_M_Invoker(_SamplePoints[k - 1]) + _M_Invoker(_SamplePoints[k])) * _SubIntervals[k - 1] / 2.;
+    }
+
+    return _Sum;
+}
+
+float64 __Trapezoidal_Engine::_E_Uniform(float64 _Min, float64 _Max)
+{
+    size_t _N_Steps = llround(pow(10, _M_LogSteps)) - 1;
+    float64 _DelX = (_Max - _Min) / _N_Steps;
+    float64 _Sum = 0;
+    float64 _Tail = (_M_Invoker(_Max) + _M_Invoker(_Min)) / 2.;
+
+    for (size_t k = 1; k <= _N_Steps - 1; ++k)
+    {
+        _Sum += _M_Invoker(_Min + k * _DelX);
+    }
+
+    return _DelX * (_Sum + _Tail);
+}
+
+/**
  * Simpson rule for irregularly spaced data.
  *
  * @param _Min: lower limit
@@ -17,9 +109,10 @@ _CSE_BEGIN
  *
  * @return: approximation for the integral
  *
- * @ref See https://en.wikipedia.org/wiki/Simpson%27s_rule
- * for a more performant implementation utilizing numpy's broadcast.
+ * @link See https://en.wikipedia.org/wiki/Simpson%27s_rule
+ * for a more performant implementation.
  */
+
 float64 __Basic_Simpson_Engine::operator()(float64 _Min, float64 _Max)
 {
     _Sample_Type _Samples;
@@ -353,6 +446,118 @@ matrix<float64, 5, 5> __Romberg_Integral_Engine::RombergAnalysis(function<float6
 matrix<float64, 5, 5> __Romberg_Integral_Engine::RombergAnalysis(float64 _Min, float64 _Max)
 {
     return RombergAnalysis(_M_Invoker, _Min, _Max);
+}
+
+/**
+ * Integrals over infinite intervals
+ *
+ * @link https://en.wikipedia.org/wiki/Numerical_integration
+ *
+ * @brief Several methods exist for approximate integration
+ * over unbounded intervals. The standard technique involves
+ * specially derived quadrature rules, such as Gauss-Hermite
+ * quadrature for integrals on the whole real line and Gauss-
+ * Laguerre quadrature for integrals on the positive reals.
+ * Monte Carlo methods can also be used, or a change of
+ * variables to a finite interval;
+ */
+
+float64 __Infinite_Integral_Nomalizer::operator()(float64 x)
+{
+    return gen()(x);
+}
+
+float64 __Infinite_Integral_Nomalizer::LowLimit()const
+{
+    return _M_FuncType == WholeLine ? -1 : 0;
+}
+
+float64 __Infinite_Integral_Nomalizer::UpLimit()const
+{
+    return 1;
+}
+
+void __Infinite_Integral_Nomalizer::SetSpecialCase(float64 _Xx, float64 _Fx, bool _Cover)
+{
+    if (_Cover) {_M_Special_Cases[_Xx] = _Fx;}
+    else {_M_Special_Cases.insert({_Xx, _Fx});}
+}
+
+void __Infinite_Integral_Nomalizer::DelSpecialCase(float64 _Xx)
+{
+    _M_Special_Cases.erase(_Xx);
+}
+
+constexpr auto __Infinite_Integral_Nomalizer::_K_WholeLine()const
+{
+    return [this](float64 _Xx)
+    {
+        auto _SpecialCase = _M_Special_Cases.find(_Xx);
+        if (_SpecialCase != _M_Special_Cases.end()) {return _SpecialCase->second;}
+        return _M_Invoker(_Xx / (1. - pow(_Xx, 2))) * ((1. + pow(_Xx, 2)) / pow(1. - pow(_Xx, 2), 2));
+    };
+}
+
+constexpr auto __Infinite_Integral_Nomalizer::_K_HasMinValue()const
+{
+    return [this](float64 _Xx)
+    {
+        auto _SpecialCase = _M_Special_Cases.find(_Xx);
+        if (_SpecialCase != _M_Special_Cases.end()) {return _SpecialCase->second;}
+        return _M_Invoker(_M_Breakpoint + _Xx / (1. - _Xx)) / pow(1. - _Xx, 2);
+    };
+}
+
+constexpr auto __Infinite_Integral_Nomalizer::_K_HasMaxValue()const
+{
+    return [this](float64 _Xx)
+    {
+        auto _SpecialCase = _M_Special_Cases.find(_Xx);
+        if (_SpecialCase != _M_Special_Cases.end()) {return _SpecialCase->second;}
+        return _M_Invoker(_M_Breakpoint - (1. - _Xx) / _Xx) / pow(_Xx, 2);
+    };
+}
+
+void __Infinite_Integral_Nomalizer::CreateDefSpecialCases()
+{
+    switch (_M_FuncType)
+    {
+    default:
+    case WholeLine:
+        SetSpecialCase(LowLimit(), 0);
+        SetSpecialCase(UpLimit(), 0);
+        break;
+    case HasMaxValue:
+        SetSpecialCase(LowLimit(), 0);
+        break;
+    case HasMinValue:
+        SetSpecialCase(UpLimit(), 0);
+        break;
+    }
+}
+
+function<float64(float64)> __Infinite_Integral_Nomalizer::gen()const
+{
+    switch (_M_FuncType)
+    {
+    default:
+    case WholeLine:
+        return function<float64(float64)>(_K_WholeLine());
+    case HasMaxValue:
+        return function<float64(float64)>(_K_HasMaxValue());
+    case HasMinValue:
+        return function<float64(float64)>(_K_HasMinValue());
+    }
+}
+
+__Infinite_Integral_Nomalizer Nomalize(function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType, float64 Breakpoint, bool AddDefaultSpecialCases, map<float64, float64> SpecialCases)
+{
+    __Infinite_Integral_Nomalizer NomalizedFunc = PFunc;
+    NomalizedFunc._M_FuncType = FuncType;
+    NomalizedFunc._M_Breakpoint = Breakpoint;
+    NomalizedFunc._M_Special_Cases = SpecialCases;
+    if (AddDefaultSpecialCases) {NomalizedFunc.CreateDefSpecialCases();}
+    return NomalizedFunc;
 }
 
 _CSE_END

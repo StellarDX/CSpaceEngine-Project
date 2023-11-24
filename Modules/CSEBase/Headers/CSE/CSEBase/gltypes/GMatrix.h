@@ -707,7 +707,7 @@ public:
     // -- Functions in linear algebra --
 
     /**
-     * @details Returns minor of the entry in the i th row and j th column
+     * @brief Returns minor of the entry in the i th row and j th column
      * @param _CPos - column
      * @param _LPos - row
      */
@@ -738,12 +738,12 @@ public:
     }
 
     /**
-     * @details Returns the determinant value of the matrix.
+     * @brief Returns the determinant value of the matrix.
      * WARNING: This function is EXTREMELY INEFFICIENT for high-dimension matrices,
      * with a time complexity in RIDICULOUS big O notation of O(n!).
      * (But a new algorithm has found, the O notation has been reduced to O(n^3).)
-     * @ref https://www.tutorialspoint.com/cplusplus-program-to-compute-determinant-of-a-matrix
-     * @ref https://codereview.stackexchange.com/questions/204135/determinant-using-gauss-elimination
+     * @link https://www.tutorialspoint.com/cplusplus-program-to-compute-determinant-of-a-matrix
+     * @link https://codereview.stackexchange.com/questions/204135/determinant-using-gauss-elimination
      */
     float64 Determinant()const
     {
@@ -790,7 +790,7 @@ public:
     }
 
     /**
-     * @details Returns the transpose of a matrix
+     * @brief Returns the transpose of a matrix
      */
     GBasicMatrix<_Ty, _Line, _Column> Transpose()const
     {
@@ -806,7 +806,7 @@ public:
     }
 
     /**
-     * @details Returns the Adjugate matrix
+     * @brief Returns the Adjugate matrix
      */
     GBasicMatrix<_Ty, _Line, _Column> Adjugate()const
     {
@@ -827,7 +827,7 @@ public:
     }
 
     /**
-     * @details Returns the Inverse matrix
+     * @brief Returns the Inverse matrix
      */
     GBasicMatrix<_Ty, _Line, _Column> Inverse()const
     {
@@ -902,8 +902,8 @@ public:
     }
 
     /**
-     * @details Finding the rank of a matrix with Gaussian elimination.
-     * @ref https://cp-algorithms.com/linear_algebra/rank-matrix.html#implementation
+     * @brief Finding the rank of a matrix with Gaussian elimination.
+     * @link https://cp-algorithms.com/linear_algebra/rank-matrix.html#implementation
      */
     uint64 Rank()const
     {
@@ -944,7 +944,7 @@ public:
     }
 
     /**
-     * @details Returns the trace of a square matrix
+     * @brief Returns the trace of a square matrix
      */
     _Ty Trace()const
     {

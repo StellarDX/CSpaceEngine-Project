@@ -1,7 +1,5 @@
 /************************************************************
   CSpaceEngine Custom math functions.
-  Copyright (C) StellarDX Astronomy
-  SPDX-License-Identifier: GPL-2.0
 ***********************************************************/
 
 #pragma once
@@ -58,7 +56,7 @@ __Float64 __cdecl __IEEE754_EXPF64(__Float64 _X);
 _END_EXTERN_C
 
 /**
- * @details Returns the natural exponentiation of x. i.e., e^x.
+ * @brief Returns the natural exponentiation of x. i.e., e^x.
  */
 float64 __cdecl exp(float64 _X);
 
@@ -83,7 +81,7 @@ __Float64 __cdecl __IEEE754_LNF64(__Float64 _X); // natural logarithm for double
 _END_EXTERN_C
 
 /**
- * @details Returns the logarithm of x, i.e. the value y which satisfies x=base^y.
+ * @brief Returns the logarithm of x, i.e. the value y which satisfies x=base^y.
  * @overload lb(x) (Scrapped feature)returns the binary logarithm of x.
  * @overload ln(x) returns the natural logarithm of x.
  * @overload log(x) returns the base 10 logarithm of x, i.e. the value y which satisfies x=10^y.
@@ -148,7 +146,7 @@ __Float64 __cdecl __IEEE754_CBRTF64(__Float64 _X);
 _END_EXTERN_C
 
 /**
- * @details Returns the value of x raised to the y power, i.e. x^y.
+ * @brief Returns the value of x raised to the y power, i.e. x^y.
  * @param _X - Specify the value to raise to the power y.
  * @param _Power - Specify the power to which to raise x.
  */
@@ -183,7 +181,7 @@ _GL GBasicMatrix<_Ty, _Size, _Size> __cdecl pow(_GL GBasicMatrix<_Ty, _Size, _Si
 }
 
 /**
- * @details Returns the square root of x, i.e. the value √x.
+ * @brief Returns the square root of x, i.e. the value √x.
  */
 float64 __cdecl sqrt(float64 _X);
 
@@ -197,7 +195,7 @@ genType __cdecl sqrt(genType _X)
 }
 
 /**
- * @details Returns the inverse of the square root of x, i.e. the value 1/√x
+ * @brief Returns the inverse of the square root of x, i.e. the value 1/√x
  */
 float64 __cdecl inversesqrt(float64 _X);
 
@@ -211,7 +209,7 @@ genType __cdecl inversesqrt(genType _X)
 }
 
 /**
- * @details Returns the cube root of x, i.e. the value 3√x.
+ * @brief Returns the cube root of x, i.e. the value 3√x.
  */
 float64 __cdecl cbrt(float64 _X);
 std::array<complex64, 3> __cdecl cbrtc(complex64 _X);
@@ -224,7 +222,7 @@ genType __cdecl cbrt(genType _X)
 }
 
 /**
- * @details Returns the nth-root of x, i.e. the value n√x.
+ * @brief Returns the nth-root of x, i.e. the value n√x.
  * @param _X - Specify the value to find root.
  * @param _Expo - Specify the value of exponential of root.
  */
@@ -263,12 +261,12 @@ genType __cdecl yroot(genType _X, genType _Expo)
 //_END_EXTERN_C
 
 /**
- * @details Converts degrees into radians.
+ * @brief Converts degrees into radians.
  */
 float64 __cdecl Radians(float64 _Deg);
 
 /**
- * @details converts radians into degrees.
+ * @brief converts radians into degrees.
  */
 float64 __cdecl Degrees(float64 _Rad);
 
@@ -288,7 +286,7 @@ __Float64 __cdecl __IBM_TANF64(__Float64 x);
 _END_EXTERN_C
 
 /**
- * @details The standard trigonometric sine function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric sine function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl sin(float64 _X);
 
@@ -302,7 +300,7 @@ genType __cdecl sin(genType _X)
 }
 
 /**
- * @details The standard trigonometric cosine function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric cosine function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl cos(float64 _X);
 
@@ -316,7 +314,7 @@ genType __cdecl cos(genType _X)
 }
 
 /**
- * @details The standard trigonometric tangent function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric tangent function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl tan(float64 _X);
 
@@ -330,7 +328,7 @@ genType __cdecl tan(genType _X)
 }
 
 /**
- * @details The standard trigonometric cotangent function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric cotangent function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl ctg(float64 _X);
 
@@ -344,7 +342,7 @@ genType __cdecl ctg(genType _X)
 }
 
 /**
- * @details The standard trigonometric secant function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric secant function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl sec(float64 _X);
 
@@ -358,7 +356,7 @@ genType __cdecl sec(genType _X)
 }
 
 /**
- * @details The standard trigonometric cosecant function(Real number based on degrees, Complex based on radians).
+ * @brief The standard trigonometric cosecant function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl csc(float64 _X);
 
@@ -372,7 +370,7 @@ genType __cdecl csc(genType _X)
 }
 
 /**
- * @details returns the axes of a two-dimensional XYZ coordinates divide the plane into four infinite regions.
+ * @brief returns the axes of a two-dimensional XYZ coordinates divide the plane into four infinite regions.
  * @param _X - angle in degrees.
  * @returns
  * 0 -> x-pos,
@@ -401,7 +399,7 @@ __Float64 __cdecl __IEEE754_ATANF128_CF64(__Float64 x, bool RadUnit = 0);
 _END_EXTERN_C
 
 /**
- * @details Arc Sine. Returns the angle whose trigonometric sine is x. The range of values returned by asin is [-90, 90].
+ * @brief Arc Sine. Returns the angle whose trigonometric sine is x. The range of values returned by asin is [-90, 90].
  */
 float64 __cdecl arcsin(float64 _X);
 
@@ -415,7 +413,7 @@ genType __cdecl arcsin(genType _X)
 }
 
 /**
- * @details Arc cosine. Returns the angle whose trigonometric cosine is x. The range of values returned by acos is [0, 180].
+ * @brief Arc cosine. Returns the angle whose trigonometric cosine is x. The range of values returned by acos is [0, 180].
  */
 float64 __cdecl arccos(float64 _X);
 
@@ -429,7 +427,7 @@ genType __cdecl arccos(genType _X)
 }
 
 /**
- * @details Arc tangent. Returns the angle whose tangent is x. The value returned in this case is in the range [-90, 90].
+ * @brief Arc tangent. Returns the angle whose tangent is x. The value returned in this case is in the range [-90, 90].
  */
 float64 __cdecl arctan(float64 _X);
 
@@ -857,7 +855,7 @@ int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR Ro
 }
 
 /**
- * @details Finds the real root of a linear equation.
+ * @brief Finds the real root of a linear equation.
  * @param Coeffs - A 2-element vector to store coefficients(Sorted by descending powers)</param>
  * @param Roots - The roots are stored in this array
  */
@@ -877,7 +875,7 @@ int SolveLinear(const InputArray& Coeffs, OutputArray& Roots)
 }
 
 /**
- * @details Finds the complex roots of a quadratic equation.
+ * @brief Finds the complex roots of a quadratic equation.
  * @param Coeffs - A 3-element vector to store coefficients(Sorted by descending powers)
  * @param Roots - The roots are stored in this array
  */
@@ -897,7 +895,7 @@ int SolveQuadratic(const InputArray& Coeffs, OutputArray& Roots)
 }
 
 /**
- * @details Finds the complex roots of a cubic equation.
+ * @brief Finds the complex roots of a cubic equation.
  * @param Coeffs - A 4-element vector to store coefficients(Sorted by descending powers)
  * @param Roots - The roots are stored in this array
  * @param p_Error - Negative logarithm of errors, default is 10, means 10^-10
@@ -919,7 +917,7 @@ int SolveCubic(const InputArray& Coeffs, OutputArray& Roots, int64 p_Error = 10)
 }
 
 /**
- * @details Finds the complex roots of a quartic equation.
+ * @brief Finds the complex roots of a quartic equation.
  * @param Coeffs - A 5-element vector to store coefficients(Sorted by descending powers)
  * @param Roots - The roots are stored in this array
  * @param p_Error - Negative logarithm of errors, default is 10, means 10^-10
@@ -1126,8 +1124,8 @@ int __Solve_Quintic_Function_Fast_Unchecked(_IterC CoeffsBegin, _IterR RootsBegi
 }
 
 /**
- * @details finds complex roots of a polynomial using Durand-Kerner method.
- * @ref http://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method
+ * @brief finds complex roots of a polynomial using Durand-Kerner method.
+ * @link http://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method
  * @param Coeffs - A array to store coefficients
  * @param Roots - The roots are stored in this array
  * @param Conf - Function configs

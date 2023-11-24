@@ -54,13 +54,13 @@ public:
     std::string ToString(std::string _Fmt = "{}.{:02}.{:02}")const;
 
     /**
-     * @details - Return a day number of week for date
+     * @brief - Return a day number of week for date
      * @return - number of day: 0 - sunday, 1 - monday,..
      */
     int DayOfWeek() const;
 
     /**
-     * @details Compute Julian day number from calendar date.
+     * @brief Compute Julian day number from calendar date.
      * Dates before 1582-10-15 are in the Julian Calendar.
      * @deprecated Consider using "GetJDFromDate" instead.
      */
@@ -69,7 +69,7 @@ public:
     static CSEDate CurrentDate();
 
     /**
-     * @details
+     * @brief
      * Make from julianDay a year, month, day for the Julian Date julianDay represents.
      * (This function is taken from Stellarium.)
      * @param JD - Input julian date
@@ -78,7 +78,7 @@ public:
     static CSEDate FromJulianDay(const double JD);
 
     /**
-     * @details return true if a year is leap year.
+     * @brief return true if a year is leap year.
      */
     bool IsLeap();
     static bool IsLeap(int year);
@@ -178,27 +178,27 @@ struct _TIME CSETimezone
 // Functions
 
 /**
- * @details Convert a Julian Day to CSE DateTime class
+ * @brief Convert a Julian Day to CSE DateTime class
  * @param jd - Julian Date
  * @return CSE DateTime class
  */
 CSEDateTime JDToDateTime(const double& JD);
 
 /**
- * @details Get the current Julian Date from system time.
+ * @brief Get the current Julian Date from system time.
  * @return the current Julian Date
  */
 double GetJDFromSystem();
 
 /**
- * @details Get the Julian Day Number (JD) from Besselian epoch. (Taken from Stellarium)
+ * @brief Get the Julian Day Number (JD) from Besselian epoch. (Taken from Stellarium)
  * @param Epoch - Besselian epoch, expressed as year
  * @return Julian Day number (JD) for B(Year)
  */
 double GetJDFromBesEpoch(const double Epoch);
 
 /**
- * @details Convert a time of day to the fraction of a Julian Day.
+ * @brief Convert a time of day to the fraction of a Julian Day.
  *          Note that a Julian Day starts at 12:00, not 0:00, and
  *          so 12:00 == 0.0 and 0:00 == 0.5.
  *          (Taken from Stellarium)
@@ -206,13 +206,13 @@ double GetJDFromBesEpoch(const double Epoch);
 double TimeToJDFract(const _TIME CSETime& Time);
 
 /**
- * @details Inverse function of TimeToJDFract(CSETime&)
+ * @brief Inverse function of TimeToJDFract(CSETime&)
  *          (Taken from Stellarium)
  */
 _TIME CSETime JDFractToTime(const double JD);
 
 /**
- * @details Returns the count of days in a specified month in a specified year (Taken from Stellarium)
+ * @brief Returns the count of days in a specified month in a specified year (Taken from Stellarium)
  * @param month - Specify month
  * @param year - Specify year
  * @return Day count
@@ -220,7 +220,7 @@ _TIME CSETime JDFractToTime(const double JD);
 int NumOfDaysInMonthInYear(const int month, const int year);
 
 /**
- * @details A safer function from Stellarium using to convert Date and Time to Julian day.
+ * @brief A safer function from Stellarium using to convert Date and Time to Julian day.
  * @param Date - Input Date time
  * @return Julian Day
  */
