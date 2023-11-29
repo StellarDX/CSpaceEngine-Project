@@ -1,8 +1,6 @@
 #include "CSE/CSEBase/MathFuncs.h"
 #include "CSE/CSEBase/AdvMath.h"
 
-#include <iostream>
-
 using namespace std;
 
 _CSE_BEGIN
@@ -21,12 +19,12 @@ _CSE_BEGIN
  * for a more performant implementation.
  */
 
-float64 __Trapezoidal_Engine::operator()(float64 _Xx)
+float64 __Trapezoidal_Integral_Engine::operator()(float64 _Xx)
 {
     return this->operator()(0, _Xx);
 }
 
-float64 __Trapezoidal_Engine::operator()(float64 _Min, float64 _Max)
+float64 __Trapezoidal_Integral_Engine::operator()(float64 _Min, float64 _Max)
 {
     switch (_M_Method)
     {
@@ -49,7 +47,7 @@ float64 __Trapezoidal_Engine::operator()(float64 _Min, float64 _Max)
     }
 }
 
-float64 __Trapezoidal_Engine::_E_NonUniform(_Sample_Type _Samples, bool IsInterval)
+float64 __Trapezoidal_Integral_Engine::_E_NonUniform(_Sample_Type _Samples, bool IsInterval)
 {
     _Sample_Type _SamplePoints, _SubIntervals;
 
@@ -84,7 +82,7 @@ float64 __Trapezoidal_Engine::_E_NonUniform(_Sample_Type _Samples, bool IsInterv
     return _Sum;
 }
 
-float64 __Trapezoidal_Engine::_E_Uniform(float64 _Min, float64 _Max)
+float64 __Trapezoidal_Integral_Engine::_E_Uniform(float64 _Min, float64 _Max)
 {
     size_t _N_Steps = llround(pow(10, _M_LogSteps)) - 1;
     float64 _DelX = (_Max - _Min) / _N_Steps;
@@ -113,7 +111,7 @@ float64 __Trapezoidal_Engine::_E_Uniform(float64 _Min, float64 _Max)
  * for a more performant implementation.
  */
 
-float64 __Basic_Simpson_Engine::operator()(float64 _Min, float64 _Max)
+float64 __Simpson_Integral_Engine::operator()(float64 _Min, float64 _Max)
 {
     _Sample_Type _Samples;
     size_t _M_Steps = llround(pow(10, _M_LogSteps));
@@ -145,12 +143,12 @@ float64 __Basic_Simpson_Engine::operator()(float64 _Min, float64 _Max)
     }
 }
 
-float64 __Basic_Simpson_Engine::operator()(float64 _Xx)
+float64 __Simpson_Integral_Engine::operator()(float64 _Xx)
 {
     return this->operator()(0, _Xx);
 }
 
-float64 __Basic_Simpson_Engine::_E_CompositeQuadratic(_Sample_Type _Samples)
+float64 __Simpson_Integral_Engine::_E_CompositeQuadratic(_Sample_Type _Samples)
 {
     if (_Samples.size() < 3)
     {
@@ -169,7 +167,7 @@ float64 __Basic_Simpson_Engine::_E_CompositeQuadratic(_Sample_Type _Samples)
     return (h * _Sum) / 3.;
 }
 
-float64 __Basic_Simpson_Engine::_E_CompositeCubic(_Sample_Type _Samples)
+float64 __Simpson_Integral_Engine::_E_CompositeCubic(_Sample_Type _Samples)
 {
     if (_Samples.size() < 4)
     {
@@ -188,7 +186,7 @@ float64 __Basic_Simpson_Engine::_E_CompositeCubic(_Sample_Type _Samples)
     return 0.375 * h * _Sum;
 }
 
-float64 __Basic_Simpson_Engine::_E_Extended(_Sample_Type _Samples)
+float64 __Simpson_Integral_Engine::_E_Extended(_Sample_Type _Samples)
 {
     if (_Samples.size() < 9)
     {
@@ -218,7 +216,7 @@ float64 __Basic_Simpson_Engine::_E_Extended(_Sample_Type _Samples)
     return (h * _Sum) / 48.;
 }
 
-float64 __Basic_Simpson_Engine::_E_NarrowPeaks1(_Sample_Type _Samples)
+float64 __Simpson_Integral_Engine::_E_NarrowPeaks1(_Sample_Type _Samples)
 {
     if (_Samples.size() < 7) // 5 inside and 2 outside
     {
@@ -246,7 +244,7 @@ float64 __Basic_Simpson_Engine::_E_NarrowPeaks1(_Sample_Type _Samples)
     return (h * _Sum) / 24.;
 }
 
-float64 __Basic_Simpson_Engine::_E_NarrowPeaks2(_Sample_Type _Samples)
+float64 __Simpson_Integral_Engine::_E_NarrowPeaks2(_Sample_Type _Samples)
 {
     if (_Samples.size() < 7)
     {
@@ -274,7 +272,7 @@ float64 __Basic_Simpson_Engine::_E_NarrowPeaks2(_Sample_Type _Samples)
     return (h * _Sum) / 24.;
 }
 
-float64 __Basic_Simpson_Engine::_E_Irregularly(_Sample_Type _Samples, bool IsInterval)
+float64 __Simpson_Integral_Engine::_E_Irregularly(_Sample_Type _Samples, bool IsInterval)
 {
     _Sample_Type _SamplePoints, _SubIntervals;
 

@@ -1,6 +1,37 @@
 /************************************************************
-  CSpaceEngine Advanced math.
+  CSpaceEngine Advanced math Library.
+
+  Description:
+    This file contains classes and functions used
+    to solve advanced math problems.
+
+  Features:
+    1. Convertions between XYZ and polar coordinates
+    2. Derivatives and integral engines
+
+  A ghost story that's been circulating in many colleges:
+    There is a tree in college with a lot of students
+    hanging on it. It is called "Advanced Maths".
+    (大学里有棵树，上面挂着很多人，这棵树叫“高数”。)
 ***********************************************************/
+
+/**
+    CSpaceEngine Advanced math Library.
+    Copyright (C) StellarDX Astronomy.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #pragma once
 
@@ -10,6 +41,7 @@
 #include "CSE/CSEBase/CSEBase.h"
 #include "CSE/CSEBase/gltypes.h"
 #include <map>
+#include <set>
 #include <functional>
 
 #if defined _MSC_VER
@@ -80,8 +112,129 @@ struct __CSE_AdvMath_Function_Invoker
 };
 
 /****************************************************************************************\
-*                                Derivates and Integrals                                 *
+*                               Derivatives and Integrals                                *
 \****************************************************************************************/
+
+/////////////////////////////////////// DERIVATIVE ///////////////////////////////////////
+
+class __Basic_FDM_Derivative_Engine : public __CSE_AdvMath_Function_Invoker
+{
+public:
+    using _Mybase = __CSE_AdvMath_Function_Invoker;
+
+    std::vector<float64> _M_Coefficients;
+    std::vector<float64> _M_CoeffOffsets;
+    uint64               _M_DeriOrder;
+
+    enum DiffType
+    {
+        Central,
+        Forward,
+        Backward
+    }_M_Differences;
+
+    constexpr static const float64 _DefStepLength = 7.8267798872635110755572112628368; // -0.5 * log(0x1p-52)
+    float64              _M_StepScaleNLog;
+
+    __Basic_FDM_Derivative_Engine() : _Mybase(), _M_StepScaleNLog(_DefStepLength) {}
+
+    __Basic_FDM_Derivative_Engine(std::function<float64(float64)> _Right,
+        float64 _Scale = _DefStepLength)
+        : _Mybase(_Right), _M_StepScaleNLog(_Scale) {SetCoefficients<1, 3>();}
+
+    __Basic_FDM_Derivative_Engine(float64 (*_PFunc)(float64),
+        float64 _Scale = _DefStepLength)
+        : _Mybase(_PFunc), _M_StepScaleNLog(_Scale) {SetCoefficients<1, 3>();}
+
+    template<typename _Functor>
+    __Basic_FDM_Derivative_Engine(_Functor _Func,
+        float64 _Scale = _DefStepLength)
+        : _Mybase(_Func), _M_StepScaleNLog(_Scale) {SetCoefficients<1, 3>();}
+
+    template<typename _Functor>
+    __Basic_FDM_Derivative_Engine& operator=(_Functor _Func)
+    {
+        return _Mybase::operator=(_Func);
+    }
+
+    template<typename _Iterator, uint64 DeriOrder, uint64 CoeffCount>
+    void SetCoefficients(_Iterator Begin, _Iterator End)
+    {
+        if (End - Begin < CoeffCount) {throw std::logic_error("Coefficients is too few.");}
+        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
+        std::set<float64> COffsets(Begin, Begin + CoeffCount);
+        if (COffsets.size() < CoeffCount) {throw std::logic_error("Coefficients is too few.");}
+        _M_CoeffOffsets = std::vector<float64>(COffsets.begin(), COffsets.end());
+        _M_DeriOrder = DeriOrder;
+
+        matrix<float64, CoeffCount, CoeffCount> CoeffMatrix(0);
+        for (size_t i = 0; i < CoeffCount; ++i)
+        {
+            for (size_t j = 0; j < CoeffCount; ++j)
+            {
+                CoeffMatrix[i][j] = pow(_M_CoeffOffsets[i], j);
+            }
+        }
+
+        matrix<float64, 1, CoeffCount> KroneckerMatrix(0);
+        for (size_t i = 0; i < CoeffCount; ++i)
+        {
+            KroneckerMatrix[0][i] = tgamma(DeriOrder + 1) * (i == DeriOrder ? 1. : 0.);
+        }
+
+        auto CoeffArray = (CoeffMatrix.Inverse() * KroneckerMatrix)[0];
+        _M_Coefficients = std::vector<float64>(CoeffArray.begin(), CoeffArray.end());
+    }
+
+    template<uint64 DeriOrder, uint64 CoeffCount>
+    void SetCoefficients(std::initializer_list<float64> _Ilist)
+    {
+        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
+        SetCoefficients<decltype(_Ilist.begin()), DeriOrder, CoeffCount>(_Ilist.begin(), _Ilist.end());
+    }
+
+    template<uint64 DeriOrder, uint64 CoeffCount>
+    void SetCoefficients(DiffType FDiff = Central)
+    {
+        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
+        std::vector<float64> Offsets;
+        switch (FDiff)
+        {
+        case Central:
+        {
+            int64 RealCoeffCount = CoeffCount;
+            if (CoeffCount % 2 == 0) {++RealCoeffCount;}
+            int64 OffsetCount = RealCoeffCount / 2;
+            for (int64 i = 0; i < RealCoeffCount; ++i)
+            {
+                Offsets.push_back(i - OffsetCount);
+            }
+        }
+            break;
+        case Forward:
+            for (int64 i = 0; i < CoeffCount; ++i)
+            {
+                Offsets.push_back(i);
+            }
+            break;
+        case Backward:
+            for (int64 i = 0; i < CoeffCount; ++i)
+            {
+                Offsets.push_back(i - int64(CoeffCount));
+            }
+            break;
+        }
+
+        SetCoefficients<decltype(Offsets.begin()), DeriOrder, CoeffCount>(Offsets.begin(), Offsets.end());
+    }
+
+    float64 operator()(float64 _Xx);
+};
+
+// Default engines
+using DerivativeFunction = __Basic_FDM_Derivative_Engine;
+
+//////////////////////////////////////// INTEGRAL ////////////////////////////////////////
 
 /**
  *  Presets of samples for sample-based integral functions
@@ -93,7 +246,7 @@ struct __CSE_AdvMath_Function_Invoker
 #define __UT_PREC 5.1335389083702175141813865785018 // Ultra precision with 136000 sample points
 #define __EX_PREC 5.2504200023088939799372822644269 // Extreme precision with 178000 sample points
 
-class __Trapezoidal_Engine : public __CSE_AdvMath_Function_Invoker
+class __Trapezoidal_Integral_Engine : public __CSE_AdvMath_Function_Invoker
 {
 public:
     using _Mybase      = __CSE_AdvMath_Function_Invoker; // pointer to the function to be integrated
@@ -108,23 +261,23 @@ public:
     constexpr static const float64 _DefLogSteps = __HI_PREC;
     float64 _M_LogSteps; // logarithm of steps of the procedure
 
-    __Trapezoidal_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(Uniform) {}
+    __Trapezoidal_Integral_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(Uniform) {}
 
-    __Trapezoidal_Engine(std::function<float64(float64)> _Right,
+    __Trapezoidal_Integral_Engine(std::function<float64(float64)> _Right,
         float64 _Steps = _DefLogSteps, Method _Method = Uniform)
         : _Mybase(_Right), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
-    __Trapezoidal_Engine(float64 (*_PFunc)(float64),
+    __Trapezoidal_Integral_Engine(float64 (*_PFunc)(float64),
         float64 _Steps = _DefLogSteps, Method _Method = Uniform)
         : _Mybase(_PFunc), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
     template<typename _Functor>
-    __Trapezoidal_Engine(_Functor _Func,
+    __Trapezoidal_Integral_Engine(_Functor _Func,
         float64 _Steps = _DefLogSteps, Method _Method = Uniform)
         : _Mybase(_Func), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
     template<typename _Functor>
-    __Trapezoidal_Engine& operator=(_Functor _Func)
+    __Trapezoidal_Integral_Engine& operator=(_Functor _Func)
     {
         return _Mybase::operator=(_Func);
     }
@@ -155,7 +308,7 @@ public:
     }
 };
 
-class __Basic_Simpson_Engine : public __CSE_AdvMath_Function_Invoker
+class __Simpson_Integral_Engine : public __CSE_AdvMath_Function_Invoker
 {
 public:
     using _Mybase      = __CSE_AdvMath_Function_Invoker; // pointer to the function to be integrated
@@ -210,23 +363,23 @@ public:
     constexpr static const float64 _DefLogSteps = __HI_PREC;
     float64 _M_LogSteps; // logarithm of steps of the procedure
 
-    __Basic_Simpson_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(CompositeQuadratic) {}
+    __Simpson_Integral_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(CompositeQuadratic) {}
 
-    __Basic_Simpson_Engine(std::function<float64(float64)> _Right,
+    __Simpson_Integral_Engine(std::function<float64(float64)> _Right,
         float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
         : _Mybase(_Right), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
-    __Basic_Simpson_Engine(float64 (*_PFunc)(float64),
+    __Simpson_Integral_Engine(float64 (*_PFunc)(float64),
         float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
         : _Mybase(_PFunc), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
     template<typename _Functor>
-    __Basic_Simpson_Engine(_Functor _Func,
+    __Simpson_Integral_Engine(_Functor _Func,
         float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
         : _Mybase(_Func), _M_LogSteps(_Steps), _M_Method(_Method) {}
 
     template<typename _Functor>
-    __Basic_Simpson_Engine& operator=(_Functor _Func)
+    __Simpson_Integral_Engine& operator=(_Functor _Func)
     {
         return _Mybase::operator=(_Func);
     }
@@ -364,7 +517,7 @@ public:
  * @param Breakpoint - Begin or end point of the integral, used for semi-infinite intervals
  * @param AddDefaultSpecialCases - Create default special cases.
  * @param SpecialCases - Special cases. Some of the points, espeially the upper or lower limit
- * in normalized function, aka. -1 and 1 for whole-line and 0 or 1 for semi-infinate integrals,
+ * in normalized function, aka. -1 and 1 for whole-line and 0 or 1 for semi-infinite integrals,
  * maybe has undefined values but their limits are exists. These values need to be set manually.
  * @return the normalized function. Use "gen()" to generate lambda expression.
  */

@@ -1087,11 +1087,11 @@ int __Solve_Quintic_Function_Fast_Unchecked(_IterC CoeffsBegin, _IterR RootsBegi
         float64 y1 = (P + sqrt(del2)) / 2.;
         float64 y2 = (P - sqrt(del2)) / 2.;
 
-        *(RootsBegin + 0) = (-b - (yroot(5, y1) + yroot(5, y2))) / (5. * a);
-        *(RootsBegin + 1) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(5, y1) + yroot(5, y2))) / (5. * a)) + (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(5, y1) - yroot(5, y2))) / (5. * a)) * 1i;
-        *(RootsBegin + 2) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(5, y1) + yroot(5, y2))) / (5. * a)) - (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(5, y1) - yroot(5, y2))) / (5. * a)) * 1i;
-        *(RootsBegin + 3) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(5, y1) + yroot(5, y2))) / (5. * a)) + (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(5, y1) - yroot(5, y2))) / (5. * a)) * 1i;
-        *(RootsBegin + 4) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(5, y1) + yroot(5, y2))) / (5. * a)) - (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(5, y1) - yroot(5, y2))) / (5. * a)) * 1i;
+        *(RootsBegin + 0) = (-b - (yroot(y1, 5) + yroot(y2, 5))) / (5. * a);
+        *(RootsBegin + 1) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) + (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
+        *(RootsBegin + 2) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) - (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
+        *(RootsBegin + 3) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) + (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
+        *(RootsBegin + 4) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) - (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
 
         return 5;
     }
@@ -1111,11 +1111,11 @@ int __Solve_Quintic_Function_Fast_Unchecked(_IterC CoeffsBegin, _IterR RootsBegi
 
     if (!__Is_Zero(D, RealError) && !__Is_Zero(M * N, RealError) && (__Is_Zero(L, RealError) && __Is_Zero(K, RealError)))
     {
-        *(RootsBegin + 0) = (-b - yroot(5, pow(N, 2) / M) - yroot(5, pow(M, 3) / N)) / (5. * a);
-        *(RootsBegin + 1) = (-b + ((1 - sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + ((1 + sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) + ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) * 1i;
-        *(RootsBegin + 2) = (-b + ((1 - sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + ((1 + sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) - ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) * 1i;
-        *(RootsBegin + 3) = (-b + ((1 + sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + ((1 - sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) + ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) * 1i;
-        *(RootsBegin + 4) = (-b + ((1 + sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) + ((1 - sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) - ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(5, pow(N, 2) / M) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(5, pow(M, 3) / N)) * 1i;
+        *(RootsBegin + 0) = (-b - yroot(pow(N, 2) / M, 5) - yroot(pow(M, 3) / N, 5)) / (5. * a);
+        *(RootsBegin + 1) = (-b + ((1 - sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 + sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) + ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
+        *(RootsBegin + 2) = (-b + ((1 - sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 + sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) - ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
+        *(RootsBegin + 3) = (-b + ((1 + sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 - sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) + ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
+        *(RootsBegin + 4) = (-b + ((1 + sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 - sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) - ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
 
         return 7;
     }

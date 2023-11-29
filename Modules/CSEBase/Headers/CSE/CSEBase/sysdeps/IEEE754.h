@@ -44,6 +44,7 @@
 #define S_NAN_DOUBLE         0x7FF0000000000001 // Singaling NAN
 #define Q_NAN_DOUBLE         0x7FF8000000000001 // Quiet NAN
 #define BIG_NAN_DOUBLE       0x7FFFFFFFFFFFFFFF // an alternative encoding of NaN
+#define DOUBLE_EPSILON       0x1p-52            // widespread variant definition
 
 // Partisions for IEEE754 standard double-precision floating point number.
 // It is constructs of 1-bit for sign, 11-bit for exponential and 52-bit for fractional.
