@@ -958,7 +958,7 @@ public:
         {
             float64 Min = min(i.second._M_First, i.second._M_Last);
             float64 Max = max(i.second._M_First, i.second._M_Last);
-            if (Min < _Xx && _Xx < Max)
+            if (Min <= _Xx && _Xx <= Max)
             {
                 Segment = i.second;
                 break;
@@ -1094,7 +1094,7 @@ public:
  * @return Result function, with the domain of [_First, _Last]
  */
 template<typename _Engine, typename _Functor, uint64 EquationCount>
-_Engine CreateODEFunctions(_Functor _Func, std::array<float64, EquationCount> _Coeffs, float64 _First, float64 _Last)
+_Engine CreateODEFunction(_Functor _Func, std::array<float64, EquationCount> _Coeffs, float64 _First, float64 _Last)
 {
     _Engine Engine = _Func;
     Engine.Init(_Coeffs, _First, _Last);
@@ -1105,6 +1105,10 @@ _Engine CreateODEFunctions(_Functor _Func, std::array<float64, EquationCount> _C
     }
     return Engine;
 }
+
+// Default engines
+template<uint64 EquationCount> requires (EquationCount > 0)
+using DefaultODEFunction = __Runge_Kutta_RK45_ODE_Engine<EquationCount>;
 
 _CSE_END
 

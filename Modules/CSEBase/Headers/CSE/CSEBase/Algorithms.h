@@ -74,6 +74,13 @@ _NODISCARD genIType __cdecl sgn(genIType _Xx)noexcept
     return _Xx;
 }
 
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl sgn(std::array<genType, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE sgn(_Xx[i]); }
+    return _Xx;
+}
+
 /**
  * @brief Returns a value equal to the nearest integer that is less than or equal to x.
  */
@@ -83,6 +90,13 @@ template<typename genType> requires vecType<genType>
 _NODISCARD genType floor(genType _Xx)noexcept
 {
     for (size_t i = 0; i < _Xx.size(); i++) { _Xx[i] = _CSE floor(_Xx[i]); }
+    return _Xx;
+}
+
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl floor(std::array<float64, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE floor(_Xx[i]); }
     return _Xx;
 }
 
@@ -98,6 +112,13 @@ _NODISCARD genType ceil(genType _Xx)noexcept
     return _Xx;
 }
 
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl ceil(std::array<float64, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE ceil(_Xx[i]); }
+    return _Xx;
+}
+
 /**
  * @brief Returns the fractional part of x.
  */
@@ -110,12 +131,26 @@ _NODISCARD genType FractionalPart(genType _Xx)noexcept
     return _Xx;
 }
 
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl FractionalPart(std::array<float64, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE FractionalPart(_Xx[i]); }
+    return _Xx;
+}
+
 _NODISCARD float64 fract(float64 _Xx)noexcept;
 
 template<typename genType> requires vecType<genType>
 _NODISCARD genType fract(genType _Xx)noexcept
 {
     for (size_t i = 0; i < _Xx.size(); i++) { _Xx[i] = _CSE fract(_Xx[i]); }
+    return _Xx;
+}
+
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl fract(std::array<float64, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE fract(_Xx[i]); }
     return _Xx;
 }
 
@@ -133,6 +168,20 @@ _NODISCARD genType mod(genType _Left, float64 _Right)noexcept
 
 template<typename genType> requires vecType<genType>
 _NODISCARD genType mod(genType _Left, genType _Right)noexcept
+{
+    for (size_t i = 0; i < _Left.size(); i++) { _Left[i] = _CSE mod(_Left[i], _Right[i]); }
+    return _Left;
+}
+
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl mod(std::array<float64, size> _Left, float64 _Right)noexcept
+{
+    for (size_t i = 0; i < _Left.size(); i++) { _Left[i] = _CSE mod(_Left[i], _Right); }
+    return _Left;
+}
+
+template<uint64 size>
+_NODISCARD std::array<float64, size> __cdecl mod(std::array<float64, size> _Left, std::array<float64, size> _Right)noexcept
 {
     for (size_t i = 0; i < _Left.size(); i++) { _Left[i] = _CSE mod(_Left[i], _Right[i]); }
     return _Left;
@@ -347,6 +396,19 @@ genUType clamp(genUType x, uint64 MinVal, uint64 MaxVal)
     return x;
 }
 
+template<typename genType, uint64 size>
+std::array<genType, size> clamp(std::array<genType, size> x, std::array<genType, size> MinVal, std::array<genType, size> MaxVal)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE clamp(x[i], MinVal[i], MaxVal[i]); }
+    return x;
+}
+template<typename genType, uint64 size>
+std::array<genType, size> clamp(std::array<genType, size> x, genType MinVal, genType MaxVal)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE clamp(x[i], MinVal, MaxVal); }
+    return x;
+}
+
 /**
  * @brief Performs a linear interpolation between x and y using a to weight between them.
  * @param x - Specify the start of the range in which to interpolate.
@@ -367,6 +429,19 @@ genType mix(genType x, genType y, genType a)
 }
 template<typename genType> requires vecType<genType>
 genType mix(genType x, genType y, float64 a)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE mix(x[i], y[i], a); }
+    return x;
+}
+
+template<uint64 size>
+std::array<float64, size> mix(std::array<float64, size> x, std::array<float64, size> y, std::array<float64, size> a)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE mix(x[i], y[i], a[i]); }
+    return x;
+}
+template<uint64 size>
+std::array<float64, size> mix(std::array<float64, size> x, std::array<float64, size> y, float64 a)
 {
     for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE mix(x[i], y[i], a); }
     return x;
@@ -400,6 +475,13 @@ genBType mix(genBType x, genBType y, genBType a)
     return x;
 }
 
+template<typename genType, uint64 size>
+std::array<genType, size> mix(std::array<genType, size> x, std::array<genType, size> y, std::array<bool, size> a)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE mix(x[i], y[i], a[i]); }
+    return x;
+}
+
 /**
  * @brief Generates a step function by comparing x to edge.
  * @param edge - Specifies the location of the edge of the step function.
@@ -415,6 +497,19 @@ genType step(genType edge, genType x)
 }
 template<typename genType> requires vecType<genType>
 genType step(float64 edge, genType x)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE step(edge, x[i]); }
+    return x;
+}
+
+template<uint64 size>
+std::array<float64, size> step(std::array<float64, size> edge, std::array<float64, size> x)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE step(edge[i], x[i]); }
+    return x;
+}
+template<uint64 size>
+std::array<float64, size> step(float64 edge, std::array<float64, size> x)
 {
     for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE step(edge, x[i]); }
     return x;
@@ -440,6 +535,19 @@ genType smoothstep(genType edge0, genType edge1, genType x)
 }
 template<typename genType> requires vecType<genType>
 genType smoothstep(float64 edge0, float64 edge1, genType x)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE smoothstep(edge0, edge1, x[i]); }
+    return x;
+}
+
+template<uint64 size>
+std::array<float64, size> smoothstep(std::array<float64, size> edge0, std::array<float64, size> edge1, std::array<float64, size> x)
+{
+    for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE smoothstep(edge0[i], edge1[i], x[i]); }
+    return x;
+}
+template<uint64 size>
+std::array<float64, size> smoothstep(float64 edge0, float64 edge1, std::array<float64, size> x)
 {
     for (size_t i = 0; i < x.size(); i++) { x[i] = _CSE smoothstep(edge0, edge1, x[i]); }
     return x;
