@@ -548,7 +548,7 @@ function<float64(float64)> __Infinite_Integral_Nomalizer::gen()const
     }
 }
 
-__Infinite_Integral_Nomalizer Nomalize(function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType, float64 Breakpoint, bool AddDefaultSpecialCases, map<float64, float64> SpecialCases)
+__Infinite_Integral_Nomalizer Normalize(function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType, float64 Breakpoint, bool AddDefaultSpecialCases, map<float64, float64> SpecialCases)
 {
     __Infinite_Integral_Nomalizer NomalizedFunc = PFunc;
     NomalizedFunc._M_FuncType = FuncType;

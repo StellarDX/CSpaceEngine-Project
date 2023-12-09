@@ -39,6 +39,8 @@
 #define _ADV_MATH_
 
 #include "CSE/CSEBase/CSEBase.h"
+#include "CSE/CSEBase/Algorithms.h"
+#include "CSE/CSEBase/MathFuncs.h"
 #include "CSE/CSEBase/gltypes.h"
 #include <map>
 #include <set>
@@ -85,16 +87,18 @@ vec3 _cdecl PolarToXYZ(vec3 Polar);
 *                                   Function Invoker                                     *
 \****************************************************************************************/
 
-struct __CSE_AdvMath_Function_Invoker
+template<typename _Signature> struct __CSE_AdvMath_Function_Invoker;
+template<typename _Res, typename... _ArgTypes>
+struct __CSE_AdvMath_Function_Invoker<_Res(_ArgTypes...)>
 {
-    std::function<float64(float64)> _M_Invoker;
+    std::function<_Res(_ArgTypes...)> _M_Invoker;
 
     __CSE_AdvMath_Function_Invoker() {}
 
-    __CSE_AdvMath_Function_Invoker(std::function<float64(float64)> _Right)
+    __CSE_AdvMath_Function_Invoker(std::function<_Res(_ArgTypes...)> _Right)
         : _M_Invoker(_Right) {}
 
-    __CSE_AdvMath_Function_Invoker(float64 (*_PFunc)(float64))
+    __CSE_AdvMath_Function_Invoker(_Res (*_PFunc)(_ArgTypes...))
         : _M_Invoker(_PFunc) {}
 
     template<typename _Functor>
@@ -108,7 +112,7 @@ struct __CSE_AdvMath_Function_Invoker
         return *this;
     }
 
-    virtual float64 operator()(float64) = 0;
+    virtual _Res operator()(_ArgTypes...) = 0;
 };
 
 /****************************************************************************************\
@@ -117,10 +121,10 @@ struct __CSE_AdvMath_Function_Invoker
 
 /////////////////////////////////////// DERIVATIVE ///////////////////////////////////////
 
-class __Basic_FDM_Derivative_Engine : public __CSE_AdvMath_Function_Invoker
+class __Basic_FDM_Derivative_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
 public:
-    using _Mybase = __CSE_AdvMath_Function_Invoker;
+    using _Mybase = __CSE_AdvMath_Function_Invoker<float64(float64)>;
 
     std::vector<float64> _M_Coefficients;
     std::vector<float64> _M_CoeffOffsets;
@@ -133,6 +137,9 @@ public:
         Backward
     }_M_Differences;
 
+    // StellarDX: Step scale is initially decided to use binary logarithm,
+    // but common logarithm is used finally because it need to compat with
+    // common usage in scientific calculating.
     constexpr static const float64 _DefStepLength = 7.8267798872635110755572112628368; // -0.5 * log(0x1p-52)
     float64              _M_StepScaleNLog;
 
@@ -246,10 +253,10 @@ using DerivativeFunction = __Basic_FDM_Derivative_Engine;
 #define __UT_PREC 5.1335389083702175141813865785018 // Ultra precision with 136000 sample points
 #define __EX_PREC 5.2504200023088939799372822644269 // Extreme precision with 178000 sample points
 
-class __Trapezoidal_Integral_Engine : public __CSE_AdvMath_Function_Invoker
+class __Trapezoidal_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
 public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker; // pointer to the function to be integrated
+    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
     using _Sample_Type = std::vector<float64>;
 
     enum Method
@@ -308,10 +315,10 @@ public:
     }
 };
 
-class __Simpson_Integral_Engine : public __CSE_AdvMath_Function_Invoker
+class __Simpson_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
 public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker; // pointer to the function to be integrated
+    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
     using _Sample_Type = std::vector<float64>;
 
     enum Method
@@ -420,10 +427,10 @@ public:
     }
 };
 
-class __Romberg_Integral_Engine : public __CSE_AdvMath_Function_Invoker
+class __Romberg_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
 public:
-    using _Mybase = __CSE_AdvMath_Function_Invoker; // pointer to the function to be integrated
+    using _Mybase = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
 
     constexpr static const size_t _DefMaxSteps = 300;
     constexpr static const float64 _DefPAcc = 8.;
@@ -459,10 +466,10 @@ public:
     static matrix<float64, 5, 5> RombergAnalysis(std::function<float64(float64)> _Func, float64 _Min, float64 _Max);
 };
 
-class __Infinite_Integral_Nomalizer : public __CSE_AdvMath_Function_Invoker
+class __Infinite_Integral_Nomalizer : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
 public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker;
+    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>;
     using _Sample_Type = std::map<float64, float64>;
 
     enum FuncType
@@ -521,11 +528,583 @@ public:
  * maybe has undefined values but their limits are exists. These values need to be set manually.
  * @return the normalized function. Use "gen()" to generate lambda expression.
  */
-__Infinite_Integral_Nomalizer Nomalize(std::function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType = __Infinite_Integral_Nomalizer::WholeLine, float64 Breakpoint = 0, bool AddDefaultSpecialCases = true, std::map<float64, float64> SpecialCases = std::map<float64, float64>());
+__Infinite_Integral_Nomalizer Normalize(std::function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType = __Infinite_Integral_Nomalizer::WholeLine, float64 Breakpoint = 0, bool AddDefaultSpecialCases = true, std::map<float64, float64> SpecialCases = std::map<float64, float64>());
 
 // Default engines
 using IntegralFunction = __Romberg_Integral_Engine;
 using NormalizedInfiniteIntegral = __Infinite_Integral_Nomalizer;
+
+/****************************************************************************************\
+*                            Ordinary Differential Equations                             *
+\****************************************************************************************/
+
+/**
+ * Standard identifier of ODEs
+ * Converted from the same feature in SciPy
+ *
+ * Below is the original description from SciPy:
+ *
+ *  This function numerically integrates a system of ordinary differential
+ *  equations given an initial value:
+ *
+ *      y' = f(x, y)
+ *      y(x0) = y0
+ *
+ *  Here x is a 1-D independent variable (time), y(x) is an
+ *  N-D vector-valued function (state), and an N-D
+ *  vector-valued function f(x, y) determines the differential equations.
+ *  The goal is to find y(x) approximately satisfying the differential
+ *  equations, given an initial value y(x0)=y0.
+ *
+ *  SciPy is available under the BSD-3-clause license,
+ *  see "ODEs.cc" for more information.
+ *
+ *  This function using iterator-form to make compatibilities for
+ *  pointers and iterators in C++, like this:
+ *
+ *      y' = f(x, begin, end, solutions)
+ *
+ *  where "begin" and "end" is the begin and end iterator of cofficient
+ *  (y0) array, and [begin, end) is used in processing. Results will be
+ *  stored in "solution" array and this parameter is the begin iterator
+ *  of this array. "x" is the scalar (x0).
+ *
+ * @param _CoeffFirst - Begin iterator of coefficient array.
+ * @param _CoeffLast - End iterator of coefficient array,
+ * and this iterator won't included when processing.
+ * @param _RootDestination - Begin iterator of solution array,
+ * aka. roots will be exported to this array.
+ * @param _Scalar - Scalar
+ */
+template<uint64 EquationCount>
+using __ODE_Fty_Untemplated = void(float64 _Scalar, std::array<float64, EquationCount> _Coeffs, std::array<float64, EquationCount>& _Roots);
+
+template<typename _Tp, std::size_t _Nm>
+_Tp __RMS_Norm(std::array<_Tp, _Nm> Input)
+{
+    float64 SumTemp;
+    for (auto i : Input){SumTemp += pow(i, 2);}
+    return sqrt(SumTemp / float64(_Nm));
+}
+
+template<uint64 EquationCount> requires (EquationCount > 0)
+struct __ODE_Engine_Base// : public __CSE_AdvMath_Function_Invoker<__ODE_Fty<IteratorType>>
+{
+public:
+    using _Fty       = __ODE_Fty_Untemplated<EquationCount>;
+    using _Mybase    = __CSE_AdvMath_Function_Invoker<_Fty>;
+
+    using ValueArray = std::array<float64, EquationCount>;
+    using StateType  = std::map<float64, ValueArray>;
+
+    struct DenseOutput;
+
+    virtual void SaveDenseOutput() = 0;
+
+    enum State
+    {
+        Processing = -1,
+        Succeeded  = 0,
+        Failed     = 1
+    };
+
+protected:
+    std::function<_Fty>  _M_Invoker;      // Function invoker
+    enum State           _M_State;        // Current status of the engine.
+    float64              _M_EndPoint;     // End point
+    bool                 _M_Direction;    // 0 if positive and 1 if negative
+    StateType            _M_StateBuffer;  // Current state
+
+public:
+    __ODE_Engine_Base() {}
+
+    __ODE_Engine_Base(std::function<_Fty> _Right)
+        : _M_Invoker(_Right) {}
+
+    __ODE_Engine_Base(_Fty* _PFunc)
+        : _M_Invoker(_PFunc) {}
+
+    template<typename _Functor>
+    __ODE_Engine_Base(_Functor _Func)
+        : _M_Invoker(_Func) {}
+
+    template<typename _Functor>
+    __ODE_Engine_Base& operator=(_Functor _Func)
+    {
+        _M_Invoker = _Func;
+        return *this;
+    }
+
+    float64 CurrentPoint()const // Current point
+    {
+        return _M_Direction ? (_M_StateBuffer.begin())->first : (--_M_StateBuffer.end())->first;
+    }
+
+    float64 PrevPoint()const // Previous point
+    {
+        if (_M_StateBuffer.size() <= 1) {return __Float64::FromBytes(CSE_NAN);}
+        if (_M_Direction) {return ++_M_StateBuffer.begin()->first;}
+        auto end = --_M_StateBuffer.end();
+        return (--end)->first;
+    }
+
+    StateType Solutions()const {return _M_StateBuffer;}
+
+    enum State CurrentState()const {return _M_State;}
+
+    constexpr float64 size()const {return abs(CurrentPoint() - PrevPoint());}
+
+    void __cdecl InvokeRun() throw()
+    {
+        if (_M_State != Processing) {throw std::logic_error("Engine is finished.");}
+
+        if (CurrentPoint() == _M_EndPoint)
+        {
+            _M_State = Succeeded;
+            return;
+        }
+
+        int ExitCode = Run();
+
+        if (ExitCode)
+        {
+            _M_State = State(ExitCode);
+            return;
+        }
+
+        if (((_M_Direction ? -1. : 1.) * (CurrentPoint() - _M_EndPoint)) > 0)
+        {
+            _M_State = Succeeded;
+            return;
+        }
+    }
+
+    virtual int Run() = 0;
+
+    virtual ValueArray operator()(float64 _Xx) = 0;
+};
+
+template<uint64 EquationCount>
+struct __ODE_Dense_Output_Base
+{
+public:
+    using ValueArray = std::array<float64, EquationCount>;
+
+protected:
+    float64 _M_First, _M_Last;
+
+public:
+    __ODE_Dense_Output_Base() {}
+    __ODE_Dense_Output_Base(float64 _Fi, float64 _La)
+        : _M_First(_Fi), _M_Last(_La) {}
+
+    float64 size()const {return _M_Last - _M_First;}
+
+    virtual ValueArray operator()(float64 _Xx) = 0;
+};
+
+///////////////////////////////////RUNGE-KUTTA METHODS///////////////////////////////////
+
+/**
+ * @brief Base class for explicit Runge-Kutta methods.
+ */
+template<uint32_t ErrorEsitmatorOrder, uint32_t StepTakenOrder, uint32_t NStages, uint64 DenseOutputOrder, uint64 EquationCount> requires (EquationCount > 0)
+struct __Runge_Kutta_ODE_Engine_Base : public __ODE_Engine_Base<EquationCount>
+{
+public:
+    using _Mybase    = __ODE_Engine_Base<EquationCount>;
+    using ValueArray = _Mybase::ValueArray;
+    using StateType  = matrix<float64, NStages + 1, EquationCount>;
+
+    struct DenseOutput : public __ODE_Dense_Output_Base<EquationCount>
+    {
+        using Mybase   = __ODE_Dense_Output_Base<EquationCount>;
+        using QTblType = matrix<float64, DenseOutputOrder, EquationCount>;
+
+        QTblType   QTable = QTblType(0);
+        ValueArray Base;
+
+        DenseOutput() {}
+        DenseOutput(float64 First, float64 Last, ValueArray BaseValue, QTblType QTbl)
+            : Mybase(First, Last), Base(BaseValue), QTable(QTbl) {}
+
+        ValueArray operator()(float64 _Xx)override
+        {
+            float64 x = (_Xx - Mybase::_M_First) / Mybase::size();
+            std::array<float64, DenseOutputOrder> p;
+            for (int i = 0; i < DenseOutputOrder; ++i)
+            {
+                p[i] = pow(x, i + 1);
+            }
+            matrix<float64, 1, DenseOutputOrder> PMat;
+            PMat[0] = p;
+            auto y = Mybase::size() * (QTable * PMat)[0];
+            return Base + y;
+        }
+
+        friend class __Runge_Kutta_ODE_Engine_Base;
+    };
+
+    std::map<float64, DenseOutput> Interpolants;
+
+    void SaveDenseOutput()override
+    {
+        matrix<float64, DenseOutputOrder, NStages + 1> PTable;
+        for (int i = 0; i < DenseOutputOrder; ++i)
+        {
+            for (int j = 0; j < NStages + 1; ++j)
+            {
+                PTable[i][j] = *(_T_PTable + (DenseOutputOrder) * j + i);
+            }
+        }
+
+        decltype(_Mybase::_M_StateBuffer.begin()) PrevState;
+        if (_Mybase::_M_Direction)
+        {
+            PrevState = ++_Mybase::_M_StateBuffer.begin();
+        }
+        else
+        {
+            auto end = --_Mybase::_M_StateBuffer.end();
+            PrevState = --end;
+        }
+
+        Interpolants.insert({_Mybase::CurrentPoint(),
+            DenseOutput(PrevState->first, _Mybase::CurrentPoint(), PrevState->second, KTable * PTable)});
+    }
+
+    constexpr static const float64 MinFactor  = 0.2;
+    constexpr static const float64 MaxFactor  = 10.;
+    constexpr static const float64 FactorSafe = 0.9;
+
+protected:
+    const float64* _T_CTable;
+    const float64* _T_ATable;
+    const float64* _T_BTable;
+    const float64* _T_ETable;
+    const float64* _T_PTable;
+
+    ValueArray     CurrentFx;
+    StateType      KTable       = StateType(0);
+
+    float64        RelTolerNLog = 3;
+    float64        AbsTolerNLog = 6;
+    float64        MaxStep      = __Float64::FromBytes(CSE_POSITIVE_INF);
+    float64        AbsStep;
+    const float64  ErrExponent  = ErrorEsitmatorOrder + 1;
+
+public:
+    __Runge_Kutta_ODE_Engine_Base() : _Mybase() {}
+
+    __Runge_Kutta_ODE_Engine_Base(std::function<typename _Mybase::_Fty> _Right)
+        : _Mybase(_Right) {}
+
+    __Runge_Kutta_ODE_Engine_Base(typename _Mybase::_Fty* _PFunc)
+        : _Mybase(_PFunc) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_ODE_Engine_Base(_Functor _Func)
+        : _Mybase(_Func) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_ODE_Engine_Base& operator=(_Functor _Func)
+    {
+        return _Mybase::operator=(_Func);
+    }
+
+    void Init(ValueArray InitState, float64 First, float64 Last, float64 InitStep = __Float64::FromBytes(CSE_NAN))
+    {
+        _Mybase::_M_StateBuffer.insert({First, InitState});
+        _Mybase::_M_EndPoint = Last;
+        _Mybase::_M_Invoker(First, InitState, CurrentFx);
+        _Mybase::_M_Direction = __Float64(_Mybase::_M_EndPoint - _Mybase::CurrentPoint()).Negative;
+        _Mybase::_M_State = _Mybase::Processing;
+        if (isnan(InitStep)){SetInitStep();}
+        else {AbsStep = InitStep;}
+    }
+
+    void SetInitStep()
+    {
+        if (_Mybase::_M_StateBuffer.empty()) {AbsStep = __Float64::FromBytes(CSE_POSITIVE_INF);}
+
+        float64 RelToler = pow(10, -RelTolerNLog);
+        float64 AbsToler = pow(10, -AbsTolerNLog);
+
+        ValueArray y0 = _Mybase::_M_StateBuffer.begin()->second;
+        ValueArray Scale = AbsToler + abs(y0) * RelToler;
+
+        float64 d0 = __RMS_Norm(y0 / Scale), d1 = __RMS_Norm(CurrentFx / Scale), h0;
+
+        if (d0 < 1E-5 || d1 < 1E-5) {h0 = 1E-6;}
+        else {h0 = 0.01 * d0 / d1;}
+
+        ValueArray y1 = y0 + h0 * (_Mybase::_M_Direction ? -1 : 1) * CurrentFx, f1;
+        _Mybase::_M_Invoker(_Mybase::CurrentPoint() + h0 * (_Mybase::_M_Direction ? -1 : 1), y1, f1);
+
+        float64 d2 = __RMS_Norm((f1 - CurrentFx) / Scale) / h0;
+
+        float64 h1;
+        if (d1 <= 1E-15 && d2 <= 1E-15){h1 = max(1E-6, h0 * 1E-3);}
+        else {h1 = yroot((0.01 / max(d1, d2)), ErrExponent);}
+
+        AbsStep = min(100 * h0, h1);
+    };
+
+    int Run()override
+    {
+        auto t = _Mybase::CurrentPoint();
+        ValueArray y = _Mybase::_M_Direction ?
+            _Mybase::_M_StateBuffer.begin()->second :
+            (--_Mybase::_M_StateBuffer.end())->second;
+
+        float64 RelToler = pow(10, -RelTolerNLog);
+        float64 AbsToler = pow(10, -AbsTolerNLog);
+        float64 MinStep = 10. * abs((t + (_Mybase::_M_Direction ? -1 : 1) * DOUBLE_EPSILON) - t);
+
+        float64 AbsH;
+        if (AbsStep > MaxStep) {AbsH = MaxStep;}
+        else if (AbsStep < MinStep) {AbsH = MinStep;}
+        else {AbsH = AbsStep;}
+
+        bool Accept = 0, Reject = 0;
+        float64 h, NextT;
+        ValueArray NewY, NewF;
+
+        while (!Accept)
+        {
+            if (AbsH < MinStep) {return 1;}
+
+            h = (_Mybase::_M_Direction ? -1 : 1) * AbsH;
+            NextT = t + h;
+
+            if ((_Mybase::_M_Direction ? -1 : 1) * (NextT - _Mybase::_M_EndPoint) > 0)
+            {
+                NextT = _Mybase::_M_EndPoint;
+            }
+
+            h = NextT - t;
+            float64 NewAbsStep = abs(h);
+
+            // ---------- Runge-Kutta Solver Begin ---------- //
+
+            KTable[0] = CurrentFx;
+            for (int i = 1; i < NStages; ++i)
+            {
+                ValueArray dy;
+                for (int j = 0; j < EquationCount; ++j)
+                {
+                    dy[j] = 0;
+                    for (int k = 0; k < i; ++k)
+                    {
+                        dy[j] += KTable[k][j] * _T_ATable[i * StepTakenOrder + k];
+                    }
+                    dy[j] *= h;
+                }
+                _Mybase::_M_Invoker(t + _T_CTable[i] * h, y + dy, KTable[i]);
+            }
+
+            matrix<float64, NStages, EquationCount> KTableWithoutBack(KTable);
+            matrix<float64, 1, NStages> BTable;
+            for (size_t i = 0; i < NStages; ++i) {BTable[0][i] = *(_T_BTable + i);}
+            auto YScale = KTableWithoutBack * BTable;
+            NewY = y + h * YScale[0];
+            _Mybase::_M_Invoker(t + h, NewY, NewF);
+            KTable[NStages] = NewF;
+
+            // ---------- Runge-Kutta solver End ---------- //
+
+            ValueArray Scale = AbsToler + max(y, NewY) * RelToler;
+
+            // ---------- Error Esitmator Begin ---------- //
+
+            matrix<float64, 1, NStages + 1> ETable;
+            for (size_t i = 0; i < NStages + 1; ++i) {ETable[0][i] = *(_T_ETable + i);}
+            auto EstmErrorMat = KTable * ETable;
+            ValueArray EstmError = (EstmErrorMat[0] * h) / Scale;
+
+            float64 EstmErrNorm, EENTempSum = 0;
+            for (auto i : EstmError) {EENTempSum += pow(i, 2);}
+            EstmErrNorm = sqrt(EENTempSum / float64(EstmError.size()));
+
+            // ---------- Error Esitmator End ---------- //
+
+            float64 Factor;
+            if (EstmErrNorm < 1)
+            {
+                if (EstmErrNorm == 0) {Factor = MaxFactor;}
+                else {Factor = min(MaxFactor, FactorSafe * yroot(EstmErrNorm, -ErrExponent));}
+                if (Reject) {Factor = min(1, Factor);}
+                AbsH *= Factor;
+                Accept = 1;
+            }
+            else
+            {
+                AbsH *= max(MinFactor, FactorSafe * yroot(EstmErrNorm, -ErrExponent));
+                Reject = 1;
+            }
+        }
+
+        _Mybase::_M_StateBuffer.insert({NextT, NewY});
+        AbsStep = AbsH;
+        CurrentFx = NewF;
+
+        return 0;
+    }
+
+    ValueArray operator()(float64 _Xx)override
+    {
+        DenseOutput Segment;
+        for (auto i : Interpolants)
+        {
+            float64 Min = min(i.second._M_First, i.second._M_Last);
+            float64 Max = max(i.second._M_First, i.second._M_Last);
+            if (Min < _Xx && _Xx < Max)
+            {
+                Segment = i.second;
+                break;
+            }
+        }
+        return Segment(_Xx);
+    }
+};
+
+// Below are implementions of this base class above.
+
+extern const uint64 __RK23_C_Table[3];
+extern const uint64 __RK23_A_Table[9];
+extern const uint64 __RK23_B_Table[3];
+extern const uint64 __RK23_E_Table[4];
+extern const uint64 __RK23_P_Table[12];
+
+/**
+ * Explicit Runge-Kutta method of order 3(2). (From SciPy)
+ *
+ * Explicit Runge-Kutta method of order 3(2) [3]. The error is controlled
+ * assuming accuracy of the second-order method, but steps are taken using
+ * the third-order accurate formula (local extrapolation is done). A cubic
+ * Hermite polynomial is used for the dense output. Can be applied in the
+ * complex domain.
+ *
+ * Can be applied in the complex domain.(Not implemented)
+ *
+ * @link P. Bogacki, L.F. Shampine, “A 3(2) Pair of Runge-Kutta Formulas”,
+ * Appl. Math. Lett. Vol. 2, No. 4. pp. 321-325, 1989.
+ * https://www.sciencedirect.com/science/article/pii/0893965989900797?via%3Dihub
+ */
+template<uint64 EquationCount> requires (EquationCount > 0)
+class __Runge_Kutta_RK23_ODE_Engine : public __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>
+{
+public:
+    using _Mybase = __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>;
+
+    __Runge_Kutta_RK23_ODE_Engine() : _Mybase() {}
+
+    __Runge_Kutta_RK23_ODE_Engine(std::function<typename _Mybase::_Fty> _Right)
+        : _Mybase(_Right) {}
+
+    __Runge_Kutta_RK23_ODE_Engine(typename _Mybase::_Fty* _PFunc)
+        : _Mybase(_PFunc) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_RK23_ODE_Engine(_Functor _Func)
+        : _Mybase(_Func) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_RK23_ODE_Engine& operator=(_Functor _Func)
+    {
+        return _Mybase::operator=(_Func);
+    }
+
+    void Init(_Mybase::ValueArray InitState, float64 First, float64 Last, float64 InitStep = __Float64::FromBytes(CSE_NAN))
+    {
+        _Mybase::_T_CTable = (float64*)__RK23_C_Table;
+        _Mybase::_T_ATable = (float64*)__RK23_A_Table;
+        _Mybase::_T_BTable = (float64*)__RK23_B_Table;
+        _Mybase::_T_ETable = (float64*)__RK23_E_Table;
+        _Mybase::_T_PTable = (float64*)__RK23_P_Table;
+        _Mybase::Init(InitState, First, Last, InitStep);
+    }
+};
+
+extern const float64 __RK45_C_Table[6];
+extern const float64 __RK45_A_Table[30];
+extern const float64 __RK45_B_Table[6];
+extern const float64 __RK45_E_Table[7];
+extern const float64 __RK45_P_Table[28];
+
+/**
+ * Explicit Runge-Kutta method of order 4 and 5. (From SciPy)
+ *
+ * This uses the Dormand-Prince pair of formulas [1]. The error is controlled
+ * assuming accuracy of the fourth-order method accuracy, but steps are taken
+ * using the fifth-order accurate formula (local extrapolation is done).
+ * A quartic interpolation polynomial is used for the dense output [2].
+ *
+ * Can be applied in the complex domain.(Not implemented)
+ *
+ * @link [1] J. R. Dormand, P. J. Prince, “A family of embedded Runge-Kutta formulae”,
+ * Journal of Computational and Applied Mathematics, Vol. 6, No. 1, pp. 19-26, 1980.
+ * https://core.ac.uk/download/pdf/81989096.pdf
+ * @link [2] L. W. Shampine, “Some Practical Runge-Kutta Formulas”,
+ * Mathematics of Computation,, Vol. 46, No. 173, pp. 135-150, 1986.
+ * https://www.semanticscholar.org/paper/Some-practical-Runge-Kutta-formulas-Shampine/61b1c882c3c728c2772dd19f75ba41e7b3e5e9af
+ */
+template<uint64 EquationCount> requires (EquationCount > 0)
+class __Runge_Kutta_RK45_ODE_Engine : public __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>
+{
+public:
+    using _Mybase = __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>;
+
+    __Runge_Kutta_RK45_ODE_Engine() : _Mybase() {}
+
+    __Runge_Kutta_RK45_ODE_Engine(std::function<typename _Mybase::_Fty> _Right)
+        : _Mybase(_Right) {}
+
+    __Runge_Kutta_RK45_ODE_Engine(typename _Mybase::_Fty* _PFunc)
+        : _Mybase(_PFunc) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_RK45_ODE_Engine(_Functor _Func)
+        : _Mybase(_Func) {}
+
+    template<typename _Functor>
+    __Runge_Kutta_RK45_ODE_Engine& operator=(_Functor _Func)
+    {
+        return _Mybase::operator=(_Func);
+    }
+
+    void Init(_Mybase::ValueArray InitState, float64 First, float64 Last, float64 InitStep = __Float64::FromBytes(CSE_NAN))
+    {
+        _Mybase::_T_CTable = __RK45_C_Table;
+        _Mybase::_T_ATable = __RK45_A_Table;
+        _Mybase::_T_BTable = __RK45_B_Table;
+        _Mybase::_T_ETable = __RK45_E_Table;
+        _Mybase::_T_PTable = __RK45_P_Table;
+        _Mybase::Init(InitState, First, Last, InitStep);
+    }
+};
+
+/**
+ * @brief Solve an initial value problem for a system of ODEs.
+ * @param _Func - Input Function: the time derivative of the state y at time x.
+ * The calling signature is _Func(x, y, Roots&), where x is a scalar and y is
+ * an std::array with y.size() = y0.size(). Result will be stored in Roots.
+ * @param _Coeffs - Initial state.
+ * @param _First, _Last - The solver starts with _First and integrates until it reaches _Last.
+ * @return Result function, with the domain of [_First, _Last]
+ */
+template<typename _Engine, typename _Functor, uint64 EquationCount>
+_Engine CreateODEFunctions(_Functor _Func, std::array<float64, EquationCount> _Coeffs, float64 _First, float64 _Last)
+{
+    _Engine Engine = _Func;
+    Engine.Init(_Coeffs, _First, _Last);
+    while (Engine.CurrentState() == Engine.Processing)
+    {
+        Engine.InvokeRun();
+        Engine.SaveDenseOutput();
+    }
+    return Engine;
+}
 
 _CSE_END
 

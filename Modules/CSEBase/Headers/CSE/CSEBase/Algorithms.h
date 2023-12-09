@@ -47,6 +47,13 @@ _NODISCARD genIType __cdecl abs(genIType _Xx)noexcept
     return _Xx;
 }
 
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl abs(std::array<genType, size> _Xx)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Xx[i] = _CSE abs(_Xx[i]); }
+    return _Xx;
+}
+
 /**
  * @brief Returns -1.0 if x is less than 0.0, 0.0 if x is equal to 0.0, and +1.0 if x is greater than 0.0.
  */
@@ -177,6 +184,19 @@ _NODISCARD constexpr genUType min(genUType _Left, uint64 _Right)noexcept
     return _Left;
 }
 
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl min(std::array<genType, size> _Left, std::array<genType, size> _Right)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Left[i] = _CSE min(_Left[i], _Right[i]); }
+    return _Left;
+}
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl min(std::array<genType, size> _Left, genType _Right)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Left[i] = _CSE min(_Left[i], _Right); }
+    return _Left;
+}
+
 template<typename iterator> requires std::random_access_iterator<iterator>
 _NODISCARD constexpr iterator min(iterator begin, iterator end)noexcept
 {
@@ -241,6 +261,19 @@ template<typename genUType> requires vecUType<genUType>
 _NODISCARD constexpr genUType max(genUType _Left, uint64 _Right)noexcept
 {
     for (size_t i = 0; i < _Left.size(); i++) { _Left[i] = _CSE max(_Left[i], _Right); }
+    return _Left;
+}
+
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl max(std::array<genType, size> _Left, std::array<genType, size> _Right)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Left[i] = _CSE max(_Left[i], _Right[i]); }
+    return _Left;
+}
+template<typename genType, uint64 size>
+_NODISCARD std::array<genType, size> __cdecl max(std::array<genType, size> _Left, genType _Right)noexcept
+{
+    for (size_t i = 0; i < size; i++) { _Left[i] = _CSE max(_Left[i], _Right); }
     return _Left;
 }
 

@@ -29,6 +29,7 @@
 #include "CSE/CSEBase/gltypes/GVector2D.h"
 #include "CSE/CSEBase/gltypes/GVector3D.h"
 #include "CSE/CSEBase/gltypes/GVector4D.h"
+#include "CSE/CSEBase/gltypes/GVectorND.h"
 #include "CSE/CSEBase/gltypes/GMatrix.h"
 #include "CSE/CSEBase/gltypes/GFunctions.h"
 
