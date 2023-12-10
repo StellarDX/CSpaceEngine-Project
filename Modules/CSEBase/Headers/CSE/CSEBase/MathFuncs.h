@@ -69,6 +69,13 @@ genType __cdecl exp(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl exp(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE exp(_X[i]); }
+    return _X;
+}
+
 /****************************************************************************************\
 *                                          L O G                                         *
 \****************************************************************************************/
@@ -101,8 +108,18 @@ complex64 __cdecl logc(complex64 _X, complex64 _Base, int64 K_OFFSET = 0);
 template<typename genType> requires vecType<genType>
 genType __cdecl lb(genType _X); // Unused
 
+template<uint64 size>
+std::array<float64, size> __cdecl lb(std::array<float64, size> _X);
+
 template<typename genType> requires vecType<genType>
 genType __cdecl ln(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE ln(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl ln(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE ln(_X[i]); }
     return _X;
@@ -115,6 +132,13 @@ genType __cdecl log(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl log(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE log(_X[i]); }
+    return _X;
+}
+
 template<typename genType> requires vecType<genType>
 genType __cdecl log(genType _X, float64 _Base)
 {
@@ -122,8 +146,22 @@ genType __cdecl log(genType _X, float64 _Base)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl log(std::array<float64, size> _X, float64 _Base)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE log(_X[i], _Base); }
+    return _X;
+}
+
 template<typename genType> requires vecType<genType>
 genType __cdecl log(genType _X, genType _Base)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE log(_X[i], _Base[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl log(std::array<float64, size> _X, std::array<float64, size> _Base)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE log(_X[i], _Base[i]); }
     return _X;
@@ -161,8 +199,22 @@ genType __cdecl pow(genType _X, float64 _Power)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl pow(std::array<float64, size> _X, float64 _Power)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE pow(_X[i], _Power); }
+    return _X;
+}
+
 template<typename genType> requires vecType<genType>
 genType __cdecl pow(genType _X, genType _Power)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE pow(_X[i], _Power[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl pow(std::array<float64, size> _X, std::array<float64, size> _Power)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE pow(_X[i], _Power[i]); }
     return _X;
@@ -194,6 +246,13 @@ genType __cdecl sqrt(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl sqrt(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE sqrt(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief Returns the inverse of the square root of x, i.e. the value 1/√x
  */
@@ -208,6 +267,13 @@ genType __cdecl inversesqrt(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl inversesqrt(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE inversesqrt(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief Returns the cube root of x, i.e. the value 3√x.
  */
@@ -216,6 +282,13 @@ std::array<complex64, 3> __cdecl cbrtc(complex64 _X);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl cbrt(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE cbrt(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl cbrt(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE cbrt(_X[i]); }
     return _X;
@@ -236,8 +309,22 @@ genType __cdecl yroot(genType _X, float64 _Expo)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl yroot(std::array<float64, size> _X, float64 _Expo)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE yroot(_X[i], _Expo); }
+    return _X;
+}
+
 template<typename genType> requires vecType<genType>
 genType __cdecl yroot(genType _X, genType _Expo)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE yroot(_X[i], _Expo[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl yroot(std::array<float64, size> _X, std::array<float64, size> _Expo)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE yroot(_X[i], _Expo[i]); }
     return _X;
@@ -299,6 +386,13 @@ genType __cdecl sin(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl sin(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE sin(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief The standard trigonometric cosine function(Real number based on degrees, Complex based on radians).
  */
@@ -308,6 +402,13 @@ complex64 __cdecl cosc(complex64 _X);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl cos(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE cos(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl cos(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE cos(_X[i]); }
     return _X;
@@ -327,6 +428,13 @@ genType __cdecl tan(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl tan(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE tan(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief The standard trigonometric cotangent function(Real number based on degrees, Complex based on radians).
  */
@@ -336,6 +444,13 @@ complex64 __cdecl ctgc(complex64 _X);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl ctg(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE ctg(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl ctg(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE ctg(_X[i]); }
     return _X;
@@ -355,6 +470,13 @@ genType __cdecl sec(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl sec(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE sec(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief The standard trigonometric cosecant function(Real number based on degrees, Complex based on radians).
  */
@@ -364,6 +486,13 @@ complex64 __cdecl cscc(complex64 _X);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl csc(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE csc(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl csc(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE csc(_X[i]); }
     return _X;
@@ -412,6 +541,13 @@ genType __cdecl arcsin(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl arcsin(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arcsin(_X[i]); }
+    return _X;
+}
+
 /**
  * @brief Arc cosine. Returns the angle whose trigonometric cosine is x. The range of values returned by acos is [0, 180].
  */
@@ -421,6 +557,13 @@ complex64 __cdecl arccosc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl arccos(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arccos(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl arccos(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arccos(_X[i]); }
     return _X;
@@ -440,12 +583,26 @@ genType __cdecl arctan(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl arctan(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arctan(_X[i]); }
+    return _X;
+}
+
 float64 __cdecl arcctg(float64 _X);
 
 complex64 __cdecl arcctgc(complex64 _X, int64 K_OFFSET = 0);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl arcctg(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arcctg(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl arcctg(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arcctg(_X[i]); }
     return _X;
@@ -462,12 +619,26 @@ genType __cdecl arcsec(genType _X)
     return _X;
 }
 
+template<uint64 size>
+std::array<float64, size> __cdecl arcsec(std::array<float64, size> _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arcsec(_X[i]); }
+    return _X;
+}
+
 float64 __cdecl arccsc(float64 _X);
 
 complex64 __cdecl arccscc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
 
 template<typename genType> requires vecType<genType>
 genType __cdecl arccsc(genType _X)
+{
+    for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arccsc(_X[i]); }
+    return _X;
+}
+
+template<uint64 size>
+std::array<float64, size> __cdecl arccsc(std::array<float64, size> _X)
 {
     for (size_t i = 0; i < _X.size(); i++) { _X[i] = _CSE arccsc(_X[i]); }
     return _X;

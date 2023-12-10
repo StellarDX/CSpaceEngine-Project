@@ -54,7 +54,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-function(ECM_OPTIONAL_ADD_SUBDIRECTORY _dir)
+function(AddModuleDirectory _dir)
   get_filename_component(_fullPath Modules/${_dir} ABSOLUTE)
   if(EXISTS ${_fullPath}/CMakeLists.txt)
     if(DISABLE_ALL_OPTIONAL_SUBDIRECTORIES)
@@ -68,6 +68,24 @@ function(ECM_OPTIONAL_ADD_SUBDIRECTORY _dir)
     option(BUILD_${_dir} "Build directory ${_dir}" ${_DEFAULT_OPTION_VALUE})
     if(BUILD_${_dir})
       add_subdirectory(Modules/${_dir}) # StellarDX modified
+    endif()
+  endif()
+endfunction()
+
+function(AddExtensionDirectory _dir)
+  get_filename_component(_fullPath Extensions/${_dir} ABSOLUTE)
+  if(EXISTS ${_fullPath}/CMakeLists.txt)
+    if(DISABLE_ALL_OPTIONAL_SUBDIRECTORIES)
+      set(_DEFAULT_OPTION_VALUE FALSE)
+    else()
+      set(_DEFAULT_OPTION_VALUE TRUE)
+    endif()
+    if(DISABLE_ALL_OPTIONAL_SUBDIRS  AND NOT DEFINED  BUILD_${_dir})
+      set(_DEFAULT_OPTION_VALUE FALSE)
+    endif()
+    option(BUILD_${_dir} "Build directory ${_dir}" ${_DEFAULT_OPTION_VALUE})
+    if(BUILD_${_dir})
+      add_subdirectory(Extensions/${_dir}) # StellarDX modified
     endif()
   endif()
 endfunction()

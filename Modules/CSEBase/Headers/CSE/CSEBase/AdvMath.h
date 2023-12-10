@@ -1093,8 +1093,8 @@ public:
  * @param _First, _Last - The solver starts with _First and integrates until it reaches _Last.
  * @return Result function, with the domain of [_First, _Last]
  */
-template<typename _Engine, typename _Functor, uint64 EquationCount>
-_Engine CreateODEFunction(_Functor _Func, std::array<float64, EquationCount> _Coeffs, float64 _First, float64 _Last)
+template<typename _Engine, typename _Functor>
+_Engine CreateODEFunction(_Functor _Func, typename _Engine::ValueArray _Coeffs, float64 _First, float64 _Last)
 {
     _Engine Engine = _Func;
     Engine.Init(_Coeffs, _First, _Last);

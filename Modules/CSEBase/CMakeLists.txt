@@ -71,7 +71,7 @@ install(EXPORT CSEBase-targets
 )
 
 # Pack Configurations
-configure_file("CSEBase-config.cmake.in"
+configure_file("CSEBase-config.cmake.conf"
   "${CMAKE_BINARY_DIR}/CSE-CSEBase-config.cmake"
   @ONLY
 )

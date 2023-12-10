@@ -19,6 +19,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Libraries")
 #file(GLOB_RECURSE Sources CONFIGURE_DEPENDS Sources/*.cc Headers/*.h)
 #add_library(CSpaceEngine STATIC "${Sources}")
 
+message(STATUS "CSE Source Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "CSE Build Directory: ${CMAKE_BINARY_DIR}")
+message(STATUS "CSE Runtime Directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message(STATUS "CSE Library Directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+message(STATUS "CSE Archive Directory: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+
 # Scan Sub-modules
 function(CSEInternalFindModules ModuleList)
     set(Result "")
@@ -34,6 +40,13 @@ function(CSEInternalFindModules ModuleList)
         endif()
     endforeach()
 
+    message(STATUS "Module Found: ${Result}")
+    set(${ModuleList} "${Result}" PARENT_SCOPE)
+endfunction()
+
+function(CSEFindExtensions ExtensionsList)
+    set(Result "")
+
     file(GLOB Dir2 "Extensions/*" LIST_DIRECTORIES true)
     message(STATUS "Also scanning: /Extensions/*")
 
@@ -46,18 +59,30 @@ function(CSEInternalFindModules ModuleList)
         endif()
     endforeach()
 
-    message(STATUS "Module Found: ${Result}")
-    set(${ModuleList} "${Result}" PARENT_SCOPE)
+    message(STATUS "Extensions Found: ${Result}")
+    set(${ExtensionsList} "${Result}" PARENT_SCOPE)
 endfunction()
+
 
 if(NOT CSESubModules)
     CSEInternalFindModules(CSESubModules)
 endif()
+if(NOT CSEExtensions)
+    CSEFindExtensions(CSEExtensions)
+endif()
+
 set(CSESubModules "${CSESubModules}" CACHE STRING "Submodules to build")
+set(CSEExtensions "${CSEExtensions}" CACHE STRING "Extensions to build")
 
 foreach(Module IN LISTS CSESubModules)
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Modules/${Module}/CMakeLists.txt")
         message(FATAL_ERROR "Module '${Module}' cannot be found or invalid.")
+    endif()
+endforeach()
+
+foreach(Extension IN LISTS CSEExtensions)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Extensions/${Extension}/CMakeLists.txt")
+        message(FATAL_ERROR "Extension '${Extension}' cannot be found or invalid.")
     endif()
 endforeach()
 
@@ -67,7 +92,12 @@ include(ECMOptionalAddSubdirectory)
 
 foreach(Module IN LISTS CSESubModules)
     message(STATUS "Configuring submodule '${Module}'")
-    ECM_OPTIONAL_ADD_SUBDIRECTORY("${Module}")
+    AddModuleDirectory("${Module}")
+endforeach()
+
+foreach(Extension IN LISTS CSEExtensions)
+    message(STATUS "Configuring extension '${Extension}'")
+    AddExtensionDirectory("${Extension}")
 endforeach()
 
 # Pack configurations
@@ -88,13 +118,29 @@ install(
   DESTINATION lib/cmake/CSE
 )
 
-# Rename output file
-#SET_TARGET_PROPERTIES (CSpaceEngine PROPERTIES OUTPUT_NAME "CSE")
+# ----------------------------------------------------------------------------
+#  CSE.h based on actual modules list
+# ----------------------------------------------------------------------------
 
-#foreach(Module IN LISTS CSESubModules)
-#    message(STATUS "Loading Library '${Module}'")
-#    target_link_libraries(CSpaceEngine PUBLIC ${Module})
-#endforeach()
+option(GenerateTotalLibrary "Generate a total header include everything built and merge all the built components into a aingle library(Not implemented.)" false)
 
-#target_include_directories(CSpaceEngine PUBLIC Headers)
-#target_compile_definitions(CSpaceEngine PRIVATE CSPACEENGINE_LIBRARY)
+if(GenerateTotalLibrary)
+    set(CSE_MODULE_DEFINITIONS_CONFIGMAKE "\n")
+
+    foreach(Module IN LISTS CSESubModules)
+        set(CSE_MODULE_DEFINITIONS_CONFIGMAKE "${CSE_MODULE_DEFINITIONS_CONFIGMAKE}#include <CSE/${Module}.h>\n")
+    endforeach()
+
+    configure_file("Headers/CSE/CSE.h.cmake" "Headers/CSE/CSE.h")
+    install(FILES "${CMAKE_BINARY_DIR}/Headers/CSE/CSE.h" DESTINATION ${CMAKE_INSTALL_PREFIX}/Headers/CSE COMPONENT CSEAll)
+
+    #SET_TARGET_PROPERTIES (CSpaceEngine PROPERTIES OUTPUT_NAME "CSE")
+
+    #foreach(Module IN LISTS CSESubModules)
+    #    message(STATUS "Loading Library '${Module}'")
+    #    target_link_libraries(CSpaceEngine PUBLIC ${Module})
+    #endforeach()
+
+    #target_include_directories(CSpaceEngine PUBLIC Headers)
+    #target_compile_definitions(CSpaceEngine PRIVATE CSPACEENGINE_LIBRARY)
+endif()
