@@ -122,7 +122,7 @@ install(
 #  CSE.h based on actual modules list
 # ----------------------------------------------------------------------------
 
-option(GenerateTotalLibrary "Generate a total header include everything built and merge all the built components into a aingle library(Not implemented.)" false)
+option(GenerateTotalLibrary "Generate a total header include everything built and merge all the built components into a single library(Not implemented.)" false)
 
 if(GenerateTotalLibrary)
     set(CSE_MODULE_DEFINITIONS_CONFIGMAKE "\n")

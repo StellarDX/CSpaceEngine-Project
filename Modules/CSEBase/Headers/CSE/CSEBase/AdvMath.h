@@ -1,5 +1,5 @@
 /************************************************************
-  CSpaceEngine Advanced math Library.
+  CSpaceEngine Advanced math Library, also called "SciC++"
 
   Description:
     This file contains classes and functions used
@@ -59,6 +59,12 @@ _STL_DISABLE_CLANG_WARNINGS
 
 _CSE_BEGIN
 
+#define _SCICXX_BEGIN namespace SciCxx {
+#define _SCICXX SciCxx::
+#define _SCICXX_END }
+
+using Function1D = std::function<float64(float64)>; // 1D Function type
+
 /****************************************************************************************\
 *                                Coordinate convertions                                  *
 \****************************************************************************************/
@@ -87,6 +93,8 @@ vec3 _cdecl PolarToXYZ(vec3 Polar);
 *                                   Function Invoker                                     *
 \****************************************************************************************/
 
+_SCICXX_BEGIN
+
 template<typename _Signature> struct __CSE_AdvMath_Function_Invoker;
 template<typename _Res, typename... _ArgTypes>
 struct __CSE_AdvMath_Function_Invoker<_Res(_ArgTypes...)>
@@ -112,14 +120,18 @@ struct __CSE_AdvMath_Function_Invoker<_Res(_ArgTypes...)>
         return *this;
     }
 
-    virtual _Res operator()(_ArgTypes...) = 0;
+    virtual _Res operator()(_ArgTypes...)const = 0;
 };
+
+_SCICXX_END
 
 /****************************************************************************************\
 *                               Derivatives and Integrals                                *
 \****************************************************************************************/
 
 /////////////////////////////////////// DERIVATIVE ///////////////////////////////////////
+
+_SCICXX_BEGIN
 
 class __Basic_FDM_Derivative_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
@@ -235,11 +247,13 @@ public:
         SetCoefficients<decltype(Offsets.begin()), DeriOrder, CoeffCount>(Offsets.begin(), Offsets.end());
     }
 
-    float64 operator()(float64 _Xx);
+    float64 operator()(float64 _Xx)const;
 };
 
+_SCICXX_END
+
 // Default engines
-using DerivativeFunction = __Basic_FDM_Derivative_Engine;
+using DerivativeFunction = _SCICXX __Basic_FDM_Derivative_Engine;
 
 //////////////////////////////////////// INTEGRAL ////////////////////////////////////////
 
@@ -252,6 +266,8 @@ using DerivativeFunction = __Basic_FDM_Derivative_Engine;
 #define __HI_PREC 4.8920946026904804017152719559219 // High precision with 78000 sample points
 #define __UT_PREC 5.1335389083702175141813865785018 // Ultra precision with 136000 sample points
 #define __EX_PREC 5.2504200023088939799372822644269 // Extreme precision with 178000 sample points
+
+_SCICXX_BEGIN
 
 class __Trapezoidal_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
 {
@@ -289,14 +305,14 @@ public:
         return _Mybase::operator=(_Func);
     }
 
-    float64 _E_NonUniform(_Sample_Type _Samples, bool IsInterval = 0);
-    float64 _E_Uniform(float64 _Min, float64 _Max);
+    float64 _E_NonUniform(_Sample_Type _Samples, bool IsInterval = 0)const;
+    float64 _E_Uniform(float64 _Min, float64 _Max)const;
 
-    float64 operator()(float64 _Xx); // override
-    float64 operator()(float64 _Min, float64 _Max);
+    float64 operator()(float64 _Xx)const override; // override
+    float64 operator()(float64 _Min, float64 _Max)const;
 
     template<typename _Iterator>
-    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)
+    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)const
     {
         if (IsInterval)
         {
@@ -391,18 +407,18 @@ public:
         return _Mybase::operator=(_Func);
     }
 
-    float64 _E_CompositeQuadratic(_Sample_Type _Samples);
-    float64 _E_CompositeCubic(_Sample_Type _Samples);
-    float64 _E_Extended(_Sample_Type _Samples);
-    float64 _E_NarrowPeaks1(_Sample_Type _Samples);
-    float64 _E_NarrowPeaks2(_Sample_Type _Samples);
-    float64 _E_Irregularly(_Sample_Type _Samples, bool IsInterval = 0);
+    float64 _E_CompositeQuadratic(_Sample_Type _Samples)const;
+    float64 _E_CompositeCubic(_Sample_Type _Samples)const;
+    float64 _E_Extended(_Sample_Type _Samples)const;
+    float64 _E_NarrowPeaks1(_Sample_Type _Samples)const;
+    float64 _E_NarrowPeaks2(_Sample_Type _Samples)const;
+    float64 _E_Irregularly(_Sample_Type _Samples, bool IsInterval = 0)const;
 
-    float64 operator()(float64 _Xx); // override
-    float64 operator()(float64 _Min, float64 _Max);
+    float64 operator()(float64 _Xx)const override; // override
+    float64 operator()(float64 _Min, float64 _Max)const;
 
     template<typename _Iterator>
-    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)
+    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)const
     {
         _Sample_Type _Samples(_First, _Last);
 
@@ -458,8 +474,8 @@ public:
         return _Mybase::operator=(_Func);
     }
 
-    float64 operator()(float64 _Xx); // override
-    float64 operator()(float64 _Min, float64 _Max);
+    float64 operator()(float64 _Xx)const override; // override
+    float64 operator()(float64 _Min, float64 _Max)const;
 
     // A debugger for Romberg integration
     matrix<float64, 5, 5> RombergAnalysis(float64 _Min, float64 _Max);
@@ -513,8 +529,10 @@ public:
     void CreateDefSpecialCases();
     std::function<float64(float64)> gen()const;
 
-    float64 operator()(float64);
+    float64 operator()(float64)const override;
 };
+
+_SCICXX_END
 
 /**
  * @brief Normalize a function for solving Integrals over infinite intervals
@@ -528,15 +546,17 @@ public:
  * maybe has undefined values but their limits are exists. These values need to be set manually.
  * @return the normalized function. Use "gen()" to generate lambda expression.
  */
-__Infinite_Integral_Nomalizer Normalize(std::function<float64(float64)> PFunc, __Infinite_Integral_Nomalizer::FuncType FuncType = __Infinite_Integral_Nomalizer::WholeLine, float64 Breakpoint = 0, bool AddDefaultSpecialCases = true, std::map<float64, float64> SpecialCases = std::map<float64, float64>());
+_SCICXX __Infinite_Integral_Nomalizer Normalize(std::function<float64(float64)> PFunc, _SCICXX __Infinite_Integral_Nomalizer::FuncType FuncType = _SCICXX __Infinite_Integral_Nomalizer::WholeLine, float64 Breakpoint = 0, bool AddDefaultSpecialCases = true, std::map<float64, float64> SpecialCases = std::map<float64, float64>());
 
 // Default engines
-using IntegralFunction = __Romberg_Integral_Engine;
-using NormalizedInfiniteIntegral = __Infinite_Integral_Nomalizer;
+using IntegralFunction = _SCICXX __Romberg_Integral_Engine;
+using NormalizedInfiniteIntegral = _SCICXX __Infinite_Integral_Nomalizer;
 
 /****************************************************************************************\
 *                            Ordinary Differential Equations                             *
 \****************************************************************************************/
+
+_SCICXX_BEGIN
 
 /**
  * Standard identifier of ODEs
@@ -681,7 +701,7 @@ public:
 
     virtual int Run() = 0;
 
-    virtual ValueArray operator()(float64 _Xx) = 0;
+    virtual ValueArray operator()(float64 _Xx)const = 0;
 };
 
 template<uint64 EquationCount>
@@ -700,7 +720,7 @@ public:
 
     float64 size()const {return _M_Last - _M_First;}
 
-    virtual ValueArray operator()(float64 _Xx) = 0;
+    virtual ValueArray operator()(float64 _Xx)const = 0;
 };
 
 ///////////////////////////////////RUNGE-KUTTA METHODS///////////////////////////////////
@@ -728,7 +748,7 @@ public:
         DenseOutput(float64 First, float64 Last, ValueArray BaseValue, QTblType QTbl)
             : Mybase(First, Last), Base(BaseValue), QTable(QTbl) {}
 
-        ValueArray operator()(float64 _Xx)override
+        ValueArray operator()(float64 _Xx)const override
         {
             float64 x = (_Xx - Mybase::_M_First) / Mybase::size();
             std::array<float64, DenseOutputOrder> p;
@@ -859,7 +879,7 @@ public:
 
         float64 RelToler = pow(10, -RelTolerNLog);
         float64 AbsToler = pow(10, -AbsTolerNLog);
-        float64 MinStep = 10. * abs((t + (_Mybase::_M_Direction ? -1 : 1) * DOUBLE_EPSILON) - t);
+        float64 MinStep = 10. * abs((nextafter(t, (_Mybase::_M_Direction ? -1 : 1) * std::numeric_limits<float64>::infinity())) - t);
 
         float64 AbsH;
         if (AbsStep > MaxStep) {AbsH = MaxStep;}
@@ -951,7 +971,7 @@ public:
         return 0;
     }
 
-    ValueArray operator()(float64 _Xx)override
+    ValueArray operator()(float64 _Xx)const override
     {
         DenseOutput Segment;
         for (auto i : Interpolants)
@@ -1084,6 +1104,8 @@ public:
     }
 };
 
+_SCICXX_END
+
 /**
  * @brief Solve an initial value problem for a system of ODEs.
  * @param _Func - Input Function: the time derivative of the state y at time x.
@@ -1108,7 +1130,175 @@ _Engine CreateODEFunction(_Functor _Func, typename _Engine::ValueArray _Coeffs, 
 
 // Default engines
 template<uint64 EquationCount> requires (EquationCount > 0)
-using DefaultODEFunction = __Runge_Kutta_RK45_ODE_Engine<EquationCount>;
+using DefaultODEFunction = _SCICXX __Runge_Kutta_RK45_ODE_Engine<EquationCount>;
+
+/****************************************************************************************\
+*                                  Inverting a function                                  *
+\****************************************************************************************/
+
+_SCICXX_BEGIN
+
+template<typename _Signature = std::function<float64(float64)>>
+class __Basic_Bisection_Searcher
+{
+public:
+    _Signature _M_Invoker;    // The function whose inverse we are trying to find
+    float64    _M_MaxIterLog; // The maximum number of iterations to compute
+    float64    _M_TolerNLog;  // Stop when iterations change by less than this
+
+    __Basic_Bisection_Searcher() {}
+
+    __Basic_Bisection_Searcher(_Signature _PFunc, float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    __Basic_Bisection_Searcher(float64(*_PFunc)(float64), float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    template<typename _Functor>
+    __Basic_Bisection_Searcher(_Functor _PFunc, float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    template<typename _Functor>
+    __Basic_Bisection_Searcher& operator=(_Functor _Func)
+    {
+        this->_M_Invoker = _Func;
+        return *this;
+    }
+
+    /**
+     * Bisection method to finding zero-point for any continuous function
+     *
+     * input: Function _M_Invoker,
+     *        endpoint values _Xa(a), _Xb(b),
+     *        tolerance _M_TolerNLog,
+     *        maximum iterations _M_MaxIterLog
+     *
+     * conditions: a < b,
+     *             either f(a) < 0 and f(b) > 0 or f(a) > 0 and f(b) < 0
+     *
+     * output: value which differs from a root of f(x) = 0 by less than TOL
+     *
+     * Algorithm:
+     *
+     *      N = 1
+     *      while N <= NMAX do // limit iterations to prevent infinite loop
+     *          c = (a + b) / 2 // new midpoint
+     *          if f(c) = 0 or (b - a) / 2 < TOL then // solution found
+     *              Output(c)
+     *              Stop
+     *          end if
+     *          N = N + 1 // increment step counter
+     *          if sign(f(c)) = sign(f(a)) then a = c else b = c // new interval
+     *      end while
+     *      Output("Method failed.") // max number of steps exceeded
+     */
+    float64 operator()(float64 _Xx, float64 _Xa, float64 _Xb)const throw()
+    {
+        //if (_Xa > _Xb) {std::swap(_Xa, _Xb);}
+        float64 RealToler = pow(10, -_M_TolerNLog);
+        size_t MaxIter = llround(pow(10, _M_MaxIterLog));
+        for (size_t i = 0; i < MaxIter; ++i)
+        {
+            float64 c = (_Xa + _Xb) / 2.;
+            if (_M_Invoker(c) == _Xx || (_Xb - _Xa) / 2. < RealToler)
+            {
+                return c;
+            }
+
+            if (sgn(_M_Invoker(c) - _Xx) == sgn(_M_Invoker(_Xa) - _Xx))
+            {
+                _Xa = c;
+            }
+            else {_Xb = c;}
+        }
+        return __Float64::FromBytes(CSE_NAN);
+    }
+};
+
+template<typename _Signature = std::function<float64(float64)>,
+         typename _Derivate = __Basic_FDM_Derivative_Engine>
+class __Newton_Raphson_Iterator
+{
+public:
+    _Signature _M_Invoker;    // The function whose inverse we are trying to find
+    _Derivate  _M_Derivate;   // The derivative of the function
+    float64    _M_MaxIterLog; // The maximum number of iterations to compute
+    float64    _M_TolerNLog;  // Stop when iterations change by less than this
+
+    __Newton_Raphson_Iterator() {}
+
+    __Newton_Raphson_Iterator(_Signature _PFunc, _Derivate _PDFunc,
+        float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
+        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    __Newton_Raphson_Iterator(float64(*_PFunc)(float64), float64(*_PDFunc)(float64),
+        float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
+        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    template<typename _Functor>
+    __Newton_Raphson_Iterator(_Functor _PFunc, float64(*_PDFunc)(float64),
+        float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
+        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    template<typename _Functor>
+    __Newton_Raphson_Iterator(float64(*_PFunc)(float64), _Functor _PDFunc,
+        float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
+        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    template<typename _Functor, typename _DFunctor>
+    __Newton_Raphson_Iterator(_Functor _PFunc, _DFunctor _PDFunc,
+        float64 _MaxItLog = 3, float64 _TolLog = 8)
+        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
+        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+
+    /**
+     * Applies the Newton's method to find the inverse of a function
+     *
+     * Args:
+     *     _Xx: Point
+     *     _Init: The initial guess
+     *     _M_Invoker: The function whose inverse we are trying to find
+     *     _M_Derivate: The derivative of the function
+     *     _M_MaxIterLog: The maximum number of iterations to compute
+     *     _M_TolerNLog: Stop when iterations change by less than this
+     *
+     * Returns:
+     *     The inverse function value at the specified point.
+     */
+    float64 operator()(float64 _Xx, float64 _X0)const throw()
+    {
+        float64 RealToler = pow(10, -_M_TolerNLog);
+        size_t MaxIter = llround(pow(10, _M_MaxIterLog));
+        for (size_t i = 0; i < MaxIter; ++i)
+        {
+            float64 y0 = _M_Invoker(_X0) - _Xx;
+            float64 y1 = _M_Derivate(_X0); // Derivative value will not affected by Adding a constant
+
+            if (abs(y1) < DOUBLE_EPSILON) {break;} // Give up if the denominator is too small
+
+            float64 x1 = _X0 - y0 / y1; // Do Newton's computation
+
+            // Stop when the result is within the desired tolerance and
+            // x1 is a solution within tolerance and maximum number of iterations
+            if (abs(x1 - _X0) < RealToler) {return x1;}
+            _X0 = x1; // Update x0 to start the process again
+        }
+        return __Float64::FromBytes(CSE_NAN); // Newton's method did not converge
+    }
+};
+
+_SCICXX_END
+
+template<typename _Signature = std::function<float64(float64)>>
+using BisectionSearcher = _SCICXX __Basic_Bisection_Searcher<_Signature>;
+
+template<typename _Signature = std::function<float64(float64)>,
+         typename _Derivate = _SCICXX __Basic_FDM_Derivative_Engine>
+using NewtonIterator = _SCICXX __Newton_Raphson_Iterator<_Signature, _Derivate>;
 
 _CSE_END
 
