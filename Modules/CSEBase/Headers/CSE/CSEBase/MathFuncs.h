@@ -1017,7 +1017,7 @@ int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR Ro
         ++it;
     }
 
-    for (ssize_t i = 0; i < Roots.size(); ++i)
+    for (size_t i = 0; i < Roots.size(); ++i)
     {
         *(RootsBegin + i) = Roots[i];
     }

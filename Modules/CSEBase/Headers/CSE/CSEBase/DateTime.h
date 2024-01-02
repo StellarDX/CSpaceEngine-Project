@@ -20,8 +20,8 @@
 #include <ctime>
 
 // Namespace definations
-#define _TIME_BEGIN namespace epoch{
-#define _TIME epoch::
+#define _TIME_BEGIN namespace Epoch{
+#define _TIME Epoch::
 #define _TIME_END }
 
 _CSE_BEGIN

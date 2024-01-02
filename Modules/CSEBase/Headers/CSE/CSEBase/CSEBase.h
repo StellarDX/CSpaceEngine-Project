@@ -104,7 +104,7 @@ public:
 
     enum DebugLevel{INFO, PRINT, WARNING, ERROR, FATAL};
 
-    CSEDebugger(std::ostream& os, bool LTime = 1, bool LThread = 1, bool LLevel = 2)
+    CSEDebugger(std::ostream& os, bool LTime = 1, bool LThread = 1, int LLevel = 2)
         : Output(os), __LogTimeStamp(LTime), __LogThreadStamp(LThread), __LogLevel(LLevel){}
 
     CSEDebugger& operator=(const CSEDebugger&) = delete;

@@ -20,7 +20,7 @@ float64 __Basic_FDM_Derivative_Engine::operator()(float64 _Xx) const
     {
         _Sum += _M_Coefficients[i] * _M_Invoker(_Xx + _M_CoeffOffsets[i] * _Scale);
     }
-    return _Sum / pow(_Scale, _M_DeriOrder);
+    return _Sum / pow(_Scale, float64(_M_DeriOrder));
 }
 
 _SCICXX_END

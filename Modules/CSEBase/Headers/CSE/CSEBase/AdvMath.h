@@ -8,6 +8,8 @@
   Features:
     1. Convertions between XYZ and polar coordinates
     2. Derivatives and integral engines
+    3. ODE Solvers
+    4. Inverting a function
 
   A ghost story that's been circulating in many colleges:
     There is a tree in college with a lot of students
@@ -191,7 +193,7 @@ public:
         {
             for (size_t j = 0; j < CoeffCount; ++j)
             {
-                CoeffMatrix[i][j] = pow(_M_CoeffOffsets[i], j);
+                CoeffMatrix[i][j] = pow(_M_CoeffOffsets[i], float64(j));
             }
         }
 
@@ -226,20 +228,20 @@ public:
             int64 OffsetCount = RealCoeffCount / 2;
             for (int64 i = 0; i < RealCoeffCount; ++i)
             {
-                Offsets.push_back(i - OffsetCount);
+                Offsets.push_back(float64(i - OffsetCount));
             }
         }
             break;
         case Forward:
             for (int64 i = 0; i < CoeffCount; ++i)
             {
-                Offsets.push_back(i);
+                Offsets.push_back(float64(i));
             }
             break;
         case Backward:
             for (int64 i = 0; i < CoeffCount; ++i)
             {
-                Offsets.push_back(i - int64(CoeffCount));
+                Offsets.push_back(float64(i - int64(CoeffCount)));
             }
             break;
         }
@@ -560,7 +562,7 @@ _SCICXX_BEGIN
 
 /**
  * Standard identifier of ODEs
- * Converted from the same feature in SciPy
+ * Converted from the same feature in SciPy, almost a literal translation.
  *
  * Below is the original description from SciPy:
  *
@@ -602,7 +604,7 @@ using __ODE_Fty_Untemplated = void(float64 _Scalar, std::array<float64, Equation
 template<typename _Tp, std::size_t _Nm>
 _Tp __RMS_Norm(std::array<_Tp, _Nm> Input)
 {
-    float64 SumTemp;
+    float64 SumTemp = 0;
     for (auto i : Input){SumTemp += pow(i, 2);}
     return sqrt(SumTemp / float64(_Nm));
 }
@@ -762,7 +764,7 @@ public:
             return Base + y;
         }
 
-        friend class __Runge_Kutta_ODE_Engine_Base;
+        friend struct __Runge_Kutta_ODE_Engine_Base;
     };
 
     std::map<float64, DenseOutput> Interpolants;
@@ -1012,25 +1014,25 @@ extern const uint64 __RK23_P_Table[12];
  * https://www.sciencedirect.com/science/article/pii/0893965989900797?via%3Dihub
  */
 template<uint64 EquationCount> requires (EquationCount > 0)
-class __Runge_Kutta_RK23_ODE_Engine : public __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>
+class __Single_Precision_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>
 {
 public:
     using _Mybase = __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>;
 
-    __Runge_Kutta_RK23_ODE_Engine() : _Mybase() {}
+    __Single_Precision_Runge_Kutta_Engine() : _Mybase() {}
 
-    __Runge_Kutta_RK23_ODE_Engine(std::function<typename _Mybase::_Fty> _Right)
+    __Single_Precision_Runge_Kutta_Engine(std::function<typename _Mybase::_Fty> _Right)
         : _Mybase(_Right) {}
 
-    __Runge_Kutta_RK23_ODE_Engine(typename _Mybase::_Fty* _PFunc)
+    __Single_Precision_Runge_Kutta_Engine(typename _Mybase::_Fty* _PFunc)
         : _Mybase(_PFunc) {}
 
     template<typename _Functor>
-    __Runge_Kutta_RK23_ODE_Engine(_Functor _Func)
+    __Single_Precision_Runge_Kutta_Engine(_Functor _Func)
         : _Mybase(_Func) {}
 
     template<typename _Functor>
-    __Runge_Kutta_RK23_ODE_Engine& operator=(_Functor _Func)
+    __Single_Precision_Runge_Kutta_Engine& operator=(_Functor _Func)
     {
         return _Mybase::operator=(_Func);
     }
@@ -1070,25 +1072,25 @@ extern const float64 __RK45_P_Table[28];
  * https://www.semanticscholar.org/paper/Some-practical-Runge-Kutta-formulas-Shampine/61b1c882c3c728c2772dd19f75ba41e7b3e5e9af
  */
 template<uint64 EquationCount> requires (EquationCount > 0)
-class __Runge_Kutta_RK45_ODE_Engine : public __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>
+class __Double_Precision_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>
 {
 public:
     using _Mybase = __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>;
 
-    __Runge_Kutta_RK45_ODE_Engine() : _Mybase() {}
+    __Double_Precision_Runge_Kutta_Engine() : _Mybase() {}
 
-    __Runge_Kutta_RK45_ODE_Engine(std::function<typename _Mybase::_Fty> _Right)
+    __Double_Precision_Runge_Kutta_Engine(std::function<typename _Mybase::_Fty> _Right)
         : _Mybase(_Right) {}
 
-    __Runge_Kutta_RK45_ODE_Engine(typename _Mybase::_Fty* _PFunc)
+    __Double_Precision_Runge_Kutta_Engine(typename _Mybase::_Fty* _PFunc)
         : _Mybase(_PFunc) {}
 
     template<typename _Functor>
-    __Runge_Kutta_RK45_ODE_Engine(_Functor _Func)
+    __Double_Precision_Runge_Kutta_Engine(_Functor _Func)
         : _Mybase(_Func) {}
 
     template<typename _Functor>
-    __Runge_Kutta_RK45_ODE_Engine& operator=(_Functor _Func)
+    __Double_Precision_Runge_Kutta_Engine& operator=(_Functor _Func)
     {
         return _Mybase::operator=(_Func);
     }
@@ -1103,6 +1105,34 @@ public:
         _Mybase::Init(InitState, First, Last, InitStep);
     }
 };
+
+#if 0
+extern const __float128 __DOP853_C_Table[16];
+extern const __float128 __DOP853_AB_Table[256];
+extern const __float128 __DOP853_E3_Table_Offset[6];
+extern const __float128 __DOP853_E5_Table[13];
+extern const __float128 __DOP853_D_Table[64];
+
+/**
+ * Explicit Runge-Kutta method of order 8. (From SciPy, Unused feature)
+ *
+ *  This is a Python implementation of "DOP853" algorithm originally written
+ *  in Fortran [1], [2]. Note that this is not a literate translation, but
+ *  the algorithmic core and coefficients are the same.
+ *
+ *  Can be applied in the complex domain.(Not implemented)
+ *
+ *  @link [1] E. Hairer, S. P. Norsett G. Wanner, "Solving Ordinary Differential
+ *  Equations I: Nonstiff Problems", Sec. II. (ISBN 978-3-540-56670-0)
+ *  @link [2] Page with original Fortran code of DOP853
+ *  http://www.unige.ch/~hairer/software.html.
+ */
+template<uint64 EquationCount> requires (EquationCount > 0)
+class __DOP853_Quaduple_Precision_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<7, 8, 12, 4, EquationCount>
+{
+    // Not implemented...
+};
+#endif
 
 _SCICXX_END
 
@@ -1130,7 +1160,7 @@ _Engine CreateODEFunction(_Functor _Func, typename _Engine::ValueArray _Coeffs, 
 
 // Default engines
 template<uint64 EquationCount> requires (EquationCount > 0)
-using DefaultODEFunction = _SCICXX __Runge_Kutta_RK45_ODE_Engine<EquationCount>;
+using DefaultODEFunction = _SCICXX __Double_Precision_Runge_Kutta_Engine<EquationCount>;
 
 /****************************************************************************************\
 *                                  Inverting a function                                  *

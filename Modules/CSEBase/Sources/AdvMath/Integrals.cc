@@ -1,5 +1,6 @@
 #include "CSE/CSEBase/MathFuncs.h"
 #include "CSE/CSEBase/AdvMath.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -355,7 +356,7 @@ float64 __Simpson_Integral_Engine::_E_Irregularly(_Sample_Type _Samples, bool Is
 float64 __Romberg_Integral_Engine::operator()(float64 _Min, float64 _Max) const
 {
     if (_Min > _Max) {swap(_Min, _Max);}
-    float64 R1[_M_MaxSteps], R2[_M_MaxSteps];
+    float64* R1 = new float64[_M_MaxSteps], *R2 = new float64[_M_MaxSteps];
     float64* Rp = R1 + 0; // Rp is previous row, Rc is current row
     float64* Rc = R2 + 0;
     float64 h = _Max - _Min; // step size
@@ -376,19 +377,25 @@ float64 __Romberg_Integral_Engine::operator()(float64 _Min, float64 _Max) const
 
         for (size_t j = 1; j <= i; ++j)
         {
-            float64 n_k = pow(4, j);
+            float64 n_k = pow(4, float64(j));
             Rc[j] = (n_k * Rc[j - 1] - Rp[j - 1]) / (n_k - 1); // compute R(i,j)
         }
 
         if (i > 1 && fabs(Rp[i - 1] - Rc[i]) < pow(10, -_M_p_Acc))
         {
-            return Rc[i];
+            float64 Result = Rc[i];
+            delete[] R1;
+            delete[] R2;
+            return Result;
         }
 
         swap(Rp, Rc); // swap Rn and Rc as we only need the last row
     }
 
-    return Rp[_M_MaxSteps - 1]; // return our best guess
+    float64 Guess = Rp[_M_MaxSteps - 1];
+    delete[] R1;
+    delete[] R2;
+    return Guess; // return our best guess
 }
 
 float64 __Romberg_Integral_Engine::operator()(float64 _Xx) const

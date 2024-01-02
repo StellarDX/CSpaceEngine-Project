@@ -11,6 +11,8 @@ if(NOT DEFINED CMAKE_MESSAGE_CONTEXT_SHOW)
     set(CMAKE_MESSAGE_CONTEXT_SHOW TRUE)
 endif()
 
+set(CSE_VER 2024)
+
 # set default output path
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Binaries")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Libraries")
@@ -88,7 +90,7 @@ endforeach()
 
 # Add Sub-modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cmake")
-include(ECMOptionalAddSubdirectory)
+include(AddSubDirectories)
 
 foreach(Module IN LISTS CSESubModules)
     message(STATUS "Configuring submodule '${Module}'")
@@ -101,6 +103,10 @@ foreach(Extension IN LISTS CSEExtensions)
 endforeach()
 
 # Pack configurations
+foreach(Module IN LISTS CSESubModules)
+    set(CSE_MODULE_INSTALLED_CONFIGS "${CSE_MODULE_INSTALLED_CONFIGS}include(\${CMAKE_CURRENT_LIST_DIR}/CSE-${Module}-config.cmake)\n")
+endforeach()
+
 configure_file(CSE-config.cmake
   "${CMAKE_BINARY_DIR}/CSE-config.cmake"
   @ONLY
@@ -109,9 +115,11 @@ configure_file(CSE-config.cmake
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   "${CMAKE_BINARY_DIR}/CSE-version.cmake"
-  VERSION 2023
+  VERSION ${CSE_VER}
   COMPATIBILITY AnyNewerVersion
 )
+
+set(CSE_MODULE_INSTALLED_CONFIGS "")
 
 install(
   FILES "${CMAKE_BINARY_DIR}/CSE-config.cmake"
