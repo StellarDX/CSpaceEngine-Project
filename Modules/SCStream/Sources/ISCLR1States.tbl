@@ -1,0 +1,475 @@
+// LR(1)项目集族
+
+/*
+    语法
+
+    G -> S -------------- [0]
+    S -> KTS | Є -------- [1, 2]
+    T -> VT | V | N ----- [3, 4, 5]
+    K -> i -------------- [6]
+    V -> E | (A) | {M} -- [7, 8, 9]
+    E -> n | s | b ------ [10, 11, 12]
+    A -> E | ACE -------- [13, 14]
+    C -> , | Є ---------- [15, 16]
+    M -> VCM | VC ------- [17, 18]
+    N -> {S} ------------ [19]
+*/
+
+const __SC_Parser_Base::GrammaTableType __SC_Parser_Base::SCGrammar =
+{
+    {'\x01', "S"},
+    {'S', "KTS"},
+    {'S', ""},
+    {'T', "VT"},
+    {'T', "V"},
+    {'T', "N"},
+    {'K', "i"},
+    {'V', "E"},
+    {'V', "(A)"},
+    {'V', "{M}"},
+    {'E', "n"},
+    {'E', "s"},
+    {'E', "b"},
+    {'A', "E"},
+    {'A', "ACE"},
+    {'C', ","},
+    {'C', ""},
+    {'M', "VCM"},
+    {'M', "VC"},
+    {'N', "{S}"}
+};
+
+/*
+    终结语词，附有它们出现处的规则
+
+    $end (0) 0 ---------- #
+    '(' (40) 8 ---------- (
+    ')' (41) 8 ---------- )
+    ',' (44) 15 --------- ,
+    '{' (123) 9 19 ------ {
+    '}' (125) 9 19 ------ }
+    error (256) --------- \xFF
+    Identifier (258) 6 -- i
+    Number (259) 10 ----- n
+    String (260) 11 ----- s
+    Boolean (261) 12 ---- b
+
+
+    非终结语词，附有它们出现处的规则
+
+    $accept (12) (G)
+        于左侧： 0
+    Table (13) (S)
+        于左侧： 1 2, 于右侧： 0 1 19
+    ValueOrSubTable (14) (T)
+        于左侧： 3 4 5, 于右侧： 1 3
+    Key (15) (K)
+        于左侧： 6, 于右侧： 1
+    Value (16) (V)
+        于左侧： 7 8 9, 于右侧： 3 4 17 18
+    Expression (17) (E)
+        于左侧： 10 11 12, 于右侧： 7 13 14
+    Array (18) (A)
+        于左侧： 13 14, 于右侧： 8 14
+    Comma (19) (C)
+        于左侧： 15 16, 于右侧： 14 17 18
+    Matrix (20) (M)
+        于左侧： 17 18, 于右侧： 9 17
+    SubTable (21) (N)
+        于左侧： 19, 于右侧： 5
+
+*/
+
+const __SC_Parser_Base::ItemCollectionSetType __SC_Parser_Base::ItemCollections
+{
+    // I0:
+    // G -> .S, #
+    // S -> .KTS, #
+    // S -> ., #
+    // K -> .i, First(T)
+    {
+        .Shifts =
+        {
+            {'i', 1}
+        },
+        .Reduces =
+        {
+            {'\x04', 2}
+        },
+        .Gotos =
+        {
+            {'S', 2},
+            {'K', 3}
+        },
+        .ErrorMessage = "Identifier Expected."
+    },
+
+    // I1:
+    // K -> i., First(T)
+    {
+        .Reduces =
+        {
+            {'n', 6},
+            {'s', 6},
+            {'b', 6},
+            {'(', 6},
+            {'{', 6}
+        },
+    },
+
+    // I2:
+    // G -> S., #
+    {
+        .Shifts =
+        {
+            {'\x04', 4}
+        },
+    },
+
+    // I3:
+    // S -> K.TS, #
+    // T -> .VT, First(S)
+    // T -> .V, First(S)
+    // T -> .N, First(S)
+    // V -> .E, First(T) + First(S)
+    // V -> .(A), First(T) + First(S)
+    // V -> .{M}, First(T) + First(S)
+    // E -> .n, First(T) + First(S)
+    // E -> .s, First(T) + First(S)
+    // E -> .b, First(T) + First(S)
+    // N -> .{S}, First(S)
+    {
+        .Shifts =
+        {
+            {'n', 5},
+            {'s', 6},
+            {'b', 7},
+            {'(', 8},
+            {'{', 9}
+        },
+        .Gotos =
+        {
+            {'T', 10},
+            {'V', 11},
+            {'E', 12},
+            {'N', 13}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I4:
+    // Accept state
+    {
+        .IsAccept = 1
+    },
+
+    // I5:
+    // E -> n., First(T) + First(S)
+    {
+        .Reduces =
+        {
+            {'\x04', 10},
+            {'i', 10},
+            {'n', 10},
+            {'s', 10},
+            {'b', 10},
+            {'(', 10},
+            {'{', 10}
+        },
+    },
+
+    // I6:
+    // E -> s., First(T) + First(S)
+    {
+        .Reduces =
+        {
+            {'\x04', 11},
+            {'i', 11},
+            {'n', 11},
+            {'s', 11},
+            {'b', 11},
+            {'(', 11},
+            {'{', 11}
+        },
+    },
+
+    // I7
+    // E -> b., First(T) + First(S)
+    {
+        .Reduces =
+        {
+            {'\x04', 12},
+            {'i', 12},
+            {'n', 12},
+            {'s', 12},
+            {'b', 12},
+            {'(', 12},
+            {'{', 12}
+        },
+    },
+
+    // I8
+    // V -> (.A), First(T) + First(S)
+    // A -> .E, ) + First(C)
+    // A -> .ACE, ) + First(C) + First(E)
+    // E -> .n, )
+    // E -> .s, )
+    // E -> .b, )
+    {
+        .Shifts =
+        {
+            {'n', 30},
+            {'s', 31},
+            {'b', 32},
+        },
+        .Gotos =
+        {
+            {'E', 14},
+            {'A', 15}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I9
+    // V -> {.M}, First(T) + First(S)
+    // N -> {.S}, First(S)
+    // M -> .VCM, }
+    // M -> .VC, }
+    // V -> .E, First(C) + First(M) + }
+    // V -> .(A), First(C) + First(M) + }
+    // V -> .{M}, First(C) + First(M) + }
+    // E -> .n, First(C) + First(M) + }
+    // E -> .s, First(C) + First(M) + }
+    // E -> .b, First(C) + First(M) + }
+    // S -> .KTS, }
+    // S -> ., }
+    // K -> .i, First(T)
+    {
+        .Shifts =
+        {
+            {'i', 1},
+            {'n', 33},
+            {'s', 34},
+            {'b', 35},
+            {'(', 36},
+            {'{', 16}
+        },
+        .Reduces =
+        {
+            {'}', 2}
+        },
+        .Gotos =
+        {
+            {'S', 17},
+            {'K', 37},
+            {'V', 18},
+            {'E', 38},
+            {'M', 19},
+        },
+        .ErrorMessage = "Identifier Expected."
+    },
+
+    // I10
+    // S -> KT.S, #
+    // S -> .KTS, #
+    // S -> ., #
+    // K -> .i, First(T)
+    {
+        .Shifts =
+        {
+            {'i', 1}
+        },
+        .Reduces =
+        {
+            {'\x04', 2}
+        },
+        .Gotos =
+        {
+            {'S', 20},
+            {'K', 3}
+        },
+        .ErrorMessage = "Identifier Expected."
+    },
+
+    // I11
+    // T -> V.T, First(S)
+    // T -> V., First(S)
+    // T -> .VT, First(S)
+    // T -> .V, First(S)
+    // T -> .N, First(S)
+    // V -> .E, First(T) + First(S)
+    // V -> .(A), First(T) + First(S)
+    // V -> .{M}, First(T) + First(S)
+    // E -> .n, First(T) + First(S)
+    // E -> .s, First(T) + First(S)
+    // E -> .b, First(T) + First(S)
+    // N -> .{S}, First(S)
+    {
+        .Shifts =
+        {
+            {'n', 5},
+            {'s', 6},
+            {'b', 7},
+            {'(', 8},
+            {'{', 9}
+        },
+        .Reduces =
+        {
+            {'\x04', 4},
+            {'i', 4},
+        },
+        .Gotos =
+        {
+            {'T', 21},
+            {'V', 11},
+            {'E', 12},
+            {'N', 13}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I12
+    // V -> E., First(T) + First(S)
+    {
+        .Reduces =
+        {
+            {'\x04', 7},
+            {'i', 7},
+            {'n', 7},
+            {'s', 7},
+            {'b', 7},
+            {'(', 7},
+            {'{', 7}
+        },
+    },
+
+    // I13
+    // T -> .N, First(S)
+    {
+        .Reduces =
+        {
+            {'\x04', 5},
+            {'i', 5}
+        },
+    },
+
+    // I14
+    // A -> E., ) + First(C)
+    {
+        .Reduces =
+        {
+            {'n', 13},
+            {'s', 13},
+            {'b', 13},
+            {')', 13},
+            {',', 13}
+        },
+    },
+
+    // I15
+    // V -> (A.), First(T) + First(S)
+    // A -> A.CE, ) + First(C) + First(E)
+    // C -> .,, First(E)
+    // C -> ., First(E)
+    {
+        .Shifts =
+        {
+            {')', 22},
+            {',', 23}
+        },
+        .Reduces =
+        {
+            {'n', 16},
+            {'s', 16},
+            {'b', 16}
+        },
+        .Gotos =
+        {
+            {'C', 24}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I16
+    // V -> {.M}, First(C) + First(M) + }
+    // M -> .VCM, }
+    // M -> .VC, }
+    // V -> .E, First(C) + First(M)
+    // V -> .(A), First(C) + First(M)
+    // V -> .{M}, First(C) + First(M)
+    // E -> .n, First(C) + First(M)
+    // E -> .s, First(C) + First(M)
+    // E -> .b, First(C) + First(M)
+    {
+        .Shifts =
+        {
+            {'n', 33},
+            {'s', 34},
+            {'b', 35},
+            {'(', 36},
+            {'{', 16}
+        },
+        .Gotos =
+        {
+            {'V', 18},
+            {'E', 38},
+            {'M', 39}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I17
+    // N -> {S.}, First(S)
+    {
+        .Shifts =
+        {
+            {'}', 25}
+        },
+        .ErrorMessage = "'}' Expected."
+    },
+
+    // I18
+    // M -> V.CM, }
+    // M -> V.C, }
+    // C -> .,, First(M) + }
+    // C -> ., First(E) + }
+    {
+        .Shifts =
+        {
+            {',', 40}
+        },
+        .Reduces =
+        {
+            {'n', 16},
+            {'s', 16},
+            {'b', 16},
+            {'(', 16},
+            {'{', 16},
+            {'}', 16}
+        },
+        .Gotos =
+        {
+            {'C', 26}
+        },
+        .ErrorMessage = "Expression Expected."
+    },
+
+    // I19
+    // V -> {M.}, First(T) + First(S)
+    {
+        .Shifts =
+        {
+            {'}', 27}
+        },
+        .ErrorMessage = "'}' Expected."
+    },
+
+    // I20
+    // S -> KTS., #
+    {
+        .Reduces =
+        {
+            {'\x04', 1}
+        },
+    },
+};

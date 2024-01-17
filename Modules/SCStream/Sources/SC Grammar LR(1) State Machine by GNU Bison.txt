@@ -1,0 +1,801 @@
+语法
+
+    0 $accept: Table $end
+
+    1 Table: Key ValueOrSubTable Table
+    2      | %empty
+
+    3 ValueOrSubTable: Value ValueOrSubTable
+    4                | Value
+    5                | SubTable
+
+    6 Key: Identifier
+
+    7 Value: Expression
+    8      | '(' Array ')'
+    9      | '{' Matrix '}'
+
+   10 Expression: Number
+   11           | String
+   12           | Boolean
+
+   13 Array: Expression
+   14      | Array Comma Expression
+
+   15 Comma: ','
+   16      | %empty
+
+   17 Matrix: Value Comma Matrix
+   18       | Value Comma
+
+   19 SubTable: '{' Table '}'
+
+
+终结语词，附有它们出现处的规则
+
+$end (0) 0
+'(' (40) 8
+')' (41) 8
+',' (44) 15
+'{' (123) 9 19
+'}' (125) 9 19
+error (256)
+Identifier (258) 6
+Number (259) 10
+String (260) 11
+Boolean (261) 12
+
+
+非终结语词，附有它们出现处的规则
+
+$accept (12)
+    于左侧： 0
+Table (13)
+    于左侧： 1 2, 于右侧： 0 1 19
+ValueOrSubTable (14)
+    于左侧： 3 4 5, 于右侧： 1 3
+Key (15)
+    于左侧： 6, 于右侧： 1
+Value (16)
+    于左侧： 7 8 9, 于右侧： 3 4 17 18
+Expression (17)
+    于左侧： 10 11 12, 于右侧： 7 13 14
+Array (18)
+    于左侧： 13 14, 于右侧： 8 14
+Comma (19)
+    于左侧： 15 16, 于右侧： 14 17 18
+Matrix (20)
+    于左侧： 17 18, 于右侧： 9 17
+SubTable (21)
+    于左侧： 19, 于右侧： 5
+
+
+状态 0
+
+    0 $accept: . Table $end
+
+    Identifier  偏移，并进入状态 1
+
+    $end  使用规则 2 以归约 (Table)
+
+    Table  转到状态 2
+    Key    转到状态 3
+
+
+状态 1
+
+    6 Key: Identifier .
+
+    Number   使用规则 6 以归约 (Key)
+    String   使用规则 6 以归约 (Key)
+    Boolean  使用规则 6 以归约 (Key)
+    '('      使用规则 6 以归约 (Key)
+    '{'      使用规则 6 以归约 (Key)
+
+
+状态 2
+
+    0 $accept: Table . $end
+
+    $end  偏移，并进入状态 4
+
+
+状态 3
+
+    1 Table: Key . ValueOrSubTable Table
+
+    Number   偏移，并进入状态 5
+    String   偏移，并进入状态 6
+    Boolean  偏移，并进入状态 7
+    '('      偏移，并进入状态 8
+    '{'      偏移，并进入状态 9
+
+    ValueOrSubTable  转到状态 10
+    Value            转到状态 11
+    Expression       转到状态 12
+    SubTable         转到状态 13
+
+
+状态 4
+
+    0 $accept: Table $end .
+
+    $default  接受
+
+
+状态 5
+
+   10 Expression: Number .
+
+    $end        使用规则 10 以归约 (Expression)
+    Identifier  使用规则 10 以归约 (Expression)
+    Number      使用规则 10 以归约 (Expression)
+    String      使用规则 10 以归约 (Expression)
+    Boolean     使用规则 10 以归约 (Expression)
+    '('         使用规则 10 以归约 (Expression)
+    '{'         使用规则 10 以归约 (Expression)
+
+
+状态 6
+
+   11 Expression: String .
+
+    $end        使用规则 11 以归约 (Expression)
+    Identifier  使用规则 11 以归约 (Expression)
+    Number      使用规则 11 以归约 (Expression)
+    String      使用规则 11 以归约 (Expression)
+    Boolean     使用规则 11 以归约 (Expression)
+    '('         使用规则 11 以归约 (Expression)
+    '{'         使用规则 11 以归约 (Expression)
+
+
+状态 7
+
+   12 Expression: Boolean .
+
+    $end        使用规则 12 以归约 (Expression)
+    Identifier  使用规则 12 以归约 (Expression)
+    Number      使用规则 12 以归约 (Expression)
+    String      使用规则 12 以归约 (Expression)
+    Boolean     使用规则 12 以归约 (Expression)
+    '('         使用规则 12 以归约 (Expression)
+    '{'         使用规则 12 以归约 (Expression)
+
+
+状态 8
+
+    8 Value: '(' . Array ')'
+
+    Number   偏移，并进入状态 30
+    String   偏移，并进入状态 31
+    Boolean  偏移，并进入状态 32
+
+    Expression  转到状态 14
+    Array       转到状态 15
+
+
+状态 9
+
+    9 Value: '{' . Matrix '}'
+   19 SubTable: '{' . Table '}'
+
+    Identifier  偏移，并进入状态 1
+    Number      偏移，并进入状态 33
+    String      偏移，并进入状态 34
+    Boolean     偏移，并进入状态 35
+    '('         偏移，并进入状态 36
+    '{'         偏移，并进入状态 16
+
+    '}'  使用规则 2 以归约 (Table)
+
+    Table       转到状态 17
+    Key         转到状态 37
+    Value       转到状态 18
+    Expression  转到状态 38
+    Matrix      转到状态 19
+
+
+状态 10
+
+    1 Table: Key ValueOrSubTable . Table
+
+    Identifier  偏移，并进入状态 1
+
+    $end  使用规则 2 以归约 (Table)
+
+    Table  转到状态 20
+    Key    转到状态 3
+
+
+状态 11
+
+    3 ValueOrSubTable: Value . ValueOrSubTable
+    4                | Value .
+
+    Number   偏移，并进入状态 5
+    String   偏移，并进入状态 6
+    Boolean  偏移，并进入状态 7
+    '('      偏移，并进入状态 8
+    '{'      偏移，并进入状态 9
+
+    $end        使用规则 4 以归约 (ValueOrSubTable)
+    Identifier  使用规则 4 以归约 (ValueOrSubTable)
+
+    ValueOrSubTable  转到状态 21
+    Value            转到状态 11
+    Expression       转到状态 12
+    SubTable         转到状态 13
+
+
+状态 12
+
+    7 Value: Expression .
+
+    $end        使用规则 7 以归约 (Value)
+    Identifier  使用规则 7 以归约 (Value)
+    Number      使用规则 7 以归约 (Value)
+    String      使用规则 7 以归约 (Value)
+    Boolean     使用规则 7 以归约 (Value)
+    '('         使用规则 7 以归约 (Value)
+    '{'         使用规则 7 以归约 (Value)
+
+
+状态 13
+
+    5 ValueOrSubTable: SubTable .
+
+    $end        使用规则 5 以归约 (ValueOrSubTable)
+    Identifier  使用规则 5 以归约 (ValueOrSubTable)
+
+
+状态 14
+
+   13 Array: Expression .
+
+    Number   使用规则 13 以归约 (Array)
+    String   使用规则 13 以归约 (Array)
+    Boolean  使用规则 13 以归约 (Array)
+    ')'      使用规则 13 以归约 (Array)
+    ','      使用规则 13 以归约 (Array)
+
+
+状态 15
+
+    8 Value: '(' Array . ')'
+   14 Array: Array . Comma Expression
+
+    ')'  偏移，并进入状态 22
+    ','  偏移，并进入状态 23
+
+    Number   使用规则 16 以归约 (Comma)
+    String   使用规则 16 以归约 (Comma)
+    Boolean  使用规则 16 以归约 (Comma)
+
+    Comma  转到状态 24
+
+
+状态 16
+
+    9 Value: '{' . Matrix '}'
+
+    Number   偏移，并进入状态 33
+    String   偏移，并进入状态 34
+    Boolean  偏移，并进入状态 35
+    '('      偏移，并进入状态 36
+    '{'      偏移，并进入状态 16
+
+    Value       转到状态 18
+    Expression  转到状态 38
+    Matrix      转到状态 39
+
+
+状态 17
+
+   19 SubTable: '{' Table . '}'
+
+    '}'  偏移，并进入状态 25
+
+
+状态 18
+
+   17 Matrix: Value . Comma Matrix
+   18       | Value . Comma
+
+    ','  偏移，并进入状态 40
+
+    Number   使用规则 16 以归约 (Comma)
+    String   使用规则 16 以归约 (Comma)
+    Boolean  使用规则 16 以归约 (Comma)
+    '('      使用规则 16 以归约 (Comma)
+    '{'      使用规则 16 以归约 (Comma)
+    '}'      使用规则 16 以归约 (Comma)
+
+    Comma  转到状态 26
+
+
+状态 19
+
+    9 Value: '{' Matrix . '}'
+
+    '}'  偏移，并进入状态 27
+
+
+状态 20
+
+    1 Table: Key ValueOrSubTable Table .
+
+    $end  使用规则 1 以归约 (Table)
+
+
+状态 21
+
+    3 ValueOrSubTable: Value ValueOrSubTable .
+
+    $end        使用规则 3 以归约 (ValueOrSubTable)
+    Identifier  使用规则 3 以归约 (ValueOrSubTable)
+
+
+状态 22
+
+    8 Value: '(' Array ')' .
+
+    $end        使用规则 8 以归约 (Value)
+    Identifier  使用规则 8 以归约 (Value)
+    Number      使用规则 8 以归约 (Value)
+    String      使用规则 8 以归约 (Value)
+    Boolean     使用规则 8 以归约 (Value)
+    '('         使用规则 8 以归约 (Value)
+    '{'         使用规则 8 以归约 (Value)
+
+
+状态 23
+
+   15 Comma: ',' .
+
+    Number   使用规则 15 以归约 (Comma)
+    String   使用规则 15 以归约 (Comma)
+    Boolean  使用规则 15 以归约 (Comma)
+
+
+状态 24
+
+   14 Array: Array Comma . Expression
+
+    Number   偏移，并进入状态 30
+    String   偏移，并进入状态 31
+    Boolean  偏移，并进入状态 32
+
+    Expression  转到状态 28
+
+
+状态 25
+
+   19 SubTable: '{' Table '}' .
+
+    $end        使用规则 19 以归约 (SubTable)
+    Identifier  使用规则 19 以归约 (SubTable)
+
+
+状态 26
+
+   17 Matrix: Value Comma . Matrix
+   18       | Value Comma .
+
+    Number   偏移，并进入状态 33
+    String   偏移，并进入状态 34
+    Boolean  偏移，并进入状态 35
+    '('      偏移，并进入状态 36
+    '{'      偏移，并进入状态 16
+
+    '}'  使用规则 18 以归约 (Matrix)
+
+    Value       转到状态 18
+    Expression  转到状态 38
+    Matrix      转到状态 29
+
+
+状态 27
+
+    9 Value: '{' Matrix '}' .
+
+    $end        使用规则 9 以归约 (Value)
+    Identifier  使用规则 9 以归约 (Value)
+    Number      使用规则 9 以归约 (Value)
+    String      使用规则 9 以归约 (Value)
+    Boolean     使用规则 9 以归约 (Value)
+    '('         使用规则 9 以归约 (Value)
+    '{'         使用规则 9 以归约 (Value)
+
+
+状态 28
+
+   14 Array: Array Comma Expression .
+
+    Number   使用规则 14 以归约 (Array)
+    String   使用规则 14 以归约 (Array)
+    Boolean  使用规则 14 以归约 (Array)
+    ')'      使用规则 14 以归约 (Array)
+    ','      使用规则 14 以归约 (Array)
+
+
+状态 29
+
+   17 Matrix: Value Comma Matrix .
+
+    '}'  使用规则 17 以归约 (Matrix)
+
+
+状态 30
+
+   10 Expression: Number .
+
+    Number   使用规则 10 以归约 (Expression)
+    String   使用规则 10 以归约 (Expression)
+    Boolean  使用规则 10 以归约 (Expression)
+    ')'      使用规则 10 以归约 (Expression)
+    ','      使用规则 10 以归约 (Expression)
+
+
+状态 31
+
+   11 Expression: String .
+
+    Number   使用规则 11 以归约 (Expression)
+    String   使用规则 11 以归约 (Expression)
+    Boolean  使用规则 11 以归约 (Expression)
+    ')'      使用规则 11 以归约 (Expression)
+    ','      使用规则 11 以归约 (Expression)
+
+
+状态 32
+
+   12 Expression: Boolean .
+
+    Number   使用规则 12 以归约 (Expression)
+    String   使用规则 12 以归约 (Expression)
+    Boolean  使用规则 12 以归约 (Expression)
+    ')'      使用规则 12 以归约 (Expression)
+    ','      使用规则 12 以归约 (Expression)
+
+
+状态 33
+
+   10 Expression: Number .
+
+    Number   使用规则 10 以归约 (Expression)
+    String   使用规则 10 以归约 (Expression)
+    Boolean  使用规则 10 以归约 (Expression)
+    '('      使用规则 10 以归约 (Expression)
+    '{'      使用规则 10 以归约 (Expression)
+    '}'      使用规则 10 以归约 (Expression)
+    ','      使用规则 10 以归约 (Expression)
+
+
+状态 34
+
+   11 Expression: String .
+
+    Number   使用规则 11 以归约 (Expression)
+    String   使用规则 11 以归约 (Expression)
+    Boolean  使用规则 11 以归约 (Expression)
+    '('      使用规则 11 以归约 (Expression)
+    '{'      使用规则 11 以归约 (Expression)
+    '}'      使用规则 11 以归约 (Expression)
+    ','      使用规则 11 以归约 (Expression)
+
+
+状态 35
+
+   12 Expression: Boolean .
+
+    Number   使用规则 12 以归约 (Expression)
+    String   使用规则 12 以归约 (Expression)
+    Boolean  使用规则 12 以归约 (Expression)
+    '('      使用规则 12 以归约 (Expression)
+    '{'      使用规则 12 以归约 (Expression)
+    '}'      使用规则 12 以归约 (Expression)
+    ','      使用规则 12 以归约 (Expression)
+
+
+状态 36
+
+    8 Value: '(' . Array ')'
+
+    Number   偏移，并进入状态 30
+    String   偏移，并进入状态 31
+    Boolean  偏移，并进入状态 32
+
+    Expression  转到状态 14
+    Array       转到状态 41
+
+
+状态 37
+
+    1 Table: Key . ValueOrSubTable Table
+
+    Number   偏移，并进入状态 42
+    String   偏移，并进入状态 43
+    Boolean  偏移，并进入状态 44
+    '('      偏移，并进入状态 45
+    '{'      偏移，并进入状态 46
+
+    ValueOrSubTable  转到状态 47
+    Value            转到状态 48
+    Expression       转到状态 49
+    SubTable         转到状态 50
+
+
+状态 38
+
+    7 Value: Expression .
+
+    Number   使用规则 7 以归约 (Value)
+    String   使用规则 7 以归约 (Value)
+    Boolean  使用规则 7 以归约 (Value)
+    '('      使用规则 7 以归约 (Value)
+    '{'      使用规则 7 以归约 (Value)
+    '}'      使用规则 7 以归约 (Value)
+    ','      使用规则 7 以归约 (Value)
+
+
+状态 39
+
+    9 Value: '{' Matrix . '}'
+
+    '}'  偏移，并进入状态 51
+
+
+状态 40
+
+   15 Comma: ',' .
+
+    Number   使用规则 15 以归约 (Comma)
+    String   使用规则 15 以归约 (Comma)
+    Boolean  使用规则 15 以归约 (Comma)
+    '('      使用规则 15 以归约 (Comma)
+    '{'      使用规则 15 以归约 (Comma)
+    '}'      使用规则 15 以归约 (Comma)
+
+
+状态 41
+
+    8 Value: '(' Array . ')'
+   14 Array: Array . Comma Expression
+
+    ')'  偏移，并进入状态 52
+    ','  偏移，并进入状态 23
+
+    Number   使用规则 16 以归约 (Comma)
+    String   使用规则 16 以归约 (Comma)
+    Boolean  使用规则 16 以归约 (Comma)
+
+    Comma  转到状态 24
+
+
+状态 42
+
+   10 Expression: Number .
+
+    Identifier  使用规则 10 以归约 (Expression)
+    Number      使用规则 10 以归约 (Expression)
+    String      使用规则 10 以归约 (Expression)
+    Boolean     使用规则 10 以归约 (Expression)
+    '('         使用规则 10 以归约 (Expression)
+    '{'         使用规则 10 以归约 (Expression)
+    '}'         使用规则 10 以归约 (Expression)
+
+
+状态 43
+
+   11 Expression: String .
+
+    Identifier  使用规则 11 以归约 (Expression)
+    Number      使用规则 11 以归约 (Expression)
+    String      使用规则 11 以归约 (Expression)
+    Boolean     使用规则 11 以归约 (Expression)
+    '('         使用规则 11 以归约 (Expression)
+    '{'         使用规则 11 以归约 (Expression)
+    '}'         使用规则 11 以归约 (Expression)
+
+
+状态 44
+
+   12 Expression: Boolean .
+
+    Identifier  使用规则 12 以归约 (Expression)
+    Number      使用规则 12 以归约 (Expression)
+    String      使用规则 12 以归约 (Expression)
+    Boolean     使用规则 12 以归约 (Expression)
+    '('         使用规则 12 以归约 (Expression)
+    '{'         使用规则 12 以归约 (Expression)
+    '}'         使用规则 12 以归约 (Expression)
+
+
+状态 45
+
+    8 Value: '(' . Array ')'
+
+    Number   偏移，并进入状态 30
+    String   偏移，并进入状态 31
+    Boolean  偏移，并进入状态 32
+
+    Expression  转到状态 14
+    Array       转到状态 53
+
+
+状态 46
+
+    9 Value: '{' . Matrix '}'
+   19 SubTable: '{' . Table '}'
+
+    Identifier  偏移，并进入状态 1
+    Number      偏移，并进入状态 33
+    String      偏移，并进入状态 34
+    Boolean     偏移，并进入状态 35
+    '('         偏移，并进入状态 36
+    '{'         偏移，并进入状态 16
+
+    '}'  使用规则 2 以归约 (Table)
+
+    Table       转到状态 54
+    Key         转到状态 37
+    Value       转到状态 18
+    Expression  转到状态 38
+    Matrix      转到状态 55
+
+
+状态 47
+
+    1 Table: Key ValueOrSubTable . Table
+
+    Identifier  偏移，并进入状态 1
+
+    '}'  使用规则 2 以归约 (Table)
+
+    Table  转到状态 56
+    Key    转到状态 37
+
+
+状态 48
+
+    3 ValueOrSubTable: Value . ValueOrSubTable
+    4                | Value .
+
+    Number   偏移，并进入状态 42
+    String   偏移，并进入状态 43
+    Boolean  偏移，并进入状态 44
+    '('      偏移，并进入状态 45
+    '{'      偏移，并进入状态 46
+
+    Identifier  使用规则 4 以归约 (ValueOrSubTable)
+    '}'         使用规则 4 以归约 (ValueOrSubTable)
+
+    ValueOrSubTable  转到状态 57
+    Value            转到状态 48
+    Expression       转到状态 49
+    SubTable         转到状态 50
+
+
+状态 49
+
+    7 Value: Expression .
+
+    Identifier  使用规则 7 以归约 (Value)
+    Number      使用规则 7 以归约 (Value)
+    String      使用规则 7 以归约 (Value)
+    Boolean     使用规则 7 以归约 (Value)
+    '('         使用规则 7 以归约 (Value)
+    '{'         使用规则 7 以归约 (Value)
+    '}'         使用规则 7 以归约 (Value)
+
+
+状态 50
+
+    5 ValueOrSubTable: SubTable .
+
+    Identifier  使用规则 5 以归约 (ValueOrSubTable)
+    '}'         使用规则 5 以归约 (ValueOrSubTable)
+
+
+状态 51
+
+    9 Value: '{' Matrix '}' .
+
+    Number   使用规则 9 以归约 (Value)
+    String   使用规则 9 以归约 (Value)
+    Boolean  使用规则 9 以归约 (Value)
+    '('      使用规则 9 以归约 (Value)
+    '{'      使用规则 9 以归约 (Value)
+    '}'      使用规则 9 以归约 (Value)
+    ','      使用规则 9 以归约 (Value)
+
+
+状态 52
+
+    8 Value: '(' Array ')' .
+
+    Number   使用规则 8 以归约 (Value)
+    String   使用规则 8 以归约 (Value)
+    Boolean  使用规则 8 以归约 (Value)
+    '('      使用规则 8 以归约 (Value)
+    '{'      使用规则 8 以归约 (Value)
+    '}'      使用规则 8 以归约 (Value)
+    ','      使用规则 8 以归约 (Value)
+
+
+状态 53
+
+    8 Value: '(' Array . ')'
+   14 Array: Array . Comma Expression
+
+    ')'  偏移，并进入状态 58
+    ','  偏移，并进入状态 23
+
+    Number   使用规则 16 以归约 (Comma)
+    String   使用规则 16 以归约 (Comma)
+    Boolean  使用规则 16 以归约 (Comma)
+
+    Comma  转到状态 24
+
+
+状态 54
+
+   19 SubTable: '{' Table . '}'
+
+    '}'  偏移，并进入状态 59
+
+
+状态 55
+
+    9 Value: '{' Matrix . '}'
+
+    '}'  偏移，并进入状态 60
+
+
+状态 56
+
+    1 Table: Key ValueOrSubTable Table .
+
+    '}'  使用规则 1 以归约 (Table)
+
+
+状态 57
+
+    3 ValueOrSubTable: Value ValueOrSubTable .
+
+    Identifier  使用规则 3 以归约 (ValueOrSubTable)
+    '}'         使用规则 3 以归约 (ValueOrSubTable)
+
+
+状态 58
+
+    8 Value: '(' Array ')' .
+
+    Identifier  使用规则 8 以归约 (Value)
+    Number      使用规则 8 以归约 (Value)
+    String      使用规则 8 以归约 (Value)
+    Boolean     使用规则 8 以归约 (Value)
+    '('         使用规则 8 以归约 (Value)
+    '{'         使用规则 8 以归约 (Value)
+    '}'         使用规则 8 以归约 (Value)
+
+
+状态 59
+
+   19 SubTable: '{' Table '}' .
+
+    Identifier  使用规则 19 以归约 (SubTable)
+    '}'         使用规则 19 以归约 (SubTable)
+
+
+状态 60
+
+    9 Value: '{' Matrix '}' .
+
+    Identifier  使用规则 9 以归约 (Value)
+    Number      使用规则 9 以归约 (Value)
+    String      使用规则 9 以归约 (Value)
+    Boolean     使用规则 9 以归约 (Value)
+    '('         使用规则 9 以归约 (Value)
+    '{'         使用规则 9 以归约 (Value)
+    '}'         使用规则 9 以归约 (Value)

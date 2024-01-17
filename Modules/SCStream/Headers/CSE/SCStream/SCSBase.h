@@ -40,13 +40,14 @@ public:
 
 enum __Token_Types
 {
-    Identifier = 1,
-    Number,
-    VString,
+    Identifier = 258,
+    Number     = 259,
+    VString    = 260,
+    Boolean    = 261,
     UnaryPunctuator,
     LeftPunctuator,
     RightPunctuator,
-    Boolean,
+    eof,
     Others
 };
 
@@ -104,6 +105,11 @@ struct SCSTable
         StringList<_CharT> Value;
         SubTablePointer    SubTable = nullptr;
     };
+
+    constexpr static const char ArrayBegin[]  = "#ArrayBegin";
+    constexpr static const char ArrayEnd[]    = "#ArrayEnd";
+    constexpr static const char MatrixBegin[] = "#MatBegin";
+    constexpr static const char MatrixEnd[]   = "#MatEnd";
 
     CatalogType _M_Elems;
 

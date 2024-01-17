@@ -6,7 +6,7 @@
 //                                                   //
 ///////////////////////////////////////////////////////
 
-/**
+/*
     CSpaceEngine SC Stream.
     Copyright (C) StellarDX Astronomy.
 
@@ -77,7 +77,7 @@ public:
 
 void SkipCommentsW(std::wstring& Input);
 SharedPointer<TokenArrayType<wchar_t>> TokenizerW(const std::wstring& Input);
-SharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
+WSharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
 
 _SC_END
 

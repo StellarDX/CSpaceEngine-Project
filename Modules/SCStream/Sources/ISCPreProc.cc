@@ -57,8 +57,9 @@ void __Skip_Comments(basic_string<char>& Input)
                 {
                     State = MultiLine;
                     CoSStartPos = LineNum;
-                    Input.erase(it, it + 2);
-                    end = Input.end();
+                    *it = ' ';
+                    *(++it) = ' ';
+                    //end = Input.end();
                     IsContinue = true;
                 }
             }
@@ -71,8 +72,9 @@ void __Skip_Comments(basic_string<char>& Input)
                 if ("*/" == Input.substr(Index, 2))
                 {
                     State = NoComment;
-                    Input.erase(it, it + 2);
-                    end = Input.end();
+                    *it = ' ';
+                    *(++it) = ' ';
+                    //end = Input.end();
                     IsContinue = true;
                 }
             }
@@ -81,10 +83,16 @@ void __Skip_Comments(basic_string<char>& Input)
 
         if (IsContinue) {continue;}
 
-        if ((State == SingleLine || State == MultiLine) && '\n' != *it)
+        if ((State == SingleLine) && '\n' != *it)
         {
             Input.erase(it);
             end = Input.end();
+        }
+        else if ((State == MultiLine) && '\n' != *it)
+        {
+            *it = ' ';
+            ++it;
+            //end = Input.end();
         }
         else {++it;}
     }
@@ -144,8 +152,9 @@ void __Skip_Comments_WCHAR(basic_string<wchar_t>& Input)
                 {
                     State = MultiLine;
                     CoSStartPos = LineNum;
-                    Input.erase(it, it + 2);
-                    end = Input.end();
+                    *it = L' ';
+                    *(++it) = L' ';
+                    //end = Input.end();
                     IsContinue = true;
                 }
             }
@@ -158,8 +167,9 @@ void __Skip_Comments_WCHAR(basic_string<wchar_t>& Input)
                 if (L"*/" == Input.substr(Index, 2))
                 {
                     State = NoComment;
-                    Input.erase(it, it + 2);
-                    end = Input.end();
+                    *it = L' ';
+                    *(++it) = L' ';
+                    //end = Input.end();
                     IsContinue = true;
                 }
             }
@@ -168,10 +178,16 @@ void __Skip_Comments_WCHAR(basic_string<wchar_t>& Input)
 
         if (IsContinue) {continue;}
 
-        if ((State == SingleLine || State == MultiLine) && '\n' != *it)
+        if ((State == SingleLine) && L'\n' != *it)
         {
             Input.erase(it);
             end = Input.end();
+        }
+        else if ((State == MultiLine) && L'\n' != *it)
+        {
+            *it = L' ';
+            ++it;
+            //end = Input.end();
         }
         else {++it;}
     }
