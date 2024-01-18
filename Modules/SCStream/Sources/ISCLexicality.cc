@@ -492,6 +492,9 @@ void __Tokenizer(const string& Input, TokenArrayType<char>* Output)
             Output->push_back({VString, StrBuf, ivec2(StartLine, StartCol)});
             continue;
         }
+
+        throw ParseException(vformat("Unexpected character <0x{:X}> at ({}, {})",
+            make_format_args(*it, LineNumber, ColumnNumber)));
     }
 }
 
@@ -569,6 +572,10 @@ void __Tokenizer_WCHAR(const wstring& Input, TokenArrayType<wchar_t>* Output)
             Output->push_back({VString, StrBuf, ivec2(StartLine, StartCol)});
             continue;
         }
+
+        short Chr = short(*it);
+        throw ParseException(vformat("Unexpected character <{}> at ({}, {})",
+            make_format_args(Chr, LineNumber, ColumnNumber)));
     }
 }
 

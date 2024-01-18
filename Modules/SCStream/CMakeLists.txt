@@ -27,21 +27,33 @@ set(CsvPatchWarning true CACHE STRING
 "Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog")
 
 # Parser algorithm, default is LR(1)
-set(ParserAlgorithm 1 CACHE STRING
-    "Parser algorithm, default is LR(1)
-    0 - LALR(1)
-    1 - LR(1)
-    2 - IELR(1)")
+set(ParserAlgorithm LR1 CACHE STRING
+    "Parser algorithm, default is LR(1)")
 
 add_definitions(-DLOG_TIME_STAMP=${LogTimeStamp})
 add_definitions(-DLOG_THRESAD_STAMP=${LogThreadStamp})
 add_definitions(-DCAT_LOG_LEVEL=${CatalogLogLevel})
 add_definitions(-DCSV_LOG_LEVEL=${CsvLogLevel})
 add_definitions(-DCSV_PATCH_WARNING=${CsvPatchWarning})
-add_definitions(-DSC_PARSER_LR=${ParserAlgorithm})
+
+if (ParserAlgorithm STREQUAL "LALR1")
+    add_definitions(-DSC_PARSER_LR=0)
+elseif (ParserAlgorithm STREQUAL "LR1")
+    add_definitions(-DSC_PARSER_LR=1)
+elseif (ParserAlgorithm STREQUAL "IELR1")
+    add_definitions(-DSC_PARSER_LR=2)
+endif()
 
 # Scan Files
-file(GLOB_RECURSE Sources CONFIGURE_DEPENDS Sources/*.cc Sources/ISCLR1States.tbl Headers/*.h)
+file(GLOB_RECURSE Sources CONFIGURE_DEPENDS Sources/*.cc Headers/*.h)
+if (ParserAlgorithm STREQUAL "LALR1")
+    list(APPEND Sources "Sources/LALR1.tbl")
+elseif (ParserAlgorithm STREQUAL "LR1")
+    list(APPEND Sources "Sources/LR1.tbl")
+elseif (ParserAlgorithm STREQUAL "IELR1")
+    list(APPEND Sources "Sources/IELR1.tbl")
+endif()
+
 add_library(SCStream STATIC "${Sources}")
 add_library(CSE::SCStream ALIAS SCStream)
 

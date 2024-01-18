@@ -9,6 +9,7 @@
 
 #include <CSE/CSEBase/CSEBase.h>
 #include <CSE/CSEBase/gltypes/GVector2D.h>
+#include <CSE/SCStream/LRParser.h>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -27,6 +28,31 @@ _STL_DISABLE_CLANG_WARNINGS
 
 _CSE_BEGIN
 _SC_BEGIN
+
+#if (SC_PARSER_LR == LALR1)
+
+#define SCFINAL    4  // State number of the termination state.
+#define SCLAST     36 // Last index in SCTABLE. (Unused)
+#define SCNTOKENS  12 // Number of terminals.
+#define SCNNTS     10 // Number of nonterminals.
+#define SCNRULES   20 // Number of rules.
+#define SCNSTATES  30 // Number of states.
+
+#elif (SC_PARSER_LR == LR1)
+
+// Definations from YACC Parser
+#define SCFINAL    4   // State number of the termination state.
+#define SCLAST     315 // Last index in TABLE. (Unused)
+#define SCNTOKENS  12  // Number of terminals.
+#define SCNNTS     10  // Number of nonterminals.
+#define SCNRULES   20  // Number of rules.
+#define SCNSTATES  61  // Number of states.
+
+#elif (SC_PARSER_LR == IELR1)
+#error IELR(1) algorithom is deprecated because its parsing table is same as LALR(1), use LALR(1) instead.
+#else
+#error Invalid parser option.
+#endif
 
 extern CSEDebugger CSECatDebug;
 
@@ -118,6 +144,12 @@ struct SCSTable
 
 using SharedTablePointer = SharedPointer<SCSTable<char>>;
 using WSharedTablePointer = SharedPointer<SCSTable<wchar_t>>;
+
+// Tables
+extern const __LR_Parser_Base<char>::GrammaTableType __SC_Grammar_Production_Table;
+extern const __LR_Parser_Base<char>::StatesType __SC_State_Table;
+extern const __LR_Parser_Base<wchar_t>::GrammaTableType __SC_Grammar_Production_Table_WCH;
+extern const __LR_Parser_Base<wchar_t>::StatesType __SC_State_Table_WCH;
 
 _SC_END
 _CSE_END
