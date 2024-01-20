@@ -3,8 +3,6 @@
 #include "CSE/SCStream/ISCStream.h"
 #include <stack>
 #include <map>
-#include <set>
-#include <vector>
 
 // Text-formating header
 #if USE_FMTLIB
@@ -77,15 +75,536 @@ _SC_BEGIN
 #error Invalid option.
 #endif
 
-// int __StelCXX_LR1_Parser(SharedPointer<TokenArrayType<char>> Symbols, SharedTablePointer& OutputTable)
-// {
+// Implementation of LR parser for SC
 
-// }
+string SCParser::TokenToString(SharedPointer<TokenArrayType<char>> Tokens)
+{
+    string Res;
+    for (auto i : *Tokens)
+    {
+        switch (i.Type)
+        {
+        case Identifier:
+            Res.push_back('i');
+            break;
+        case Number:
+            Res.push_back('n');
+            break;
+        case VString:
+            Res.push_back('s');
+            break;
+        case Boolean:
+            Res.push_back('b');
+            break;
+        case UnaryPunctuator:
+        case LeftPunctuator:
+        case RightPunctuator:
+            Res.push_back(i.Value.front());
+            break;
+        case eof:
+        case Others:
+            break;
+        }
+    }
+    return Res;
+}
 
-// int __StelCXX_LR1_Parser_WCHAR(SharedPointer<TokenArrayType<wchar_t>> Symbols, WSharedTablePointer& OutputTable)
-// {
+SharedPointer<SCSTable<char>> SCParser::MakeTable(stack<SCSTable<char>::SCKeyValue>& SubTableTempStack)
+{
+    SCSTable<char> SubTable;
+    while (!SubTableTempStack.empty())
+    {
+        SubTable._M_Elems.push_back(SubTableTempStack.top());
+        SubTableTempStack.pop();
+    }
+    return make_shared<decltype(SubTable)>(SubTable);
+}
 
-// }
+void SCParser::MakeSubMatrix(ValueType<char>& ExpressionBuffer, ValueType<char> SubMatrix)
+{
+    if (!ExpressionBuffer.SubMatrices)
+    {
+        ValueType<char>::SubMatrixType Table;
+        Table.insert({0, SubMatrix});
+        ExpressionBuffer.SubMatrices = make_shared<decltype(Table)>(Table);
+    }
+    else {ExpressionBuffer.SubMatrices->insert({0, SubMatrix});}
+}
+
+void SCParser::MoveSubMateix(ValueType<char>& ExpressionBuffer)
+{
+    if (!ExpressionBuffer.SubMatrices) {return;}
+    std::vector<size_t> Keys;
+    std::vector<ValueType<char>> Values;
+    auto it = ExpressionBuffer.SubMatrices->begin();
+    auto end = ExpressionBuffer.SubMatrices->end();
+    while (it != end)
+    {
+        Keys.push_back(it->first);
+        Values.push_back(it->second);
+        ++it;
+    }
+    ExpressionBuffer.SubMatrices->clear();
+    for (int i = 0; i < Keys.size(); ++i)
+    {
+        ExpressionBuffer.SubMatrices->insert({Keys[i] + 1, Values[i]});
+    }
+}
+
+void SCParser::ThrowError(size_t CurrentState, ivec2 Pos)
+{
+    auto StateMsg = _Mybase::States[CurrentState].ErrorMessage;
+    auto FullMsg = (StateMsg.empty() ? "" : (": " + StateMsg));
+    std::string Msg = vformat("Syntax error at ({}, {}){}",
+        make_format_args(Pos.x, Pos.y, FullMsg));
+    throw std::runtime_error(Msg);
+}
+
+SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0)
+{
+    // Initialize storage and buffer
+    std::stack<SCSTable<char>::SCKeyValue> KTStack, SubTableTempStack;
+    std::stack<ValueType<char>> ValueStack;
+    ValueType<char> ExpressionBuffer = ValueType<char>();
+
+    // Initialize parsing stacks
+    std::string SymbolString = TokenToString(Tokens);
+    std::stack<size_t> StateStack;
+    std::stack<char> SymbolStack;
+
+    SymbolString.push_back(char(ETX));
+    auto CurrentPosition = SymbolString.begin();
+    StateStack.push(0);
+    SymbolStack.push(char(STX));
+
+    TokenType<char> PreviousWord;
+    auto CurrentWordIter = Tokens->begin();
+
+    // Start Parsing.
+    bool Accepted = 0;
+    while(!Accepted)
+    {
+        size_t CurrentState = StateStack.top();
+        char CurrentSymbol;
+        if (CurrentPosition != SymbolString.end()) {CurrentSymbol = *CurrentPosition;}
+        else {CurrentSymbol = ETX;}
+        typename _Mybase::Actions CurrentAction;
+        size_t NewState = GetNewState(CurrentState, CurrentSymbol, &CurrentAction);
+
+        TokenType<char> CurrentWord;
+        if (CurrentSymbol != ETX) {CurrentWord = *CurrentWordIter;}
+
+        switch (CurrentAction)
+        {
+        case _Mybase::Accept:
+            Accepted = 1;
+            CSECatDebug("SCParser", CSECatDebug.INFO, "Accepted.");
+            break;
+
+        case _Mybase::Shift:
+        case _Mybase::Goto:
+        {
+
+            StateStack.push(NewState);
+            SymbolStack.push(CurrentSymbol);
+            ++CurrentPosition;
+
+            if (CurrentSymbol != ETX)
+            {
+                PreviousWord = CurrentWord;
+                ++CurrentWordIter;
+            }
+
+            CSECatDebug("SCParser", CSECatDebug.INFO,
+            vformat("Shifting, Current state: %llu, Current symbol: %c, Next state is %llu.",
+                make_format_args(CurrentState, CurrentSymbol, NewState)));
+        }
+        break;
+
+        case _Mybase::Reduce:
+        {
+            auto Production = _Mybase::Grammar[NewState];
+            PopStack(StateStack, Production.second.size());
+            PopStack(SymbolStack, Production.second.size());
+            SymbolStack.push(Production.first);
+
+            switch (NewState)
+            {
+                // Operations when reducing
+            case 1:
+                SubTableTempStack.push(KTStack.top());
+                KTStack.pop();
+                break;
+
+            case 3:
+            case 4:
+                KTStack.top().Value.insert(KTStack.top().Value.begin(), ValueStack.top());
+                ValueStack.pop();
+                break;
+
+            case 6:
+                KTStack.push({.Key = PreviousWord.Value});
+                break;
+
+            case 7:
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<char>();
+                break;
+
+            case 8:
+                ExpressionBuffer.Type = decltype(ExpressionBuffer.Type)
+                    (ExpressionBuffer.Type | ExpressionBuffer.Array);
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<char>();
+                break;
+
+            case 9:
+                ExpressionBuffer.Type = ExpressionBuffer.Matrix;
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<char>();
+                break;
+
+            case 10:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.Number)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.Number;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 11:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.VString)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.VString;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 12:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.Boolean)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.Boolean;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 17:
+            case 18:
+                MoveSubMateix(ExpressionBuffer);
+                if (ValueStack.top().Type & ValueStack.top().Array)
+                {
+                    MakeSubMatrix(ExpressionBuffer, ValueStack.top());
+                }
+                else
+                {
+                    ExpressionBuffer.Value.insert(ExpressionBuffer.Value.begin(), ValueStack.top().Value.front());
+                }
+                ValueStack.pop();
+                break;
+
+            case 19:
+                KTStack.top().SubTable = MakeTable(SubTableTempStack);
+                break;
+
+            default:
+                break;
+            }
+
+            CurrentState = StateStack.top();
+            NewState = GetNewState(CurrentState, SymbolStack.top(), &CurrentAction);
+            if (CurrentAction == _Mybase::Error)
+            {
+                ThrowError(CurrentState, CurrentWord.Posiston);
+            }
+            StateStack.push(NewState);
+
+            CSECatDebug("SCParser", CSECatDebug.INFO,
+                vformat("Reducing: {}->{}, Go to state {}.",
+                make_format_args(Production.first, Production.second, NewState)));
+        }
+        break;
+
+        default:
+            ThrowError(CurrentState, CurrentWord.Posiston);
+        }
+    }
+
+    return MakeTable(SubTableTempStack);
+}
+
+// Wide Char version
+
+wstring WSCParser::TokenToString(SCS::SharedPointer<SCS::TokenArrayType<wchar_t>> Tokens)
+{
+    wstring Res;
+    for (auto i : *Tokens)
+    {
+        switch (i.Type)
+        {
+        case SCS::Identifier:
+            Res.push_back(L'i');
+            break;
+        case SCS::Number:
+            Res.push_back(L'n');
+            break;
+        case SCS::VString:
+            Res.push_back(L's');
+            break;
+        case SCS::Boolean:
+            Res.push_back(L'b');
+            break;
+        case SCS::UnaryPunctuator:
+        case SCS::LeftPunctuator:
+        case SCS::RightPunctuator:
+            Res.push_back(i.Value.front());
+            break;
+        case SCS::eof:
+        case SCS::Others:
+            break;
+        }
+    }
+    return Res;
+}
+
+SharedPointer<SCSTable<wchar_t>> WSCParser::MakeTable(stack<SCSTable<wchar_t>::SCKeyValue>& SubTableTempStack)
+{
+    SCSTable<wchar_t> SubTable;
+    while (!SubTableTempStack.empty())
+    {
+        SubTable._M_Elems.push_back(SubTableTempStack.top());
+        SubTableTempStack.pop();
+    }
+    return make_shared<decltype(SubTable)>(SubTable);
+}
+
+void WSCParser::MakeSubMatrix(ValueType<wchar_t>& ExpressionBuffer, ValueType<wchar_t> SubMatrix)
+{
+    if (!ExpressionBuffer.SubMatrices)
+    {
+        ValueType<wchar_t>::SubMatrixType Table;
+        Table.insert({0, SubMatrix});
+        ExpressionBuffer.SubMatrices = make_shared<decltype(Table)>(Table);
+    }
+    else {ExpressionBuffer.SubMatrices->insert({0, SubMatrix});}
+}
+
+void WSCParser::MoveSubMateix(ValueType<wchar_t>& ExpressionBuffer)
+{
+    if (!ExpressionBuffer.SubMatrices) {return;}
+    std::vector<size_t> Keys;
+    std::vector<ValueType<wchar_t>> Values;
+    auto it = ExpressionBuffer.SubMatrices->begin();
+    auto end = ExpressionBuffer.SubMatrices->end();
+    while (it != end)
+    {
+        Keys.push_back(it->first);
+        Values.push_back(it->second);
+        ++it;
+    }
+    ExpressionBuffer.SubMatrices->clear();
+    for (int i = 0; i < Keys.size(); ++i)
+    {
+        ExpressionBuffer.SubMatrices->insert({Keys[i] + 1, Values[i]});
+    }
+}
+
+void WSCParser::ThrowError(size_t CurrentState, ivec2 Pos)
+{
+    auto StateMsg = _Mybase::States[CurrentState].ErrorMessage;
+    auto FullMsg = (StateMsg.empty() ? "" : (": " + StateMsg));
+    std::string Msg = vformat("Syntax error at ({}, {}){}",
+        make_format_args(Pos.x, Pos.y, FullMsg));
+    throw std::runtime_error(Msg);
+}
+
+SharedPointer<SCSTable<wchar_t>> WSCParser::Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0)
+{
+    // Initialize storage and buffer
+    std::stack<SCSTable<wchar_t>::SCKeyValue> KTStack, SubTableTempStack;
+    std::stack<ValueType<wchar_t>> ValueStack;
+    ValueType<wchar_t> ExpressionBuffer = ValueType<wchar_t>();
+
+    // Initialize parsing stacks
+    std::wstring SymbolString = TokenToString(Tokens);
+    std::stack<size_t> StateStack;
+    std::stack<wchar_t> SymbolStack;
+
+    SymbolString.push_back(wchar_t(ETX));
+    auto CurrentPosition = SymbolString.begin();
+    StateStack.push(0);
+    SymbolStack.push(wchar_t(STX));
+
+    TokenType<wchar_t> PreviousWord;
+    auto CurrentWordIter = Tokens->begin();
+
+    // Start Parsing.
+    bool Accepted = 0;
+    while(!Accepted)
+    {
+        size_t CurrentState = StateStack.top();
+        wchar_t CurrentSymbol;
+        if (CurrentPosition != SymbolString.end()) {CurrentSymbol = *CurrentPosition;}
+        else {CurrentSymbol = ETX;}
+        typename _Mybase::Actions CurrentAction;
+        size_t NewState = GetNewState(CurrentState, CurrentSymbol, &CurrentAction);
+
+        TokenType<wchar_t> CurrentWord;
+        if (CurrentSymbol != ETX) {CurrentWord = *CurrentWordIter;}
+
+        switch (CurrentAction)
+        {
+        case _Mybase::Accept:
+            Accepted = 1;
+            break;
+
+        case _Mybase::Shift:
+        case _Mybase::Goto:
+        {
+
+            StateStack.push(NewState);
+            SymbolStack.push(CurrentSymbol);
+            ++CurrentPosition;
+
+            if (CurrentSymbol != ETX)
+            {
+                PreviousWord = CurrentWord;
+                ++CurrentWordIter;
+            }
+        }
+        break;
+
+        case _Mybase::Reduce:
+        {
+            auto Production = _Mybase::Grammar[NewState];
+            PopStack(StateStack, Production.second.size());
+            PopStack(SymbolStack, Production.second.size());
+            SymbolStack.push(Production.first);
+
+            switch (NewState)
+            {
+                // Operations when reducing
+            case 1:
+                SubTableTempStack.push(KTStack.top());
+                KTStack.pop();
+                break;
+
+            case 3:
+            case 4:
+                KTStack.top().Value.insert(KTStack.top().Value.begin(), ValueStack.top());
+                ValueStack.pop();
+                break;
+
+            case 6:
+                KTStack.push({.Key = PreviousWord.Value});
+                break;
+
+            case 7:
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<wchar_t>();
+                break;
+
+            case 8:
+                ExpressionBuffer.Type = decltype(ExpressionBuffer.Type)
+                    (ExpressionBuffer.Type | ExpressionBuffer.Array);
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<wchar_t>();
+                break;
+
+            case 9:
+                ExpressionBuffer.Type = ExpressionBuffer.Matrix;
+                ValueStack.push(ExpressionBuffer);
+                ExpressionBuffer = ValueType<wchar_t>();
+                break;
+
+            case 10:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.Number)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.Number;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 11:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.VString)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.VString;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 12:
+                if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
+                    (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.Boolean)
+                {
+                    ThrowError(CurrentState, CurrentWord.Posiston);
+                }
+                ExpressionBuffer.Type = ExpressionBuffer.Boolean;
+                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                break;
+
+            case 17:
+            case 18:
+                MoveSubMateix(ExpressionBuffer);
+                if (ValueStack.top().Type & ValueStack.top().Array)
+                {
+                    MakeSubMatrix(ExpressionBuffer, ValueStack.top());
+                }
+                else
+                {
+                    ExpressionBuffer.Value.insert(ExpressionBuffer.Value.begin(), ValueStack.top().Value.front());
+                }
+                ValueStack.pop();
+                break;
+
+            case 19:
+                KTStack.top().SubTable = MakeTable(SubTableTempStack);
+                break;
+
+            default:
+                break;
+            }
+
+            CurrentState = StateStack.top();
+            NewState = GetNewState(CurrentState, SymbolStack.top(), &CurrentAction);
+            if (CurrentAction == _Mybase::Error)
+            {
+                ThrowError(CurrentState, CurrentWord.Posiston);
+            }
+            StateStack.push(NewState);
+        }
+        break;
+
+        default:
+            ThrowError(CurrentState, CurrentWord.Posiston);
+        }
+    }
+
+    return MakeTable(SubTableTempStack);
+}
+
+// Function Caller
+
+SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input)
+{
+    SCParser Parser;
+    return Parser.Run(Input);
+}
+
+WSharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input)
+{
+    WSCParser Parser;
+    return Parser.Run(Input);
+}
 
 _SC_END
 _CSE_END

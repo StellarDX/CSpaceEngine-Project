@@ -7,8 +7,39 @@
 using namespace std;
 
 _CSE_BEGIN
+_SC_BEGIN
 
 CSEDebugger CSECatDebug(cout, LOG_TIME_STAMP, LOG_THRESAD_STAMP, CAT_LOG_LEVEL);
+
+SharedTablePointer ISCStream::Parse()const
+{
+    ostringstream OStr;
+    OStr << input.rdbuf();
+    string Str = OStr.str();
+
+    SCS::SkipComments(Str);
+
+    auto Tokens = SCS::Tokenizer(Str);
+
+    auto FinalTable = Parser(Tokens);
+    return FinalTable;
+}
+
+WSharedTablePointer WISCStream::Parse()const
+{
+    wostringstream OStr;
+    OStr << input.rdbuf();
+    wstring Str = OStr.str();
+
+    SCS::SkipCommentsW(Str);
+
+    auto Tokens = SCS::TokenizerW(Str);
+
+    auto FinalTable = ParserW(Tokens);
+    return FinalTable;
+}
+
+_SC_END
 
 _SC SharedTablePointer ParseFile(filesystem::path FileName)noexcept(false)
 {

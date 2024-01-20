@@ -38,16 +38,14 @@
 #ifndef __LR_PARSER__
 #define __LR_PARSER__
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <cstdio>
 #include <map>
 #include <string>
 #include <vector>
 #include <stack>
 #include <stdexcept>
-
-#define LALR1 0
-#define LR1   1
-#define IELR1 2
 
 #ifndef _MSC_VER
 #define __interface struct
@@ -132,6 +130,12 @@ public:
         }
         else
         {
+            auto it4 = State.Reduces.find(0x00);
+            if (it4 != State.Reduces.end())
+            {
+                *Act = _Mybase::Reduce;
+                return it4->second;
+            }
             *Act = _Mybase::Error;
             return _Mybase::StateNPos;
         }
@@ -168,7 +172,8 @@ public:
         while(!Accepted)
         {
             size_t CurrentState = StateStack.top();
-            _CharT CurrentSymbol = *CurrentPosition;
+            _CharT CurrentSymbol;
+            if (CurrentPosition != SymbolString.end()) {CurrentSymbol = *CurrentPosition;}
             typename _Mybase::Actions CurrentAction;
             size_t NewState = GetNewState(CurrentState, CurrentSymbol, &CurrentAction);
 
@@ -195,6 +200,11 @@ public:
                 PopStack(SymbolStack, Production.second.size());
                 SymbolStack.push(Production.first);
 
+                switch (NewState)
+                {
+                    // Operations when reducing...
+                }
+
                 CurrentState = StateStack.top();
                 NewState = GetNewState(CurrentState, SymbolStack.top(), &CurrentAction);
                 if (CurrentAction == _Mybase::Error)
@@ -205,11 +215,6 @@ public:
 
                 printf("Reducing: %c->%s, Go to state %llu.\n",
                        Production.first, Production.second.c_str(), NewState);
-
-                switch (NewState)
-                {
-                    // Operations when reducing...
-                }
             }
                 break;
 
