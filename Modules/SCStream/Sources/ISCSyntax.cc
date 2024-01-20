@@ -216,7 +216,7 @@ SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> 
             }
 
             CSECatDebug("SCParser", CSECatDebug.INFO,
-            vformat("Shifting, Current state: %llu, Current symbol: %c, Next state is %llu.",
+            vformat("Shifting, Current state: {}, Current symbol: {}, Next state is {}.",
                 make_format_args(CurrentState, CurrentSymbol, NewState)));
         }
         break;

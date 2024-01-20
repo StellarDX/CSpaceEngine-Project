@@ -47,17 +47,13 @@
 #include <stack>
 #include <stdexcept>
 
-#ifndef _MSC_VER
-#define __interface struct
-#endif
-
 #define STX 0x02
 #define ETX 0x03
 #define ESC 0x1B
 
 // Base class of SC Parser
 template<typename _CharT>
-__interface __LR_Parser_Base
+struct __LR_Parser_Base
 {
 public:
     using ProductionType        = std::pair<_CharT, std::basic_string<_CharT>>;
