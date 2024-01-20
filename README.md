@@ -20,7 +20,7 @@
     </head>
     <body-->
 <!--a href="README_EN.md">English</a-->
-<div class="Head" style="width:100%;text-align:center;">
+<div class="Head" align="center" style="width:100%;">
     <h1 style="font-weight: bold;background: -webkit-linear-gradient(-66.5607189deg, rgb(41,82,190), rgb(41,82,190) 40%, rgb(254,226,223) 60%, rgb(251,172,19) 75%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;color: transparent;">CSpaceEngine·聚力新生</h1>
     <p>开源的SpaceEngine静态库，适配SE0.990</p>
     <p>许可证：<a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPL-2.0</a></p>
