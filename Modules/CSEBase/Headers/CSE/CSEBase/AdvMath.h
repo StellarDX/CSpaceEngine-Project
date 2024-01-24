@@ -128,6 +128,47 @@ struct __CSE_AdvMath_Function_Invoker<_Res(_ArgTypes...)>
 _SCICXX_END
 
 /****************************************************************************************\
+*                                  Limit of a function                                   *
+\****************************************************************************************/
+
+_SCICXX_BEGIN
+
+class __Calculateur_Limite_LHopital
+{
+    // TODO...
+};
+
+_SCICXX_END
+
+template<typename _Functor1, typename _Functor2>
+float64 LHopitalDiv(_Functor1 Numerateur, _Functor2 Denominateur, float64 x)
+{
+    // TODO...
+    return 0;
+}
+
+template<typename _Functor1, typename _Functor2>
+float64 LHopitalMul(_Functor1 Facteur1, _Functor2 Facteur2, float64 x)
+{
+    // TODO...
+    return 0;
+}
+
+template<typename _Functor1, typename _Functor2>
+float64 LHopitalSub(_Functor1 Diminuende, _Functor2 Diminuteur, float64 x)
+{
+    // TODO...
+    return 0;
+}
+
+template<typename _Functor1, typename _Functor2>
+float64 LHopitalPow(_Functor1 Base, _Functor2 Exposant, float64 x)
+{
+    // TODO...
+    return 0;
+}
+
+/****************************************************************************************\
 *                               Derivatives and Integrals                                *
 \****************************************************************************************/
 
@@ -198,10 +239,7 @@ public:
         }
 
         matrix<float64, 1, CoeffCount> KroneckerMatrix(0);
-        for (size_t i = 0; i < CoeffCount; ++i)
-        {
-            KroneckerMatrix[0][i] = tgamma(DeriOrder + 1) * (i == DeriOrder ? 1. : 0.);
-        }
+        KroneckerMatrix[0][DeriOrder] = tgamma(DeriOrder + 1);
 
         auto CoeffArray = (CoeffMatrix.Inverse() * KroneckerMatrix)[0];
         _M_Coefficients = std::vector<float64>(CoeffArray.begin(), CoeffArray.end());

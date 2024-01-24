@@ -84,7 +84,7 @@ using uint64             = unsigned long long; // unsigned int
 
 // Write bytes of buffer into return value with another type
 template<typename genTypeA = uint64, typename genTypeB = float64>
-inline constexpr genTypeB modtype(genTypeA Value)
+inline constexpr genTypeB chtype(genTypeA Value)
 {
     union _Buf{genTypeA Src; genTypeB Dst;} _Buffer;
     _Buffer.Src = Value;

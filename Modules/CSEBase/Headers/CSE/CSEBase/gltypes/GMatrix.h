@@ -808,7 +808,7 @@ public:
     /**
      * @brief Returns the Adjugate matrix
      */
-    GBasicMatrix<_Ty, _Line, _Column> Adjugate()const
+    GBasicMatrix<_Ty, _Column, _Line> Adjugate()const
     {
         GBasicMatrix<_Ty, _Column, _Line> m0;
         if (_Column != _Line) { return GBasicMatrix<_Ty, _Line, _Column>(IEEE754_Dbl64::FromBytes(Q_NAN_DOUBLE)); }

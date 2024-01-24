@@ -43,6 +43,7 @@ float64 Distance(genType p0, genType p1)
 }
 
 inline float64 DistancePolar(vec2 p0, vec2 p1);
+inline float64 DistancePolar(vec3 p0, vec3 p1);
 
 inline float64 AngularSeparation(vec3 p0, vec3 p1, float64 RABase = 24);
 
@@ -109,7 +110,6 @@ genType reflect(genType I, genType N)
     // Original code in GLSL (Normal vector need to be normalized)
     /*if (Length(N) != 1.)
     {
-        MathLog.Out("Math-Geometry", "WARNING", "Length of normal vector is not 1, automatically nomalized.", SysLogLevel);
         N = normalize(N);
     }
     return I - 2.0 * dot(N, I) * N;*/

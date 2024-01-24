@@ -153,7 +153,7 @@ public:
     void SetDate(const _TIME CSEDate& date);
     void SetTime(const _TIME CSETime& time);
     void SetOffsetFromUTC(int OffsetSeconds);
-    void SetTimeZone(const long& ToZone);
+    void SetTimeZone(const _TIME CSETimezone& ToZone);
 
     CSEDateTime ToUTC() const;
 

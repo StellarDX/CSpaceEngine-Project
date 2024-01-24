@@ -357,6 +357,32 @@ float64 __cdecl Radians(float64 _Deg);
  */
 float64 __cdecl Degrees(float64 _Rad);
 
+// A new convertor for angle unit converting
+struct Angle
+{
+    constexpr static const float64 Turns    = 360.l;
+    constexpr static const float64 Degrees  = 1.l;
+    constexpr static const float64 Radians  = 57.295779513082320876798154814105l;
+    constexpr static const float64 Gradians = 0.9l;
+
+    float64 ValueInDegs;
+
+    Angle() {}
+    Angle(float64 Degs) : ValueInDegs(Degs) {}
+
+    static Angle FromTurns(float64 _Turns) {return Angle{_Turns * Turns};}
+    static Angle FromDegrees(float64 _Degs) {return Angle{_Degs * Degrees};}
+    static Angle FromRadians(float64 _Rads) {return Angle{_Rads * Radians};}
+    static Angle FromGradians(float64 _Gons) {return Angle{_Gons * Gradians};}
+
+    constexpr float64 ToTurns()const {return ValueInDegs / Turns;}
+    constexpr float64 ToDegrees()const {return ValueInDegs / Degrees;}
+    constexpr float64 ToRadians()const {return ValueInDegs / Radians;}
+    constexpr float64 ToGradians()const {return ValueInDegs / Gradians;}
+
+    operator float64() {return ValueInDegs;}
+};
+
 // Trigonometric functions for Degrees Implemented by OpenCV
 extern const float64 __CV_SinCos_Tab[];
 float64 __cdecl __CV_SIN_DEGREES(float64 _X);
@@ -376,6 +402,7 @@ _END_EXTERN_C
  * @brief The standard trigonometric sine function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl sin(float64 _X);
+float64 __cdecl sin(Angle _X);
 
 complex64 __cdecl sinc(complex64 _X);
 
@@ -397,6 +424,7 @@ std::array<float64, size> __cdecl sin(std::array<float64, size> _X)
  * @brief The standard trigonometric cosine function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl cos(float64 _X);
+float64 __cdecl cos(Angle _X);
 
 complex64 __cdecl cosc(complex64 _X);
 
@@ -418,6 +446,7 @@ std::array<float64, size> __cdecl cos(std::array<float64, size> _X)
  * @brief The standard trigonometric tangent function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl tan(float64 _X);
+float64 __cdecl tan(Angle _X);
 
 complex64 __cdecl tanc(complex64 _X);
 
@@ -439,6 +468,7 @@ std::array<float64, size> __cdecl tan(std::array<float64, size> _X)
  * @brief The standard trigonometric cotangent function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl ctg(float64 _X);
+float64 __cdecl ctg(Angle _X);
 
 complex64 __cdecl ctgc(complex64 _X);
 
@@ -460,6 +490,7 @@ std::array<float64, size> __cdecl ctg(std::array<float64, size> _X)
  * @brief The standard trigonometric secant function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl sec(float64 _X);
+float64 __cdecl sec(Angle _X);
 
 complex64 __cdecl secc(complex64 _X);
 
@@ -481,6 +512,7 @@ std::array<float64, size> __cdecl sec(std::array<float64, size> _X)
  * @brief The standard trigonometric cosecant function(Real number based on degrees, Complex based on radians).
  */
 float64 __cdecl csc(float64 _X);
+float64 __cdecl csc(Angle _X);
 
 complex64 __cdecl cscc(complex64 _X);
 
@@ -512,6 +544,7 @@ std::array<float64, size> __cdecl csc(std::array<float64, size> _X)
  * 7 -> Quadrant IV
  */
 int64 __cdecl Quadrant(float64 _X);
+int64 __cdecl Quadrant(Angle _X);
 
 ///////////////////////////////////// INVERSE ////////////////////////////////////
 

@@ -23,8 +23,8 @@ namespace consts{
 // -------------------------------------------------------------------------
 //      Name          Value                                  Note
 #define CSE_E         2.7182818284590452353602874713527l  // e
-#define CSE_LOG2E     1.4426950408889634073599246810019l  // lb(e)
-#define CSE_LOG10E    0.43429448190325182765112891891661l // log(e)
+#define CSE_LBE       1.4426950408889634073599246810019l  // lb(e)
+#define CSE_LOGE      0.43429448190325182765112891891661l // log(e)
 #define CSE_LN2       0.69314718055994530941723212145818l // ln(2)
 #define CSE_LN10      2.3025850929940456840179914546844l  // ln(10)
 #define CSE_PI        3.1415926535897932384626433832795l  // Pi
@@ -43,17 +43,17 @@ namespace consts{
 //      Name            Value/Equation          Note
 #define GravConstant    6.67430E-11          // (±0.00015)2018 CODATA Value, reference from NIST
 #define SpeedOfLight    299792458            // Exact value defined by 1983 17th CGPM
-#define PPM             0.0001               // by definition, Parts-per million to percent
-#define GasConstant     8.31446261815324     // 2018 CODATA Value
+#define PPM2Percent     0.0001               // by definition, Parts-per million to percent
+#define GasConstant     _CONSTS Equation21   // 2018 CODATA Value
 #define AvogadroConst   6.02214076E+23       // SI redefinition of 2019
-#define BoltzmannConst  _CONSTS Equation21   // SI by definition, J/K = m2⋅kg/(s2⋅K) in SI base units. Exactly 1.380649E-23
+#define BoltzmannConst  1.380649E-23         // SI by definition, J/K = m2⋅kg/(s2⋅K) in SI base units. Exactly 1.380649E-23
 #define PlanckConst     6.62607015E-34       // 2018 CODATA Value
 #define StBConstant     _CONSTS Equation22   // by definition
 #define ElemCharge      1.602176634E-19      // the electric charge carried by a single proton
-#define FineStructConst (1. / 137.035999206) // Measured in 2020
-#define MagnetConstant  _CONSTS Equation23   // the magnetic permeability in a classical vacuum
-#define ElectricConst   _CONSTS Equation24   // the value of the absolute dielectric permittivity of classical vacuum
-#define Dalton          1.66053906660E-27    // (±0.0000000000050)
+#define VacPermeability 1.25663706212E-6     // SI redefinition of 2019, the magnetic permeability in a classical vacuum
+#define VacPermittivity _CONSTS Equation23   // the value of the absolute dielectric permittivity of classical vacuum
+#define FineStructConst _CONSTS Equation24   // Measured in 2020
+#define AtomMassConst   1.66053906660E-27    // 2018 CODATA Value
 #define StandardAtm     101325               // Standard atmosphere, on sea level
 // -------------------------------------------------------------------------
 extern const long double Equation21;
@@ -69,19 +69,19 @@ extern const long double Equation24;
 #define ElectronMass  9.1093837015E-31  // (±0.0000000028)2018 CODATA Value
 #define ProtonMass    1.67262192369E-27 // (±0.00000000051)2018 CODATA Value
 #define NeutronMass   1.67492749804E-27 // (±0.00000000095)2018 CODATA Value
-#define MassMoon      7.342E+22         // 
-#define MassEarth     5.972168E+24      // (±0.00028)Estimated value from planetary ephemeris DE421
-#define MassJupiter   1.898125E+27      // (±0.000088)value from Jovian Satellite ephemeris JUP310
-#define MassSol       1.98847E+30       // (±0.00007)given by solving Kepler's third law
+#define LunarMass     7.342E+22         //
+#define EarthMass     5.972168E+24      // (±0.00028)Estimated value from planetary ephemeris DE421
+#define JupiterMass   1.898125E+27      // (±0.000088)value from Jovian Satellite ephemeris JUP310
+#define SolarMass     1.98847E+30       // (±0.00007)given by solving Kepler's third law
 
 
 // List4: Units of length
 // -------------------------------------------------------------------------
 //      Name          Value/Equation        Note
-#define RadMoon       1738100            // 
-#define RadEarth      6378137            // equatorial radius provided by IUGG
-#define RadJupiter    71492000           // IAU 2015 definition
-#define RadSol        695700000          // IAU 2015 definition
+#define LunarRadius   1738100            //
+#define EarthRadius   6378137            // equatorial radius provided by IUGG
+#define JupiterRadius 71492000           // IAU 2015 definition
+#define SolarRadius   695700000          // IAU 2015 definition
 #define AU            149597870700       // IAU 2012 definition
 #define LightYear     9460730472580800   // IAU 1976 System of Astronomical Constants
 #define Parsec        _CONSTS Equation41 // exact by the 2015 definition
@@ -157,7 +157,7 @@ extern const long double Equation41;
 #define PlanckMass        _CONSTS Equation83 // The dividing point between macro scale and micro scale
 #define PlanckTime        _CONSTS Equation84 // the time it takes for a photon to travel a distance equal to the Planck length, and is the shortest possible time interval that can be measured.
 #define PlanckTemp        _CONSTS Equation85 // At this temperature, the wavelength of light emitted by thermal radiation reaches the Planck length
-#define HubbleParam       68.3               // (±1.5 | Format: (Km/s)/Mpc)Value by South Pole Telescope, 2022-12-12, CMB TT/TE/EE power spectrum. Less than 1σ discrepancy with planck. (Preprint)
+#define HubbleParam       67.0               // (±1.5 | Format: (Km/s)/Mpc)Value by South Pole Telescope, 2022-12-12, CMB TT/TE/EE power spectrum. Less than 1σ discrepancy with planck. (Preprint)
 #define HubbleParamSI     _CONSTS Equation86 // Hubble Parameter in SI (Format: 1/s)
 #define CosmoDensityRatio 0.6889             // (±0.0056)ratio between the energy density due to the cosmological constant and the critical density of the universe, according to results published by the Planck Collaboration in 2018
 #define CosmoConstant     _CONSTS Equation87 // constant coefficient of a term Albert Einstein temporarily added to his field equations of general relativity

@@ -11,6 +11,12 @@ inline float64 DistancePolar(vec2 p0, vec2 p1)
     return sqrt(pow(p0.x, 2) + pow(p1.x, 2) - 2. * p0.x * p1.x * _CSE cos(p0.y - p1.y));
 }
 
+inline float64 DistancePolar(vec3 p0, vec3 p1)
+{
+    float64 CosSep = cse::cos(p0.y) * cse::cos(p1.y) * cse::cos(p0.x - p1.x) + cse::sin(p0.y) * cse::sin(p1.y);
+    return sqrt(pow(p0.z, 2) + pow(p1.z, 2) - (2. * p0.z * p1.z * CosSep));
+}
+
 inline float64 AngularSeparation(vec3 p0, vec3 p1, float64 RABase)
 {
     p0.x *= 360. / RABase;

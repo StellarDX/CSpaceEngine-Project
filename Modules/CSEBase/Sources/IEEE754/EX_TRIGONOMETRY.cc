@@ -11,6 +11,10 @@ float64 __cdecl sin(float64 _X) { return __CV_SIN_DEGREES(_X); }
 float64 __cdecl cos(float64 _X) { return __CV_COS_DEGREES(_X); }
 float64 __cdecl tan(float64 _X) { return __CV_TAN_DEGREES(_X); }
 
+float64 __cdecl sin(Angle _X) {return sin(_X.ToDegrees());}
+float64 __cdecl cos(Angle _X) {return cos(_X.ToDegrees());}
+float64 __cdecl tan(Angle _X) {return tan(_X.ToDegrees());}
+
 // Cotangent and secants
 
 float64 __cdecl ctg(float64 _X)
@@ -27,6 +31,10 @@ float64 __cdecl csc(float64 _X)
 {
 	return 1. / _CSE sin(_X);
 }
+
+float64 __cdecl ctg(Angle _X) {return ctg(_X.ToDegrees());}
+float64 __cdecl sec(Angle _X) {return sec(_X.ToDegrees());}
+float64 __cdecl csc(Angle _X) {return csc(_X.ToDegrees());}
 
 int64 __cdecl Quadrant(float64 _X)
 {
@@ -47,6 +55,8 @@ int64 __cdecl Quadrant(float64 _X)
 	if (_X > 270 && _X < 360) { return 7; }
     return -1;
 }
+
+int64 __cdecl Quadrant(Angle _X) {return Quadrant(_X.ToDegrees());}
 
 ///////////////////////////////////// EXPAND ////////////////////////////////////
 

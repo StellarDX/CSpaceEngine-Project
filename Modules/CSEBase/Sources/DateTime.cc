@@ -125,9 +125,9 @@ void CSEDateTime::SetOffsetFromUTC(int OffsetSeconds)
     OffsetSecs = OffsetSeconds;
 }
 
-void CSEDateTime::SetTimeZone(const long& ToZone)
+void CSEDateTime::SetTimeZone(const Epoch::CSETimezone &ToZone)
 {
-    OffsetSecs = ToZone * 3600;
+    OffsetSecs = -ToZone.Bias * 60;
 }
 
 CSEDateTime CSEDateTime::ToUTC() const
@@ -641,6 +641,11 @@ CSETime CSETime::AddMSecs(int ms, int* AddDays) const
     static const long MAX_MSEC_IN_DAYS = 86400000; // 24 * 60 * 60 * 1000
     long CurrentMsecs = hours * 3600000 + minutes * 60000 + seconds * 1000 + msecs;
     CurrentMsecs += ms;
+    if (CurrentMsecs < 0)
+    {
+        if (AddDays){*AddDays = long(CurrentMsecs / MAX_MSEC_IN_DAYS) - 1;}
+        CurrentMsecs  = CurrentMsecs % MAX_MSEC_IN_DAYS + MAX_MSEC_IN_DAYS;
+    }
     if (CurrentMsecs > MAX_MSEC_IN_DAYS)
     {
         if (AddDays){*AddDays = long(CurrentMsecs / MAX_MSEC_IN_DAYS);}

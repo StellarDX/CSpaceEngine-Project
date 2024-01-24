@@ -8,10 +8,10 @@ namespace consts
 	using cse::pow;
 	using cse::sqrt;
 
-    const long double Equation21 = GasConstant / AvogadroConst;
+    const long double Equation21 = AvogadroConst * BoltzmannConst;
     const long double Equation22 = (2.0 * pow(CSE_PI, 5) * pow(BoltzmannConst, 4)) / (15.0 * pow(PlanckConst, 3) * pow(SpeedOfLight, 2));
-    const long double Equation23 = (2. * FineStructConst * PlanckConst) / (pow(ElemCharge, 2) * SpeedOfLight);
-    const long double Equation24 = 1. / (MagnetConstant * pow(SpeedOfLight, 2));
+    const long double Equation23 = 1. / (VacPermeability * pow(SpeedOfLight, 2));
+    const long double Equation24 = pow(ElemCharge, 2) / (2. * VacPermittivity * PlanckConst * SpeedOfLight);
 
     const long double Equation41 = (180.0 * 60.0 * 60.0 * AU) / CSE_PI;
 

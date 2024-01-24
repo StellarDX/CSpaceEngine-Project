@@ -8,12 +8,12 @@ _CSE_BEGIN
 
 float64 __cdecl Radians(float64 _Deg)
 {
-    return _Deg * 0.01745329251994329576923690768489;
+    return Angle::FromDegrees(_Deg).ToRadians();
 }
 
 float64 __cdecl Degrees(float64 _Rad)
 {
-    return _Rad * 57.295779513082320876798154814105;
+    return Angle::FromRadians(_Rad).ToDegrees();
 }
 
 _EXTERN_C

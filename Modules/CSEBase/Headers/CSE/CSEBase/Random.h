@@ -364,7 +364,7 @@ public:
      * @param _Bet - Beta, default is 1
      * @return Values range between 0 and 1.
      */
-    float64 beta(float64 _Alf = 1., float64 _Bet = 1.)
+    float64 betavariate(float64 _Alf = 1., float64 _Bet = 1.)
     {
         return beta_distribution<float64>(_Alf, _Bet)(_Rd);
     }
@@ -375,7 +375,7 @@ public:
      * @return Values range from 0 to positive infinity if lambda is
      * positive, and from negative infinity to 0 if lambda is negative.
      */
-    float64 exponential(float64 _Lam = 1.)
+    float64 expovariate(float64 _Lam = 1.)
     {
         return std::exponential_distribution<float64>(_Lam)(_Rd);
     }
@@ -385,14 +385,14 @@ public:
      * @param _Alf - shape parameter, default is 1
      * @param _Bet - scale parameter, default is 1
      */
-    float64 gamma(float64 _Alf = 1., float64 _Bet = 1.)
+    float64 gammavariate(float64 _Alf = 1., float64 _Bet = 1.)
     {
         return std::gamma_distribution<float64>(_Alf, _Bet)(_Rd);
     }
 
     float64 kgamma(float64 _K = 1., float64 _Tet = 1.)
     {
-        return gamma(_K, 1. / _Tet);
+        return gammavariate(_K, 1. / _Tet);
     }
 
     /**
@@ -400,7 +400,7 @@ public:
      * @param _Mean - Mean, default is 0
      * @param _StDev - Standard deviation, default is 1
      */
-    float64 normal(float64 _Mean = 0., float64 _StDev = 1.)
+    float64 normalvariate(float64 _Mean = 0., float64 _StDev = 1.)
     {
         return std::normal_distribution<float64>(_Mean, _StDev)(_Rd);
     }
@@ -410,7 +410,7 @@ public:
      * @param _Mean - Mean, default is 0
      * @param _StDev - Standard deviation, default is 1
      */
-    float64 lognorm(float64 _Mean = 0., float64 _StDev = 1.)
+    float64 lognormvariate(float64 _Mean = 0., float64 _StDev = 1.)
     {
         return std::lognormal_distribution<float64>(_Mean, _StDev)(_Rd);
     }
@@ -420,7 +420,7 @@ public:
      * @param _Mu - mean angle
      * @param _Kap - concentration parameter
      */
-    /*float64 vonmises(float64 _Mu = 0., float64 _Kap = 1.)
+    /*float64 vonmisesvariate(float64 _Mu = 0., float64 _Kap = 1.)
     {
         return vonmises_distribution<float64>(_Mu, _Kap)(_Rd);
     }*/
@@ -429,7 +429,7 @@ public:
      * @brief Pareto distribution
      * @param _Alf - shape parameter
      */
-    /*float64 pareto(float64 _Alf = 0.)
+    /*float64 paretovariate(float64 _Alf = 0.)
     {
         return pareto_distribution<float64>(_Alf)(_Rd);
     }*/
@@ -439,7 +439,7 @@ public:
      * @param _Lam - scale parameter
      * @param _k - shape parameter
      */
-    float64 weibull(float64 _Lam = 0., float64 _k = 1.)
+    float64 weibullvariate(float64 _Lam = 0., float64 _k = 1.)
     {
         return std::weibull_distribution<float64>(_Lam, _k)(_Rd);
     }
