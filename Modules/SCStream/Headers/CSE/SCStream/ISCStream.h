@@ -53,15 +53,21 @@ _SC_BEGIN
 class ISCStream
 {
 public:
+    __StelCXX_Text_Codecvt_65001 _DefDecoder = __StelCXX_Text_Codecvt_65001();
+    __StelCXX_Text_Codecvt_Base& Decoder = _DefDecoder;
+
     std::istream& input;
     ISCStream(std::istream& is) : input(is){}
     ISCStream& operator=(const ISCStream& is) = delete;
+
+    void SetDecoder(__StelCXX_Text_Codecvt_Base& NewDecoder) {Decoder = NewDecoder;}
+
     SharedTablePointer Parse()const;
 };
 
 void SkipComments(std::string& Input);
 SharedPointer<TokenArrayType<char>> Tokenizer(const std::string& Input);
-SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input);
+SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input, __StelCXX_Text_Codecvt_Base& Decoder);
 
 /**
  * @brief SC Parser wide-char version.
@@ -72,17 +78,17 @@ public:
     std::wistream& input;
     WISCStream(std::wistream& is) : input(is){}
     WISCStream& operator=(const WISCStream& is) = delete;
-    WSharedTablePointer Parse()const;
+    SharedTablePointer Parse()const;
 };
 
 void SkipCommentsW(std::wstring& Input);
 SharedPointer<TokenArrayType<wchar_t>> TokenizerW(const std::wstring& Input);
-WSharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
+SharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
 
 _SC_END
 
 _SC SharedTablePointer ParseFile(std::filesystem::path FileName)noexcept(false);
-_SC WSharedTablePointer ParseFileW(std::filesystem::path FileName)noexcept(false);
+_SC SharedTablePointer ParseFileW(std::filesystem::path FileName)noexcept(false);
 
 _CSE_END
 

@@ -9,7 +9,11 @@ using namespace std;
 _CSE_BEGIN
 _SC_BEGIN
 
+#if CAT_LOG_LEVEL == 3 || CAT_LOG_LEVEL == 4
+CSEDebugger CSECatDebug(cout, LOG_TIME_STAMP, LOG_THRESAD_STAMP, CAT_LOG_LEVEL - 2);
+#else
 CSEDebugger CSECatDebug(cout, LOG_TIME_STAMP, LOG_THRESAD_STAMP, CAT_LOG_LEVEL);
+#endif
 
 SharedTablePointer ISCStream::Parse()const
 {
@@ -21,11 +25,11 @@ SharedTablePointer ISCStream::Parse()const
 
     auto Tokens = SCS::Tokenizer(Str);
 
-    auto FinalTable = Parser(Tokens);
+    auto FinalTable = Parser(Tokens, Decoder);
     return FinalTable;
 }
 
-WSharedTablePointer WISCStream::Parse()const
+SharedTablePointer WISCStream::Parse()const
 {
     wostringstream OStr;
     OStr << input.rdbuf();
@@ -49,7 +53,7 @@ _SC SharedTablePointer ParseFile(filesystem::path FileName)noexcept(false)
     return sc.Parse();
 }
 
-_SC WSharedTablePointer ParseFileW(filesystem::path FileName)noexcept(false)
+_SC SharedTablePointer ParseFileW(filesystem::path FileName)noexcept(false)
 {
     wifstream is(FileName);
     if (!is) {throw _SC ParseException("File " + FileName.string() + " is not found.\n");}

@@ -65,12 +65,14 @@ _SC_BEGIN
  *
  */
 
+#define _LOG_LEVEL_KEY "LogLevel"
+
 #if (SC_PARSER_LR == LALR1)
-#include "LALR1.tbl"
+#include "Grammar/LALR1.tbl"
 #elif (SC_PARSER_LR == LR1)
-#include "LR1.tbl"
+#include "Grammar/LR1.tbl"
 #elif (SC_PARSER_LR == IELR1)
-#include "IELR1.tbl"
+#include "Grammar/IELR1.tbl"
 #else
 #error Invalid option.
 #endif
@@ -109,9 +111,9 @@ string SCParser::TokenToString(SharedPointer<TokenArrayType<char>> Tokens)
     return Res;
 }
 
-SharedPointer<SCSTable<char>> SCParser::MakeTable(stack<SCSTable<char>::SCKeyValue>& SubTableTempStack)
+SharedPointer<SCSTable> SCParser::MakeTable(stack<SCSTable::SCKeyValue>& SubTableTempStack)
 {
-    SCSTable<char> SubTable;
+    SCSTable SubTable;
     while (!SubTableTempStack.empty())
     {
         SubTable._M_Elems.push_back(SubTableTempStack.top());
@@ -120,22 +122,22 @@ SharedPointer<SCSTable<char>> SCParser::MakeTable(stack<SCSTable<char>::SCKeyVal
     return make_shared<decltype(SubTable)>(SubTable);
 }
 
-void SCParser::MakeSubMatrix(ValueType<char>& ExpressionBuffer, ValueType<char> SubMatrix)
+void SCParser::MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix)
 {
     if (!ExpressionBuffer.SubMatrices)
     {
-        ValueType<char>::SubMatrixType Table;
+        ValueType::SubMatrixType Table;
         Table.insert({0, SubMatrix});
         ExpressionBuffer.SubMatrices = make_shared<decltype(Table)>(Table);
     }
     else {ExpressionBuffer.SubMatrices->insert({0, SubMatrix});}
 }
 
-void SCParser::MoveSubMateix(ValueType<char>& ExpressionBuffer)
+void SCParser::MoveSubMateix(ValueType& ExpressionBuffer)
 {
     if (!ExpressionBuffer.SubMatrices) {return;}
     std::vector<size_t> Keys;
-    std::vector<ValueType<char>> Values;
+    std::vector<ValueType> Values;
     auto it = ExpressionBuffer.SubMatrices->begin();
     auto end = ExpressionBuffer.SubMatrices->end();
     while (it != end)
@@ -160,12 +162,12 @@ void SCParser::ThrowError(size_t CurrentState, ivec2 Pos)
     throw std::runtime_error(Msg);
 }
 
-SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0)
+SharedPointer<SCSTable> SCParser::Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0)
 {
     // Initialize storage and buffer
-    std::stack<SCSTable<char>::SCKeyValue> KTStack, SubTableTempStack;
-    std::stack<ValueType<char>> ValueStack;
-    ValueType<char> ExpressionBuffer = ValueType<char>();
+    std::stack<SCSTable::SCKeyValue> KTStack, SubTableTempStack;
+    std::stack<ValueType> ValueStack;
+    ValueType ExpressionBuffer = ValueType();
 
     // Initialize parsing stacks
     std::string SymbolString = TokenToString(Tokens);
@@ -179,6 +181,11 @@ SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> 
 
     TokenType<char> PreviousWord;
     auto CurrentWordIter = Tokens->begin();
+
+    // Log Level
+    #if CAT_LOG_LEVEL == 1 || CAT_LOG_LEVEL == 2
+    bool DetectedLogLevel = 0;
+    #endif
 
     // Start Parsing.
     bool Accepted = 0;
@@ -243,35 +250,52 @@ SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> 
                 break;
 
             case 6:
-                KTStack.push({.Key = PreviousWord.Value});
+                #if CAT_LOG_LEVEL == 1 || CAT_LOG_LEVEL == 2
+                if (PreviousWord.Value == _LOG_LEVEL_KEY)
+                {
+                    CSECatDebug("SCParser", CSECatDebug.INFO, "Detected custom log-level setting.");
+                    DetectedLogLevel = 1;
+                }
+                #endif
+                KTStack.push({.Key = Decoder.ToUnicode(PreviousWord.Value)});
                 break;
 
             case 7:
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<char>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 8:
                 ExpressionBuffer.Type = decltype(ExpressionBuffer.Type)
                     (ExpressionBuffer.Type | ExpressionBuffer.Array);
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<char>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 9:
                 ExpressionBuffer.Type = ExpressionBuffer.Matrix;
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<char>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 10:
+                #if CAT_LOG_LEVEL == 1 || CAT_LOG_LEVEL == 2
+                if (DetectedLogLevel)
+                {
+                    int LogLvl = stoi(PreviousWord.Value);
+                    CSECatDebug("SCParser", CSECatDebug.INFO,
+                    vformat("Log level has been set to {}.", make_format_args(LogLvl)));
+                    CSECatDebug.__LogLevel = std::min(CAT_LOG_LEVEL, LogLvl);
+                    DetectedLogLevel = 0;
+                }
+                #endif
                 if (ExpressionBuffer.Type != ExpressionBuffer.Others &&
                     (int(ExpressionBuffer.Type) & ExpressionBuffer.Mask) != ExpressionBuffer.Number)
                 {
                     ThrowError(CurrentState, CurrentWord.Posiston);
                 }
                 ExpressionBuffer.Type = ExpressionBuffer.Number;
-                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                ExpressionBuffer.Value.push_back(Decoder.ToUnicode(PreviousWord.Value));
                 break;
 
             case 11:
@@ -281,7 +305,7 @@ SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> 
                     ThrowError(CurrentState, CurrentWord.Posiston);
                 }
                 ExpressionBuffer.Type = ExpressionBuffer.VString;
-                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                ExpressionBuffer.Value.push_back(Decoder.ToUnicode(PreviousWord.Value));
                 break;
 
             case 12:
@@ -291,7 +315,7 @@ SharedPointer<SCSTable<char>> SCParser::Run(SharedPointer<TokenArrayType<char>> 
                     ThrowError(CurrentState, CurrentWord.Posiston);
                 }
                 ExpressionBuffer.Type = ExpressionBuffer.Boolean;
-                ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                ExpressionBuffer.Value.push_back(Decoder.ToUnicode(PreviousWord.Value));
                 break;
 
             case 17:
@@ -372,9 +396,9 @@ wstring WSCParser::TokenToString(SCS::SharedPointer<SCS::TokenArrayType<wchar_t>
     return Res;
 }
 
-SharedPointer<SCSTable<wchar_t>> WSCParser::MakeTable(stack<SCSTable<wchar_t>::SCKeyValue>& SubTableTempStack)
+SharedPointer<SCSTable> WSCParser::MakeTable(stack<SCSTable::SCKeyValue>& SubTableTempStack)
 {
-    SCSTable<wchar_t> SubTable;
+    SCSTable SubTable;
     while (!SubTableTempStack.empty())
     {
         SubTable._M_Elems.push_back(SubTableTempStack.top());
@@ -383,22 +407,22 @@ SharedPointer<SCSTable<wchar_t>> WSCParser::MakeTable(stack<SCSTable<wchar_t>::S
     return make_shared<decltype(SubTable)>(SubTable);
 }
 
-void WSCParser::MakeSubMatrix(ValueType<wchar_t>& ExpressionBuffer, ValueType<wchar_t> SubMatrix)
+void WSCParser::MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix)
 {
     if (!ExpressionBuffer.SubMatrices)
     {
-        ValueType<wchar_t>::SubMatrixType Table;
+        ValueType::SubMatrixType Table;
         Table.insert({0, SubMatrix});
         ExpressionBuffer.SubMatrices = make_shared<decltype(Table)>(Table);
     }
     else {ExpressionBuffer.SubMatrices->insert({0, SubMatrix});}
 }
 
-void WSCParser::MoveSubMateix(ValueType<wchar_t>& ExpressionBuffer)
+void WSCParser::MoveSubMateix(ValueType& ExpressionBuffer)
 {
     if (!ExpressionBuffer.SubMatrices) {return;}
     std::vector<size_t> Keys;
-    std::vector<ValueType<wchar_t>> Values;
+    std::vector<ValueType> Values;
     auto it = ExpressionBuffer.SubMatrices->begin();
     auto end = ExpressionBuffer.SubMatrices->end();
     while (it != end)
@@ -423,12 +447,12 @@ void WSCParser::ThrowError(size_t CurrentState, ivec2 Pos)
     throw std::runtime_error(Msg);
 }
 
-SharedPointer<SCSTable<wchar_t>> WSCParser::Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0)
+SharedPointer<SCSTable> WSCParser::Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0)
 {
     // Initialize storage and buffer
-    std::stack<SCSTable<wchar_t>::SCKeyValue> KTStack, SubTableTempStack;
-    std::stack<ValueType<wchar_t>> ValueStack;
-    ValueType<wchar_t> ExpressionBuffer = ValueType<wchar_t>();
+    std::stack<SCSTable::SCKeyValue> KTStack, SubTableTempStack;
+    std::stack<ValueType> ValueStack;
+    ValueType ExpressionBuffer = ValueType();
 
     // Initialize parsing stacks
     std::wstring SymbolString = TokenToString(Tokens);
@@ -506,20 +530,20 @@ SharedPointer<SCSTable<wchar_t>> WSCParser::Run(SharedPointer<TokenArrayType<wch
 
             case 7:
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<wchar_t>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 8:
                 ExpressionBuffer.Type = decltype(ExpressionBuffer.Type)
                     (ExpressionBuffer.Type | ExpressionBuffer.Array);
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<wchar_t>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 9:
                 ExpressionBuffer.Type = ExpressionBuffer.Matrix;
                 ValueStack.push(ExpressionBuffer);
-                ExpressionBuffer = ValueType<wchar_t>();
+                ExpressionBuffer = ValueType();
                 break;
 
             case 10:
@@ -594,13 +618,14 @@ SharedPointer<SCSTable<wchar_t>> WSCParser::Run(SharedPointer<TokenArrayType<wch
 
 // Function Caller
 
-SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input)
+SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input, __StelCXX_Text_Codecvt_Base& Decoder)
 {
     SCParser Parser;
+    Parser.Decoder = Decoder;
     return Parser.Run(Input);
 }
 
-WSharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input)
+SharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input)
 {
     WSCParser Parser;
     return Parser.Run(Input);

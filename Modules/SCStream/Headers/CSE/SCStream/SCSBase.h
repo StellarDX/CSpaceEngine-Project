@@ -12,6 +12,7 @@
 #include <CSE/CSEBase/gltypes/GVector2D.h>
 #include <CSE/CSEBase/Algorithms.h>
 #include <CSE/SCStream/LRParser.h>
+#include <CSE/SCStream/CodeCvt.h>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -59,6 +60,8 @@ _SC_BEGIN
 #else
 #error Invalid parser option.
 #endif
+
+using ucs2_t = wchar_t;
 
 extern CSEDebugger CSECatDebug;
 
@@ -131,7 +134,8 @@ inline bool stob(const std::wstring& __str)
     return __str == L"true" ? 1 : 0;
 }
 
-template<typename _CharT>
+inline ustring __Matrix_To_String(struct ValueType Val);
+
 struct ValueType
 {
     using SubMatrixType = std::map<size_t, ValueType>;
@@ -148,14 +152,14 @@ struct ValueType
         Mask    = 0b0011
     }Type;
 
-    StringList<_CharT> Value;
+    StringList<ucs2_t> Value;
     SharedPointer<SubMatrixType> SubMatrices = nullptr;
 
     template<typename _Tp>
     TypeID ToTypeID()
     {
         if (std::convertible_to<_Tp, float64>) {return Number;}
-        else if (std::convertible_to<_Tp, String<_CharT>>) {return VString;}
+        else if (std::convertible_to<_Tp, ustring>) {return VString;}
         else if (std::is_same_v<_Tp, bool>) {return Boolean;}
         else {return Others;}
     }
@@ -165,17 +169,17 @@ struct ValueType
         switch (Type)
         {
         case Number:
-            *((float64*)Dst) = std::stod(Value.first());
+            *((float64*)Dst) = std::stod(Value.front());
             break;
 
         case VString:
-            *((String<_CharT>*)Dst) = Value.first();
-            ((String<_CharT>*)Dst)->erase(((String<_CharT>*)Dst)->begin());
-            ((String<_CharT>*)Dst)->pop_back();
+            *((ustring*)Dst) = Value.front();
+            ((ustring*)Dst)->erase(((ustring*)Dst)->begin());
+            ((ustring*)Dst)->pop_back();
             break;
 
         case Boolean:
-            *((bool*)Dst) = stob(Value.first());
+            *((bool*)Dst) = stob(Value.front());
             break;
 
         default:
@@ -215,20 +219,65 @@ struct ValueType
             GetQualified(&(*Dst)[i], i);
         }
     }
+
+    ustring ToString()const
+    {
+        if ((Type & (~Mask)) == Array)
+        {
+            ustring Str;
+            Str.push_back(L'(');
+            for (int i = 0; i < Value.size(); ++i)
+            {
+                Str += Value[i];
+                if (i < Value.size() - 1) {Str += L", ";}
+            }
+            Str.push_back(L')');
+            return Str;
+        }
+        if ((Type & (~Mask)) == Matrix)
+        {
+            return __Matrix_To_String(*this);
+        }
+        else {return Value.front();}
+    }
 };
 
-template<typename _CharT>
-using ValueList = std::vector<ValueType<_CharT>>;
+inline ustring __Matrix_To_String(ValueType Val)
+{
+    ustring Str;
+    Str.push_back(L'{');
+    for (size_t i = 0; i <= Val.Value.size(); ++i)
+    {
+        if (Val.SubMatrices)
+        {
+            size_t j = i;
+            while (Val.SubMatrices->contains(j))
+            {
+                Str += Val.SubMatrices->at(j).ToString();
+                Str += L", ";
+                ++j;
+            }
+        }
+        if (i < Val.Value.size())
+        {
+            Str += Val.Value[i];
+            Str += L", ";
+        }
+    }
+    Str.push_back(L'}');
+    return Str;
+}
 
-template<typename _CharT>
+using ValueList = std::vector<ValueType>;
+
 struct SCSTable
 {
-    using SubTablePointer = SharedPointer<SCSTable<_CharT>>;
+    using SubTablePointer = SharedPointer<SCSTable>;
 
     struct SCKeyValue
     {
-        String<_CharT>     Key;
-        ValueList<_CharT>  Value;
+        ustring            Key;
+        ValueList          Value;
         SubTablePointer    SubTable = nullptr;
     };
 
@@ -243,8 +292,7 @@ struct SCSTable
     CatalogType& Get() {return _M_Elems;}
 };
 
-using SharedTablePointer = SharedPointer<SCSTable<char>>;
-using WSharedTablePointer = SharedPointer<SCSTable<wchar_t>>;
+using SharedTablePointer = SharedPointer<SCSTable>;
 
 // Tables
 extern const __LR_Parser_Base<char>::GrammaTableType __SC_Grammar_Production_Table;
@@ -258,15 +306,18 @@ class SCParser : public LRParser
 public:
     using _Mybase = LRParser;
 
+    __StelCXX_Text_Codecvt_65001 _DefDecoder = __StelCXX_Text_Codecvt_65001();
+    __StelCXX_Text_Codecvt_Base& Decoder = _DefDecoder;
+
     SCParser() : _Mybase(__SC_Grammar_Production_Table, __SC_State_Table) {}
 
     std::string TokenToString(SharedPointer<TokenArrayType<char>> Tokens);
-    SharedPointer<SCSTable<char>> MakeTable(std::stack<SCSTable<char>::SCKeyValue>& SubTableTempStack);
-    void MakeSubMatrix(ValueType<char>& ExpressionBuffer, ValueType<char> SubMatrix);
-    void MoveSubMateix(ValueType<char>& ExpressionBuffer);
+    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
+    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
+    void MoveSubMateix(ValueType& ExpressionBuffer);
     void ThrowError(size_t CurrentState, ivec2 Pos);
 
-    SharedPointer<SCSTable<char>> Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0);
+    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0);
 };
 
 class WSCParser : public WLRParser
@@ -277,12 +328,12 @@ public:
     WSCParser() : _Mybase(__SC_Grammar_Production_Table_WCH, __SC_State_Table_WCH) {}
 
     std::wstring TokenToString(SharedPointer<TokenArrayType<wchar_t>> Tokens);
-    SharedPointer<SCSTable<wchar_t>> MakeTable(std::stack<SCSTable<wchar_t>::SCKeyValue>& SubTableTempStack);
-    void MakeSubMatrix(ValueType<wchar_t>& ExpressionBuffer, ValueType<wchar_t> SubMatrix);
-    void MoveSubMateix(ValueType<wchar_t>& ExpressionBuffer);
+    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
+    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
+    void MoveSubMateix(ValueType& ExpressionBuffer);
     void ThrowError(size_t CurrentState, ivec2 Pos);
 
-    SharedPointer<SCSTable<wchar_t>> Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0);
+    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0);
 };
 
 _SC_END

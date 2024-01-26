@@ -73,6 +73,11 @@ _STL_DISABLE_CLANG_WARNINGS
 #define _END_EXTERN_C }
 #endif
 
+// Interfaces
+#ifndef _MSC_VER
+#define __interface struct
+#endif
+
 _CSE_BEGIN
 
 #include <CSE/CSEBase/sysdeps/IEEE754.h>
@@ -81,6 +86,7 @@ _CSE_BEGIN
 using int64              = long long;          // int
 using float64            = double;             // real
 using uint64             = unsigned long long; // unsigned int
+using ustring            = std::wstring;       // Unicode string
 
 // Write bytes of buffer into return value with another type
 template<typename genTypeA = uint64, typename genTypeB = float64>
@@ -155,6 +161,15 @@ CSEDebugger& operator<<(CSEDebugger& os, const genType& Val)
     os("PRINT_STREAM", CSEDebugger::PRINT, Val);
     return os;
 }
+
+// SE Object defination
+__interface __SEObject
+{
+public:
+    using NumType    = float64;
+    using StringType = std::u8string;
+    using BoolType   = bool;
+};
 
 _CSE_END
 
