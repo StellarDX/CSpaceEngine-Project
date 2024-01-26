@@ -162,15 +162,6 @@ CSEDebugger& operator<<(CSEDebugger& os, const genType& Val)
     return os;
 }
 
-// SE Object defination
-__interface __SEObject
-{
-public:
-    using NumType    = float64;
-    using StringType = std::u8string;
-    using BoolType   = bool;
-};
-
 _CSE_END
 
 #if defined _MSC_VER

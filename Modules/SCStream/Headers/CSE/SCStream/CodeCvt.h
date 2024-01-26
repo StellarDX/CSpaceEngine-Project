@@ -37,10 +37,6 @@ _STL_DISABLE_CLANG_WARNINGS
 #undef new
 #endif
 
-#if !defined(_MSC_VER) && !defined(__interface)
-#define __interface struct
-#endif
-
 // Return code if invalid input after a shift sequence of n bytes was read. (xxx_mbtowc)
 #define RET_SHIFT_ILSEQ(n)     (-1-2*(n))
 // Return code if invalid.
@@ -56,7 +52,7 @@ _STL_DISABLE_CLANG_WARNINGS
 #define RET_ILUNI              -1
 
 // Code convertor interface
-__interface __StelCXX_Text_Codecvt_Base
+struct __StelCXX_Text_Codecvt_Base
 {
     virtual std::wstring ConvertToUnicode(std::string in, int* state) const = 0;
     virtual std::string ConvertFromUnicode(std::wstring in, int* state) const = 0;
@@ -65,7 +61,7 @@ __interface __StelCXX_Text_Codecvt_Base
 
     std::wstring ToUnicode(std::string ByteArray)
     {
-        int ReturnValue;
+        int ReturnValue = 0;
         std::wstring Result = ConvertToUnicode(ByteArray, &ReturnValue);
         if (ReturnValue < 0) {throw std::runtime_error("Invalid characters in string.");}
         return Result;
@@ -73,7 +69,7 @@ __interface __StelCXX_Text_Codecvt_Base
 
     std::string FromUnicode(std::wstring Str)
     {
-        int ReturnValue;
+        int ReturnValue = 0;
         std::string Result = ConvertFromUnicode(Str, &ReturnValue);
         if (ReturnValue < 0) {throw std::runtime_error("Invalid characters in string.");}
         return Result;

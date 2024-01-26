@@ -32,7 +32,7 @@ public:
     explicit OutputException(const std::string& _Message) : runtime_error(_Message) {}
 };
 
-__interface __OSC_BASE
+struct __OSC_BASE
 {
     using OutputType          = SCSTable;
     using CustomMatOutputType = std::map<ustring, int64>;
