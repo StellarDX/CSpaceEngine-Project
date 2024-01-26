@@ -11,8 +11,8 @@
 #include <CSE/CSEBase/CSEBase.h>
 #include <CSE/CSEBase/gltypes/GVector2D.h>
 #include <CSE/CSEBase/Algorithms.h>
-#include <CSE/SCStream/LRParser.h>
-#include <CSE/SCStream/CodeCvt.h>
+#include <CSE/SCStream/StelCXXRes/LRParser.h>
+#include <CSE/SCStream/StelCXXRes/CodeCvt.h>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -245,7 +245,7 @@ struct ValueType
 inline ustring __Matrix_To_String(ValueType Val)
 {
     ustring Str;
-    Str.push_back(L'{');
+    Str += L"{ ";
     for (size_t i = 0; i <= Val.Value.size(); ++i)
     {
         if (Val.SubMatrices)
@@ -254,14 +254,14 @@ inline ustring __Matrix_To_String(ValueType Val)
             while (Val.SubMatrices->contains(j))
             {
                 Str += Val.SubMatrices->at(j).ToString();
-                Str += L", ";
+                Str += L" ";
                 ++j;
             }
         }
         if (i < Val.Value.size())
         {
             Str += Val.Value[i];
-            Str += L", ";
+            Str += L" ";
         }
     }
     Str.push_back(L'}');
@@ -293,48 +293,6 @@ struct SCSTable
 };
 
 using SharedTablePointer = SharedPointer<SCSTable>;
-
-// Tables
-extern const __LR_Parser_Base<char>::GrammaTableType __SC_Grammar_Production_Table;
-extern const __LR_Parser_Base<char>::StatesType __SC_State_Table;
-extern const __LR_Parser_Base<wchar_t>::GrammaTableType __SC_Grammar_Production_Table_WCH;
-extern const __LR_Parser_Base<wchar_t>::StatesType __SC_State_Table_WCH;
-
-// SC Parser
-class SCParser : public LRParser
-{
-public:
-    using _Mybase = LRParser;
-
-    __StelCXX_Text_Codecvt_65001 _DefDecoder = __StelCXX_Text_Codecvt_65001();
-    __StelCXX_Text_Codecvt_Base& Decoder = _DefDecoder;
-
-    SCParser() : _Mybase(__SC_Grammar_Production_Table, __SC_State_Table) {}
-
-    std::string TokenToString(SharedPointer<TokenArrayType<char>> Tokens);
-    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
-    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
-    void MoveSubMateix(ValueType& ExpressionBuffer);
-    void ThrowError(size_t CurrentState, ivec2 Pos);
-
-    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0);
-};
-
-class WSCParser : public WLRParser
-{
-public:
-    using _Mybase = WLRParser;
-
-    WSCParser() : _Mybase(__SC_Grammar_Production_Table_WCH, __SC_State_Table_WCH) {}
-
-    std::wstring TokenToString(SharedPointer<TokenArrayType<wchar_t>> Tokens);
-    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
-    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
-    void MoveSubMateix(ValueType& ExpressionBuffer);
-    void ThrowError(size_t CurrentState, ivec2 Pos);
-
-    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0);
-};
 
 _SC_END
 _CSE_END

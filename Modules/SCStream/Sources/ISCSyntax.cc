@@ -1,6 +1,6 @@
 #include "CSE/SCStream/SCSBase.h"
-#include "CSE/SCStream/LRParser.h"
 #include "CSE/SCStream/ISCStream.h"
+#include "CSE/SCStream/StelCXXRes/LRParser.h"
 #include <stack>
 #include <map>
 

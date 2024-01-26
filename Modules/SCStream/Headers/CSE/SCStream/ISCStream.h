@@ -47,6 +47,58 @@ _STL_DISABLE_CLANG_WARNINGS
 _CSE_BEGIN
 _SC_BEGIN
 
+// Tables
+extern const __LR_Parser_Base<char>::GrammaTableType __SC_Grammar_Production_Table;
+extern const __LR_Parser_Base<char>::StatesType __SC_State_Table;
+extern const __LR_Parser_Base<wchar_t>::GrammaTableType __SC_Grammar_Production_Table_WCH;
+extern const __LR_Parser_Base<wchar_t>::StatesType __SC_State_Table_WCH;
+
+// SC Parser
+class SCParser : public LRParser
+{
+public:
+    using _Mybase = LRParser;
+
+    __StelCXX_Text_Codecvt_65001 _DefDecoder = __StelCXX_Text_Codecvt_65001();
+    __StelCXX_Text_Codecvt_Base& Decoder = _DefDecoder;
+
+    SCParser() : _Mybase(__SC_Grammar_Production_Table, __SC_State_Table) {}
+
+    std::string TokenToString(SharedPointer<TokenArrayType<char>> Tokens);
+    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
+    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
+    void MoveSubMateix(ValueType& ExpressionBuffer);
+    void ThrowError(size_t CurrentState, ivec2 Pos);
+
+    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<char>> Tokens) noexcept(0);
+};
+
+class WSCParser : public WLRParser
+{
+public:
+    using _Mybase = WLRParser;
+
+    WSCParser() : _Mybase(__SC_Grammar_Production_Table_WCH, __SC_State_Table_WCH) {}
+
+    std::wstring TokenToString(SharedPointer<TokenArrayType<wchar_t>> Tokens);
+    SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
+    void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
+    void MoveSubMateix(ValueType& ExpressionBuffer);
+    void ThrowError(size_t CurrentState, ivec2 Pos);
+
+    SharedPointer<SCSTable> Run(SharedPointer<TokenArrayType<wchar_t>> Tokens) noexcept(0);
+};
+
+void SkipComments(std::string& Input);
+SharedPointer<TokenArrayType<char>> Tokenizer(const std::string& Input);
+SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input, __StelCXX_Text_Codecvt_Base& Decoder);
+
+void SkipCommentsW(std::wstring& Input);
+SharedPointer<TokenArrayType<wchar_t>> TokenizerW(const std::wstring& Input);
+SharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
+
+_SC_END
+
 /**
  * @brief SC Parser constructed from streams.
  */
@@ -62,12 +114,8 @@ public:
 
     void SetDecoder(__StelCXX_Text_Codecvt_Base& NewDecoder) {Decoder = NewDecoder;}
 
-    SharedTablePointer Parse()const;
+    _SC SharedTablePointer Parse()const;
 };
-
-void SkipComments(std::string& Input);
-SharedPointer<TokenArrayType<char>> Tokenizer(const std::string& Input);
-SharedTablePointer Parser(SharedPointer<TokenArrayType<char>> Input, __StelCXX_Text_Codecvt_Base& Decoder);
 
 /**
  * @brief SC Parser wide-char version.
@@ -78,14 +126,8 @@ public:
     std::wistream& input;
     WISCStream(std::wistream& is) : input(is){}
     WISCStream& operator=(const WISCStream& is) = delete;
-    SharedTablePointer Parse()const;
+    _SC SharedTablePointer Parse()const;
 };
-
-void SkipCommentsW(std::wstring& Input);
-SharedPointer<TokenArrayType<wchar_t>> TokenizerW(const std::wstring& Input);
-SharedTablePointer ParserW(SharedPointer<TokenArrayType<wchar_t>> Input);
-
-_SC_END
 
 _SC SharedTablePointer ParseFile(std::filesystem::path FileName)noexcept(false);
 _SC SharedTablePointer ParseFileW(std::filesystem::path FileName)noexcept(false);
