@@ -146,7 +146,17 @@ public:
     void Write()override;
 };
 
+template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
+_SC SCSTable MakeTable(_SEObject Object);
+
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SC SCSTable& table);
+
+template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
+_SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SEObject& Object)
+{
+    os << MakeTable(Object);
+    return os;
+}
 
 _CSE_END
 

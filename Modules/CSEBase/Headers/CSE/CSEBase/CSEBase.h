@@ -27,6 +27,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <version>
 #include <string>
+#include <vector>
 #include <ostream>
 
 // Compiler version definations
@@ -161,6 +162,19 @@ CSEDebugger& operator<<(CSEDebugger& os, const genType& Val)
     os("PRINT_STREAM", CSEDebugger::PRINT, Val);
     return os;
 }
+
+// SE Object Defination
+static const auto _NoDataDbl = IEEE754_Dbl64::FromBytes(0x7FF00000BAADF00D).x;
+static const auto _NoDataStr = L"None";
+static const auto _NoDataInt = 0xFFFFFFFFFFFFFFFF;
+
+#define IS_NO_DATA_STR(str) (str == _NoDataStr)
+#define IS_NO_DATA_DBL(dbl) (IEEE754_Dbl64(dbl).Bytes == 0x7FF00000BAADF00D)
+#define IS_NO_DATA_INT(int) (int == 0xFFFFFFFFFFFFFFFF)
+
+using ustringlist = std::vector<ustring>;
+
+__interface SEObject {};
 
 _CSE_END
 

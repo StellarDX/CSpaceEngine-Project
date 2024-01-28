@@ -132,6 +132,13 @@ public:
 _SC SharedTablePointer ParseFile(std::filesystem::path FileName)noexcept(false);
 _SC SharedTablePointer ParseFileW(std::filesystem::path FileName)noexcept(false);
 
+#ifdef GetObject
+#undef GetObject
+#endif
+
+template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
+_SEObject GetObject(_SC SharedTablePointer Table, ustring Name);
+
 _CSE_END
 
 #if defined _MSC_VER

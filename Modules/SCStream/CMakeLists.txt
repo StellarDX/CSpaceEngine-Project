@@ -16,15 +16,15 @@ set(CatalogLogLevel 2 CACHE STRING
 # 0 - do not log
 # 1 - log errors and warnings
 # 2 - log everything
-set(CsvLogLevel 1 CACHE STRING
-    "Level of logging for the *.csv catalog files:
-    0 - do not log
-    1 - log errors and warnings
-    2 - log everything")
+# set(CsvLogLevel 1 CACHE STRING
+#     "Level of logging for the *.csv catalog files:
+#     0 - do not log
+#     1 - log errors and warnings
+#     2 - log everything")
 
 # Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog
-set(CsvPatchWarning true CACHE STRING
-"Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog")
+# set(CsvPatchWarning true CACHE STRING
+# "Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog")
 
 # Parser algorithm, default is LR(1)
 set(ParserAlgorithm LR1 CACHE STRING
@@ -33,8 +33,8 @@ set(ParserAlgorithm LR1 CACHE STRING
 add_definitions(-DLOG_TIME_STAMP=${LogTimeStamp})
 add_definitions(-DLOG_THRESAD_STAMP=${LogThreadStamp})
 add_definitions(-DCAT_LOG_LEVEL=${CatalogLogLevel})
-add_definitions(-DCSV_LOG_LEVEL=${CsvLogLevel})
-add_definitions(-DCSV_PATCH_WARNING=${CsvPatchWarning})
+#add_definitions(-DCSV_LOG_LEVEL=${CsvLogLevel})
+#add_definitions(-DCSV_PATCH_WARNING=${CsvPatchWarning})
 
 if (ParserAlgorithm STREQUAL "LALR1")
     add_definitions(-DSC_PARSER_LR=0)

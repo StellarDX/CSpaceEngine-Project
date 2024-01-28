@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.25)
 
 project(CSpaceEngine LANGUAGES CXX DESCRIPTION "CSpaceEngine Astronomy Library")
 
@@ -103,9 +103,20 @@ foreach(Extension IN LISTS CSEExtensions)
 endforeach()
 
 # Pack configurations
-foreach(Module IN LISTS CSESubModules)
-    set(CSE_MODULE_INSTALLED_CONFIGS "${CSE_MODULE_INSTALLED_CONFIGS}include(\${CMAKE_CURRENT_LIST_DIR}/CSE-${Module}-config.cmake)\n")
-endforeach()
+if (NOT BUILD_CSEBase)
+    message(FATAL_ERROR "CSEBase is strictly required to be built.")
+endif()
+
+set(CSE_MODULE_INSTALLED_CONFIGS "include(\${CMAKE_CURRENT_LIST_DIR}/CSE-CSEBase-config.cmake)\n")
+
+macro(CSEAddSysModuleConfig Conf Module)
+    if (BUILD_${Module})
+        set(${Conf} "${${Conf}}include(\${CMAKE_CURRENT_LIST_DIR}/CSE-${Module}-config.cmake)\n")
+    endif()
+endmacro()
+
+CSEAddSysModuleConfig(CSE_MODULE_INSTALLED_CONFIGS SCStream)
+CSEAddSysModuleConfig(CSE_MODULE_INSTALLED_CONFIGS Object)
 
 configure_file(CSE-config.cmake
   "${CMAKE_BINARY_DIR}/CSE-config.cmake"
@@ -135,7 +146,7 @@ option(GenerateTotalLibrary "Generate a total header include everything built an
 if(GenerateTotalLibrary)
     set(CSE_MODULE_DEFINITIONS_CONFIGMAKE "\n")
 
-    foreach(Module IN LISTS CSESubModules)
+    foreach(Module IN LISTS CSESubModulesz)
         set(CSE_MODULE_DEFINITIONS_CONFIGMAKE "${CSE_MODULE_DEFINITIONS_CONFIGMAKE}#include <CSE/${Module}.h>\n")
     endforeach()
 

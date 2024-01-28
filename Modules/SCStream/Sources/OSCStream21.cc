@@ -189,7 +189,10 @@ void WOSCStream::Write()
 
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SC SCSTable& table)
 {
-    os._Buf.Get().insert(os._Buf.Get().end(), table._M_Elems.begin(), table._M_Elems.end());
+    if (!table._M_Elems.empty())
+    {
+        os._Buf.Get().insert(os._Buf.Get().end(), table._M_Elems.begin(), table._M_Elems.end());
+    }
     return os;
 }
 
