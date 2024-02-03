@@ -181,11 +181,6 @@ struct _TIME CSETimezone
     long         DaylightBias;
 };
 
-// Dynamic Date time constants
-#ifdef _USE_CSE_DEFINES
-const long double CurrentSynodicDay();
-#endif
-
 // Functions
 
 /**
