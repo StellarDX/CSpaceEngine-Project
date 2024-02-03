@@ -38,7 +38,7 @@ namespace Tokens
     REGEX_DEFINE(BinIntRegex,   "^[+-]?0[Bb][01]*$")
     REGEX_DEFINE(BoolRegex,     "^(true)|(false)$")
     REGEX_DEFINE(FloatRegex,    "^[+-]?([0-9]*\\.[0-9]+([Ee][+-]?[0-9]+)?)|([0-9]+\\.([Ee][+-]?[0-9]+)?)|([0-9]+([Ee][+-]?[0-9]+))$")
-    REGEX_DEFINE(HexFloatRegex, "^[+-]?0[Xx]([A-Fa-f0-9]*\\.[A-Fa-f0-9]+[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+\\.[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+[Pp][+-]?[0-9]+)$")
+    REGEX_DEFINE(HexFloatRegex, "^[+-]?0[Xx](([A-Fa-f0-9]*\\.[A-Fa-f0-9]+[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+\\.[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+[Pp][+-]?[0-9]+))$")
     REGEX_DEFINE(StringRegex,   "\".*\"")
 
     #undef REGEX_DEFINE
@@ -128,7 +128,7 @@ void ParseIdentifierW(wstring::const_iterator& it, const wstring::const_iterator
     //if (!regex_match(*Output, Tokens::IdentRegex)) {return;}
 }
 
-void ParseNumber(string::const_iterator& it, const string::const_iterator& end, string* Output, uint64* line, uint64* column)
+void ParseNumber(string::const_iterator& it, const string::const_iterator& end, string* Output, uint64* line, uint64* column, int* Base)
 {
     uint64 StartCol = *column;
     while (it != end && !isspace(*it) && !IsPunctuator(*it) && '\"' != *it)
@@ -147,7 +147,11 @@ void ParseNumber(string::const_iterator& it, const string::const_iterator& end, 
         // Binary Number
         if (regex_match(NumberPart.substr(0, 2), regex("0[Bb]")))
         {
-            if (regex_match(NumberPart, Tokens::BinIntRegex)) {return;}
+            if (regex_match(NumberPart, Tokens::BinIntRegex))
+            {
+                *Base = 2;
+                return;
+            }
             else
             {
                 throw ParseException(vformat
@@ -162,7 +166,11 @@ void ParseNumber(string::const_iterator& it, const string::const_iterator& end, 
             (
                 regex_match(NumberPart, Tokens::HexFloatRegex) ||
                 regex_match(NumberPart, Tokens::HexIntRegex)
-            ) {return;}
+            )
+            {
+                *Base = 16;
+                return;
+            }
             else
             {
                 transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -197,7 +205,16 @@ void ParseNumber(string::const_iterator& it, const string::const_iterator& end, 
             (
                 regex_match(NumberPart, Tokens::FloatRegex) ||
                 regex_match(NumberPart, Tokens::OctIntRegex)
-            ){return;}
+            )
+            {
+                auto IsFound = [](string In, char Val)
+                {
+                    return find(In.begin(), In.end(), Val) != In.end();
+                };
+                if (IsFound(NumberPart, '.') || IsFound(NumberPart, 'e')) {*Base = 10;}
+                else {*Base = 8;}
+                return;
+            }
             else
             {
                 transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -226,7 +243,11 @@ void ParseNumber(string::const_iterator& it, const string::const_iterator& end, 
         (
             regex_match(NumberPart, Tokens::FloatRegex) ||
             regex_match(NumberPart, Tokens::DecIntRegex)
-        ){return;}
+        )
+        {
+            *Base = 10;
+            return;
+        }
         else
         {
             transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -250,7 +271,7 @@ void ParseNumber(string::const_iterator& it, const string::const_iterator& end, 
     }
 }
 
-void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& end, wstring* Output, uint64* line, uint64* column)
+void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& end, wstring* Output, uint64* line, uint64* column, int* Base)
 {
     uint64 StartCol = *column;
     while (it != end && !isspace(*it) && !IsPunctuator(*it) && L'\"' != *it)
@@ -269,7 +290,11 @@ void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& en
         // Binary Number
         if (regex_match(NumberPart.substr(0, 2), wregex(L"0[Bb]")))
         {
-            if (regex_match(NumberPart, Tokens::BinIntRegexW)) {return;}
+            if (regex_match(NumberPart, Tokens::BinIntRegexW))
+            {
+                *Base = 2;
+                return;
+            }
             else
             {
                 throw ParseException(vformat
@@ -284,7 +309,11 @@ void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& en
             (
                 regex_match(NumberPart, Tokens::HexFloatRegexW) ||
                 regex_match(NumberPart, Tokens::HexIntRegexW)
-            ) {return;}
+            )
+            {
+                *Base = 16;
+                return;
+            }
             else
             {
                 transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -319,7 +348,16 @@ void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& en
             (
                 regex_match(NumberPart, Tokens::FloatRegexW) ||
                 regex_match(NumberPart, Tokens::OctIntRegexW)
-            ){return;}
+            )
+            {
+                auto IsFound = [](wstring In, char Val)
+                {
+                    return find(In.begin(), In.end(), Val) != In.end();
+                };
+                if (IsFound(NumberPart, L'.') || IsFound(NumberPart, L'e')) {*Base = 10;}
+                else {*Base = 8;}
+                return;
+            }
             else
             {
                 transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -348,7 +386,11 @@ void ParseNumberW(wstring::const_iterator& it, const wstring::const_iterator& en
         (
             regex_match(NumberPart, Tokens::FloatRegexW) ||
             regex_match(NumberPart, Tokens::DecIntRegexW)
-        ){return;}
+        )
+        {
+            *Base = 10;
+            return;
+        }
         else
         {
             transform(NumberPart.begin(), NumberPart.end(), NumberPart.begin(), ::tolower);
@@ -478,8 +520,9 @@ void __Tokenizer(const string& Input, TokenArrayType<char>* Output)
         {
             string NumBuf;
             uint64 StartCol = ColumnNumber;
-            ParseNumber(it, end, &NumBuf, &LineNumber, &ColumnNumber);
-            Output->push_back({Number, NumBuf, ivec2(LineNumber, StartCol)});
+            int Base;
+            ParseNumber(it, end, &NumBuf, &LineNumber, &ColumnNumber, &Base);
+            Output->push_back({Number, NumBuf, ivec2(LineNumber, StartCol), Base});
             continue;
         }
 
@@ -558,8 +601,9 @@ void __Tokenizer_WCHAR(const wstring& Input, TokenArrayType<wchar_t>* Output)
         {
             wstring NumBuf;
             uint64 StartCol = ColumnNumber;
-            ParseNumberW(it, end, &NumBuf, &LineNumber, &ColumnNumber);
-            Output->push_back({Number, NumBuf, ivec2(LineNumber, StartCol)});
+            int Base;
+            ParseNumberW(it, end, &NumBuf, &LineNumber, &ColumnNumber, &Base);
+            Output->push_back({Number, NumBuf, ivec2(LineNumber, StartCol), Base});
             continue;
         }
 

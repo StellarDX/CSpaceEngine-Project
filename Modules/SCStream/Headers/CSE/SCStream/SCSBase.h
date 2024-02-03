@@ -7,8 +7,10 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <regex>
 
 #include <CSE/CSEBase/CSEBase.h>
+#include <CSE/CSEBase/DateTime.h>
 #include <CSE/CSEBase/gltypes/GVector2D.h>
 #include <CSE/CSEBase/Algorithms.h>
 #include <CSE/SCStream/StelCXXRes/LRParser.h>
@@ -103,6 +105,7 @@ struct TokenType
     __Token_Types  Type;
     String<_CharT> Value;
     ivec2          Posiston;
+    int            NumBase = 10;
 };
 
 template<typename _CharT>
@@ -154,6 +157,7 @@ struct ValueType
 
     StringList<ucs2_t> Value;
     SharedPointer<SubMatrixType> SubMatrices = nullptr;
+    int Base = 10;
 
     template<typename _Tp>
     TypeID ToTypeID()
@@ -166,20 +170,20 @@ struct ValueType
 
     void GetQualified(void* Dst, size_t Idx = 0)
     {
-        switch (Type)
+        switch (Type & Mask)
         {
         case Number:
-            *((float64*)Dst) = std::stod(Value.front());
+            *((float64*)Dst) = std::stod(Value[Idx]);
             break;
 
         case VString:
-            *((ustring*)Dst) = Value.front();
+            *((ustring*)Dst) = Value[Idx];
             ((ustring*)Dst)->erase(((ustring*)Dst)->begin());
             ((ustring*)Dst)->pop_back();
             break;
 
         case Boolean:
-            *((bool*)Dst) = stob(Value.front());
+            *((bool*)Dst) = stob(Value[Idx]);
             break;
 
         default:
@@ -188,7 +192,12 @@ struct ValueType
         }
     }
 
-    bool GetTypeID() {return (Type & Mask);}
+    TypeID GetTypeID() {return TypeID(Type & Mask);}
+
+    void GetAsBasedInteger(void* Dst, size_t Idx = 0)
+    {
+        *((int64*)Dst) = std::stoll(Value.front(), nullptr, Base);
+    }
 
     template<typename _Tp, std::size_t _Nm>
     void GetAsArray(std::array<_Tp, _Nm>* Dst)
@@ -217,6 +226,30 @@ struct ValueType
         for (int i = 0; i < Value.size(); ++i)
         {
             GetQualified(&(*Dst)[i], i);
+        }
+    }
+
+    void GetAsDateTime(CSEDateTime* Dst)noexcept(false)
+    {
+        if (GetTypeID() != VString) {throw ParseException("Invalid value");}
+        ustring Str;
+        GetQualified(&Str);
+        std::wsmatch Toks;
+        if (std::regex_match(Str, Toks, _TIME SEDateTimeStringRegex))
+        {
+            *Dst = CSEDateTime
+            (
+                {std::stoi(Toks[1]), std::stoi(Toks[2]), std::stoi(Toks[3])},
+                {std::stoi(Toks[4]), std::stoi(Toks[5]), std::stod(Toks[6])}
+            );
+        }
+        else if (std::regex_match(Str, Toks, _TIME SEDateStringRegex))
+        {
+            *Dst = CSEDateTime({std::stoi(Toks[1]), std::stoi(Toks[2]), std::stoi(Toks[3])});
+        }
+        else
+        {
+            *Dst = CSEDateTime({std::stoi(Str), 1, 1});
         }
     }
 
@@ -295,6 +328,159 @@ struct SCSTable
 using SharedTablePointer = SharedPointer<SCSTable>;
 
 _SC_END
+
+// Get Taable Helpers
+inline auto __Str_Contain(ustring Left, ustring Right)
+{
+    return Left.find(Right) != ustring::npos;
+}
+
+inline ustringlist __Str_Split(ustring Str, ucs2 Symb = L'/')
+{
+    ustringlist Toks;
+    auto First = Str.find_first_not_of(Symb, 0);
+    auto Current = Str.find_first_of(Symb, 0);
+    for(; First != ustring::npos || Current != ustring::npos;)
+    {
+        Toks.emplace_back(Str.substr(First, Current - First));
+        First = Str.find_first_not_of(Symb, Current);
+        Current = Str.find_first_of(Symb, First);
+    }
+    return Toks;
+}
+
+inline auto __Find_Table_From_List(const _SC SharedTablePointer& Src, ustring Key)
+{
+    return find_if(Src->Get().begin(), Src->Get().end(), [Key](_SC SCSTable::ValueType Tbl)
+    {
+        return Tbl.Key == Key;
+    });
+}
+
+inline auto __Find_Table_With_Unit(const _SC SharedTablePointer& Src, ustring Key)
+{
+    return find_if(Src->Get().begin(), Src->Get().end(), [Key](_SC SCSTable::ValueType Tbl)
+    {
+        return Tbl.Key.substr(0, Key.size()) == Key;
+    });
+}
+
+inline auto __Find_Multi_Tables_From_List(const _SC SharedTablePointer& Src, ustring Key)
+{
+    std::vector<decltype(Src->Get().begin())> Result;
+    auto it = Src->Get().begin();
+    for (; it != Src->Get().end();)
+    {
+        it = find_if(it, Src->Get().end(), [Key](_SC SCSTable::ValueType Tbl)
+        {
+            return Tbl.Key == Key;
+        });
+        if (it != Src->Get().end())
+        {
+            Result.push_back(it);
+            ++it;
+        }
+    }
+    return Result;
+}
+
+inline auto __Find_Table_With_KeyWord(const _SC SharedTablePointer& Src, ustring Key)
+{
+    return find_if(Src->Get().begin(), Src->Get().end(), [Key](_SC SCSTable::ValueType Tbl)
+    {
+        return Tbl.Key.find(Key) != ustring::npos;
+    });
+}
+
+template<typename VTy> requires
+(
+    std::is_same_v<VTy, float64> ||
+    std::is_same_v<VTy, ustring> ||
+    std::is_same_v<VTy, bool>
+)
+inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end()) {it->Value.front().GetQualified(Dst);}
+    else {*Dst = Alt;}
+}
+
+template<typename VTy> requires
+(
+    std::is_same_v<VTy, uint64> ||
+    std::is_same_v<VTy, int64>
+)
+inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end()) {it->Value.front().GetAsBasedInteger(Dst);}
+    else {*Dst = Alt;}
+}
+
+template<typename _Tp, size_t _Nm>
+inline void __Get_Value_From_Table(std::array<_Tp, _Nm>* Dst, const _SC SharedTablePointer& Src, ustring Key, std::array<_Tp, _Nm> Alt)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end()) {it->Value.front().GetAsArray(Dst);}
+    else {*Dst = Alt;}
+}
+
+template<typename VTy> requires std::is_same_v<VTy, _TIME CSEDate>
+inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end())
+    {
+        CSEDateTime DateTime;
+        it->Value.front().GetAsDateTime(&DateTime);
+        *Dst = DateTime.date();
+    }
+    else {*Dst = Alt;}
+}
+
+inline void __Get_Value_With_Unit(float64* Dst, const _SC SharedTablePointer& Src, ustring Key, float64 Alt, float64 DefMultiply, std::map<ustring, float64> MultiplyOfUnits)
+{
+    if (Src->Get().front().Value.front().GetTypeID() != _SC ValueType::Number) {*Dst = Alt;}
+    auto it = __Find_Table_With_Unit(Src, Key);
+    if (it != Src->Get().end())
+    {
+        it->Value.front().GetQualified(Dst);
+        if (it->Key != Key)
+        {
+            ustring Unit = it->Key.substr(Key.size(), it->Key.size() - Key.size());
+            if (MultiplyOfUnits.contains(Unit))
+            {
+                *Dst *= MultiplyOfUnits.at(Unit);
+                return;
+            }
+        }
+        *Dst *= DefMultiply;
+    }
+    else {*Dst = Alt;}
+}
+
+template<size_t _Nm>
+inline void __Get_Value_With_Unit(std::array<float64, _Nm>* Dst, const _SC SharedTablePointer& Src, ustring Key, std::array<float64, _Nm> Alt, float64 DefMultiply, std::map<ustring, float64> MultiplyOfUnits)
+{
+    if (Src->Get().front().Value.front().GetTypeID() != _SC ValueType::Number) {*Dst = Alt;}
+    auto it = __Find_Table_With_Unit(Src, Key);
+    if (it != Src->Get().end())
+    {
+        it->Value.front().GetAsArray(Dst);
+        if (it->Key != Key)
+        {
+            ustring Unit = it->Key.substr(Key.size(), it->Key.size() - Key.size());
+            if (MultiplyOfUnits.contains(Unit))
+            {
+                *Dst = *Dst * MultiplyOfUnits.at(Unit);
+                return;
+            }
+        }
+        *Dst = *Dst * DefMultiply;
+    }
+    else {*Dst = Alt;}
+}
+
 _CSE_END
 
 #if defined _MSC_VER

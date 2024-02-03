@@ -222,6 +222,11 @@ string CSEDateTime::ToString(string _Fmt)const
 
 _TIME_BEGIN
 
+const std::wregex ISO8601TimeStringRegex(L"^([+\\-]?\\d+)[:\\-](\\d\\d)[:\\-](\\d\\d)T(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)([+\\-]\\d?\\d):(\\d\\d)$");
+const std::wregex SEDateTimeStringRegex(L"^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d) (\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
+const std::wregex SEDateStringRegex(L"^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d)$");
+const std::wregex SETimeStringRegex(L"^(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
+
 /*****************************************************************************
   CSEDate member functions
  *****************************************************************************/
@@ -837,6 +842,15 @@ CSETime CSETime::CurrentTime()
 }
 
 _TIME_END
+
+/*****************************************************************************
+  Dynamic time constants
+ *****************************************************************************/
+
+const long double CurrentSynodicDay()
+{
+
+}
 
 /*****************************************************************************
   Other functions

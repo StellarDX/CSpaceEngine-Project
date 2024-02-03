@@ -102,7 +102,9 @@ extern const long double Equation41;
 // -------------------------------------------------------------------------
 //      Name          Value                Note
 #define SynodicDay    86400             // mean synodic day(Solar day) in seconds(Sunrise to Sunrise), is approx. 24 hours
-#define SiderealDay   86164.09053083288 // Earth's rotation period relative to the precessing mean vernal equinox
+#define SiderealDay   86164.098903691   // IERS Value, Earth's rotation period relative to the precessing mean vernal equinox
+#define StellarDay    86164.09053083288 // IERS Value
+#define JulianYear    31557600          // Length of a Julian year, equals 365.25 days
 #define TropicalYear  31556925.18747072 // mean tropical year on January 1, 2000, equals 365.2421896698 days
 #define SiderealYear  31558149.7635456  // J2000.0 epoch, equals 365.256363004 days
 #define J2000         2451545           // Julian day of 2000.01.01 12:00:00.00
@@ -112,7 +114,7 @@ extern const long double Equation41;
 // -------------------------------------------------------------------------
 //      Name          Value         Note
 #define SolarLum      3.828E+26  // nominal solar luminosity defined by IAU
-#define SolarLumBol   3.0128E+28 // zero points of the absolute and apparent bolometric magnitude scales
+#define SolarLumBol   3.0128E+28 // zero points of the absolute and apparent bolometric magnitude scales (Mbol_Sun = ~-4.74)
 
 
 // List8: Molar Masses (in g/mol)

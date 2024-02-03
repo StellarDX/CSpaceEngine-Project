@@ -190,6 +190,8 @@ struct Object : public SEObject
     |                              Orbit                             |
     \*--------------------------------------------------------------*/
 
+    bool            FixedPos             = false;
+    vec3            Position             = vec3(_NoDataDbl);
     struct OrbitParams
     {
         // Binary
@@ -199,7 +201,7 @@ struct Object : public SEObject
 
         // Non-Binary
         ustring     AnalyticModel     = _NoDataStr; //
-        ustring     RefPlne           = _NoDataStr; // Reference system
+        ustring     RefPlane          = _NoDataStr; // Reference system
         float64     Epoch             = _NoDataDbl; // Epoch in JD
         float64     Period            = _NoDataDbl; // Period in seconds (T)
         float64     PericenterDist    = _NoDataDbl; // Pericenter distance in metres
@@ -226,6 +228,7 @@ struct Object : public SEObject
         ustring     Class             = _NoDataStr;
         ustring     Type              = _NoDataStr;
         ustringlist Biome             = {};
+        bool        Panspermia        = false;
     }Life[2];
 
     // ------------------------------------------------------------ //
@@ -439,7 +442,7 @@ struct Object : public SEObject
         float64     MinSurfaceTemp    = _NoDataDbl;
         float64     MaxSurfaceTemp    = _NoDataDbl;
         ustring     AtmoProfile       = _NoDataStr;
-    };
+    }Climate;
 
     // ------------------------------------------------------------ //
 
@@ -485,15 +488,15 @@ struct Object : public SEObject
     struct RingsParams : public _ASOBJ HapkeParams
     {
         ustring     Texture           = _NoDataStr;
-        float64     InnerRadius       = _NoDataDbl;
-        float64     OuterRadius       = _NoDataDbl;
-        float64     EdgeRadius        = _NoDataDbl;
-        float64     MeanRadius        = _NoDataDbl;
-        float64     Thickness         = _NoDataDbl;
-        float64     RocksMaxSize      = _NoDataDbl;
+        float64     InnerRadius       = _NoDataDbl;	// meters
+        float64     OuterRadius       = _NoDataDbl;	// meters
+        float64     EdgeRadius        = _NoDataDbl;	// outer radius of the dense part of rings  (skipping the E ring)
+        float64     MeanRadius        = _NoDataDbl;	// radius of the most denser part for the "rings winter" effect
+        float64     Thickness         = _NoDataDbl;	// meters
+        float64     RocksMaxSize      = _NoDataDbl;	// meters
         float64     RocksSpacing      = _NoDataDbl;
         float64     DustDrawDist      = _NoDataDbl;
-        float64     ChartRadius       = _NoDataDbl;
+        float64     ChartRadius       = _NoDataDbl;	// outer radius of rings for the chart mode (skipping the E ring)
         float64     RotationPeriod    = _NoDataDbl;
         float64     Brightness        = _NoDataDbl;
         float64     FrontBright       = _NoDataDbl;
@@ -586,12 +589,15 @@ struct Object : public SEObject
         float64     DustBright        = _NoDataDbl;
         vec3        GasColor          = vec3(_NoDataDbl);
         vec3        DustColor         = vec3(_NoDataDbl);
-    };
+    }CometTail;
 };
 
 // IOSCStream Compatibility
 #ifdef _CSE_SCSTREAM
-Object GetObjectFromTable(_SC SCSTable::SCKeyValue KeyValue);
+#ifdef GetObject
+#undef GetObject
+#endif
+Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);
 template<> Object GetObject(_SC SharedTablePointer Table, ustring Name);
 template<> _SC SCSTable MakeTable(Object Object);
 #endif

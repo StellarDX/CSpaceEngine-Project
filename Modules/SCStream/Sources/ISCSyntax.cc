@@ -296,6 +296,7 @@ SharedPointer<SCSTable> SCParser::Run(SharedPointer<TokenArrayType<char>> Tokens
                 }
                 ExpressionBuffer.Type = ExpressionBuffer.Number;
                 ExpressionBuffer.Value.push_back(Decoder.ToUnicode(PreviousWord.Value));
+                ExpressionBuffer.Base = PreviousWord.NumBase;
                 break;
 
             case 11:
@@ -554,6 +555,7 @@ SharedPointer<SCSTable> WSCParser::Run(SharedPointer<TokenArrayType<wchar_t>> To
                 }
                 ExpressionBuffer.Type = ExpressionBuffer.Number;
                 ExpressionBuffer.Value.push_back(PreviousWord.Value);
+                ExpressionBuffer.Base = PreviousWord.NumBase;
                 break;
 
             case 11:

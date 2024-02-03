@@ -87,6 +87,7 @@ _CSE_BEGIN
 using int64              = long long;          // int
 using float64            = double;             // real
 using uint64             = unsigned long long; // unsigned int
+using ucs2               = wchar_t;            // Unicode char
 using ustring            = std::wstring;       // Unicode string
 
 // Write bytes of buffer into return value with another type
@@ -169,7 +170,7 @@ static const auto _NoDataStr = L"None";
 static const auto _NoDataInt = 0xFFFFFFFFFFFFFFFF;
 
 #define IS_NO_DATA_STR(str) (str == _NoDataStr)
-#define IS_NO_DATA_DBL(dbl) (IEEE754_Dbl64(dbl).Bytes == 0x7FF00000BAADF00D)
+#define IS_NO_DATA_DBL(dbl) ((IEEE754_Dbl64(dbl).Bytes & (0x7FF00000FFFFFFFF)) == 0x7FF00000BAADF00D)
 #define IS_NO_DATA_INT(int) (int == 0xFFFFFFFFFFFFFFFF)
 
 using ustringlist = std::vector<ustring>;

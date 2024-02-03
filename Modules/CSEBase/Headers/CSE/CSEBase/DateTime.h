@@ -18,6 +18,7 @@
 
 #include <CSE/CSEBase/CSEBase.h>
 #include <ctime>
+#include <regex>
 
 // Namespace definations
 #define _TIME_BEGIN namespace Epoch{
@@ -27,6 +28,11 @@
 _CSE_BEGIN
 
 _TIME_BEGIN
+
+extern const std::wregex ISO8601TimeStringRegex;
+extern const std::wregex SEDateTimeStringRegex;
+extern const std::wregex SEDateStringRegex;
+extern const std::wregex SETimeStringRegex;
 
 class CSEDate
 {
@@ -174,6 +180,11 @@ struct _TIME CSETimezone
     CSEDateTime  DaylightDate;
     long         DaylightBias;
 };
+
+// Dynamic Date time constants
+#ifdef _USE_CSE_DEFINES
+const long double CurrentSynodicDay();
+#endif
 
 // Functions
 

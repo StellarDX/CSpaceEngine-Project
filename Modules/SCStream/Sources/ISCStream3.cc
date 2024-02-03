@@ -22,11 +22,8 @@ _SC SharedTablePointer ISCStream::Parse()const
     ostringstream OStr;
     OStr << input.rdbuf();
     string Str = OStr.str();
-
     SCS::SkipComments(Str);
-
     auto Tokens = SCS::Tokenizer(Str);
-
     auto FinalTable = Parser(Tokens, Decoder);
     return FinalTable;
 }
@@ -36,11 +33,8 @@ _SC SharedTablePointer WISCStream::Parse()const
     wostringstream OStr;
     OStr << input.rdbuf();
     wstring Str = OStr.str();
-
     SCS::SkipCommentsW(Str);
-
     auto Tokens = SCS::TokenizerW(Str);
-
     auto FinalTable = ParserW(Tokens);
     return FinalTable;
 }
