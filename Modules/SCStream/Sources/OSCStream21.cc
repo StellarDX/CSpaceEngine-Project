@@ -180,11 +180,13 @@ _SC_END
 void OSCStream::Write()
 {
     output << _Mybase::encod().FromUnicode(__Write(_Mybase::_Buf));
+    _Mybase::_Buf.Get().clear();
 }
 
 void WOSCStream::Write()
 {
     output << __Write(_Mybase::_Buf);
+    _Mybase::_Buf.Get().clear();
 }
 
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SC SCSTable& table)

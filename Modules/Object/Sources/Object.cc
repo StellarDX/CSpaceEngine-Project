@@ -1,9 +1,14 @@
 #include "CSE/CSEBase/AdvMath.h"
 #include "CSE/CSEBase/ConstLists.h"
+#include "CSE/CSEBase/DateTime.h"
 #include "CSE/Object.h"
 
 #if __has_include(<CSE/SCStream.h>)
 #include <CSE/SCStream.h>
+#endif
+
+#if __has_include(<CSE/Extensions/Hyperbolic.h>)
+#include <CSE/Extensions/Hyperbolic.h>
 #endif
 
 using namespace std;
@@ -104,6 +109,8 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         std::array<float64, 3> Color;
         __Get_Value_From_Table(&Color, CurrentTable, L"Color", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
         Obj.Color = vec3(Color);
+        __Get_Value_From_Table(&Obj.AbsMagn, CurrentTable, L"AbsMagn", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.SlopeParam, CurrentTable, L"SlopeParam", _NoDataDbl);
         __Get_Value_From_Table(&Obj.Brightness, CurrentTable, L"Brightness", _NoDataDbl);
         __Get_Value_From_Table(&Obj.BrightnessReal, CurrentTable, L"BrightnessReal", _NoDataDbl);
 
@@ -182,7 +189,9 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         {
             auto OrbitSubTable = OrbitTable->SubTable;
             if (OrbitTable->Key == L"BinaryOrbit") {Obj.Orbit.Binary = true;}
+            __Get_Value_From_Table(&Obj.Orbit.RefPlane, OrbitSubTable, L"RefPlane", Obj.Orbit.RefPlane);
             __Get_Value_From_Table(&Obj.Orbit.Separation, OrbitSubTable, L"Separation", _NoDataDbl);
+            Obj.Orbit.Separation *= AU;
             __Get_Value_From_Table(&Obj.Orbit.PositionAngle, OrbitSubTable, L"PositionAngle", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Orbit.AnalyticModel, OrbitSubTable, L"AnalyticModel", ustring(_NoDataStr));
             if (Obj.Orbit.AnalyticModel != _NoDataStr) {Obj.Orbit.RefPlane = L"Analytic";}
@@ -194,6 +203,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
                 float64 SemiMajorAxis;
                 __Get_Value_With_Unit(&SemiMajorAxis, OrbitSubTable, L"SemiMajorAxis", _NoDataDbl, AU, {{L"Km", 1000}});
+                if (Obj.Orbit.Eccentricity > 1 && SemiMajorAxis > 0) {SemiMajorAxis = -SemiMajorAxis;}
                 Obj.Orbit.PericenterDist = abs(SemiMajorAxis - SemiMajorAxis *
                     (IS_NO_DATA_DBL(Obj.Orbit.Eccentricity) ? 1 : Obj.Orbit.Eccentricity));
             }
@@ -699,6 +709,335 @@ template<> Object GetObject(_SC SharedTablePointer Table, ustring Name)
     return GetObjectFromKeyValue(*it);
 }
 
+template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags Fl, std::streamsize Prec)
+{
+    _SC SCSTable MainTable, ContentTable;
+    bool FixedOutput = !(Fl & __Object_Manipulator::Scientific);
+    __Add_Key_Value(&MainTable, Obj.Type, __Str_List_To_String(Obj.Name), Fl, Prec);
+
+    __Add_Key_Value(&ContentTable, L"DateUpdated", Obj.DateUpdated, FixedOutput, Prec);
+    __Add_Key_Value(&ContentTable, L"DiscMethod", Obj.DiscMethod, FixedOutput, Prec);
+    __Add_Key_Value(&ContentTable, L"DiscDate", Obj.DiscDate, FixedOutput, Prec);
+    __Add_Key_Value(&ContentTable, L"ParentBody", Obj.ParentBody, FixedOutput, Prec);
+    if (Obj.Type == L"Star")
+    {
+        __Add_Key_Value(&ContentTable, L"Class", Obj.SpecClass, FixedOutput, Prec);
+    }
+    else {__Add_Key_Value(&ContentTable, L"Class", Obj.Class, FixedOutput, Prec);}
+    __Add_Key_Value(&ContentTable, L"AsterType", Obj.AsterType, FixedOutput, Prec);
+
+    __Add_Key_Value(&ContentTable, L"MassKg", Obj.Mass, FixedOutput, Prec);
+    if (Fl & __Object_Manipulator::AutoRadius)
+    {
+        if (Obj.Dimensions.x == Obj.Dimensions.y && Obj.Dimensions.y == Obj.Dimensions.z)
+        {
+            if (Fl & __Object_Manipulator::FlatObjDim)
+            {
+                __Add_Key_Value(&ContentTable, L"Radius", Obj.Dimensions.x / 2. / 1000., FixedOutput, Prec);
+            }
+            else
+            {
+                __Add_Key_Value(&ContentTable, L"Radius", Obj.Dimensions.x / 2. / 1000., FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"Oblateness", array<float64, 3>{0, 0, 0}, FixedOutput, Prec);
+            }
+        }
+        else
+        {
+            if (Fl & __Object_Manipulator::FlatObjDim)
+            {
+                __Add_Key_Value(&ContentTable, L"Dimensions", array<float64, 3>(Obj.Dimensions / 1000.), FixedOutput, Prec);
+            }
+            else
+            {
+                auto Radius = array<float64, 3>(Obj.Dimensions / 2.);
+                auto MaxRad = *max(Radius.begin(), Radius.end());
+                array<float64, 3> Flattening = (MaxRad - Radius) / MaxRad;
+                __Add_Key_Value(&ContentTable, L"Radius", MaxRad / 1000., FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"Oblateness", Flattening, FixedOutput, Prec);
+            }
+        }
+    }
+    else {__Add_Key_Value(&ContentTable, L"Dimensions", array<float64, 3>(Obj.Dimensions / 1000.), FixedOutput, Prec);}
+
+    if (Fl & __Object_Manipulator::Physical)
+    {
+        __Add_Key_Value(&ContentTable, L"InertiaMoment", Obj.InertiaMoment, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"AlbedoBond", Obj.AlbedoBond, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"AlbedoGeom", Obj.AlbedoGeom, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"EndogenousHeating", Obj.EndogenousHeating, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"ThermalLuminosity", Obj.ThermalLuminosity, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"ThermalLuminosityBol", Obj.ThermalLuminosityBol, FixedOutput, Prec);
+        if (Obj.Type == L"Star")
+        {
+            __Add_Key_Value(&ContentTable, L"Teff", Obj.Temperature, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"Luminosity", Obj.Luminosity / SolarLum, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"LumBol", Obj.LumBol / SolarLumBol, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"FeH", Obj.FeH, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"CtoO", Obj.CtoO, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"Age", Obj.Age / 1E+12, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"KerrSpin", Obj.KerrSpin, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"KerrCharge", Obj.KerrCharge, FixedOutput, Prec);
+        }
+    }
+
+    if (Fl & __Object_Manipulator::Optical)
+    {
+        __Add_Key_Value(&ContentTable, L"Color", array<float64, 3>(Obj.Color), FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"AbsMagn", Obj.AbsMagn, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"SlopeParam", Obj.SlopeParam, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"Brightness", Obj.Brightness, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"BrightnessReal", Obj.BrightnessReal, FixedOutput, Prec);
+    }
+
+    if (Fl & __Object_Manipulator::Rotation)
+    {
+        __Add_Key_Value(&ContentTable, L"RotationEpoch", Obj.Rotation.RotationEpoch, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"Obliquity", Obj.Rotation.Obliquity, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"EqAscendNode", Obj.Rotation.EqAscendNode, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"RotationOffset", Obj.Rotation.RotationOffset, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"RotationPeriod", Obj.Rotation.RotationPeriod, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"Precession", Obj.Rotation.Precession, FixedOutput, Prec);
+        if (Obj.Rotation.TidalLocked && (Fl & __Object_Manipulator::FTidalLock))
+        {
+            __Add_Key_Value(&ContentTable, L"TidalLocked", Obj.Rotation.TidalLocked, FixedOutput, Prec);
+        }
+        else if (Obj.RotationModel == L"IAU")
+        {
+            __Add_Key_Value(&ContentTable, L"RotationModel", Obj.RotationModel, FixedOutput, Prec);
+            _SC SCSTable IAUTable;
+            __Add_Key_Value(&IAUTable, L"Epoch", Obj.RotationIAU.Epoch, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"PoleRA", Obj.RotationIAU.PoleRA, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"PoleRARate", Obj.RotationIAU.PoleRARate, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"PoleDec", Obj.RotationIAU.PoleDec, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"PoleDecRate", Obj.RotationIAU.PoleDecRate, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"PrimeMeridian", Obj.RotationIAU.PrimeMeridian, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"RotationRate", Obj.RotationIAU.RotationRate, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"RotationAccel", Obj.RotationIAU.RotationAccel, FixedOutput, Prec);
+            _SC ValueType PeriodicTerms;
+            ustringlist VList;
+            for (int i = 0; i < Obj.RotationIAU.PeriodicTerms.size(); ++i)
+            {
+                for (int j = 0; j < 6; ++j)
+                {
+                    std::wostringstream ValueStr;
+                    if (FixedOutput) {ValueStr << fixed;}
+                    ValueStr.precision(Prec);
+                    ValueStr << Obj.RotationIAU.PeriodicTerms[i][j];
+                    VList.push_back(ValueStr.str());
+                }
+            }
+            PeriodicTerms.Type = PeriodicTerms.Matrix;
+            PeriodicTerms.Value = VList;
+            _SC SCSTable::SCKeyValue PTKV;
+            if (Obj.RotationIAU.UsingSecular) {PTKV.Key = L"PeriodicTermsSecular";}
+            else {PTKV.Key = L"PeriodicTermsDiurnal";}
+            PTKV.Value.push_back(PeriodicTerms);
+            IAUTable.Get().push_back(PTKV);
+            ContentTable.Get().back().SubTable = make_shared<decltype(IAUTable)>(IAUTable);
+        }
+    }
+
+    /**
+     * @brief Smart orbit elements output
+     *
+     *     Object	            Elements used
+     *     Major planet	        e, a, i, Ω, ϖ, L0
+     *     Comet	            e, q, i, Ω, ω, T0
+     *     Asteroid	            e, a, i, Ω, ω, M0
+     *     Two - line elements	e, i, Ω, ω, n, M0
+     *
+     * @link https://en.wikipedia.org/wiki/Orbital_elements
+     */
+    if (!IS_NO_DATA_STR(Obj.Orbit.RefPlane))
+    {
+        if (Fl & __Object_Manipulator::AutoOrbit)
+        {
+            if (Obj.Orbit.RefPlane == L"Static")
+            {
+                __Add_Key_Value(&ContentTable, L"StaticPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+            }
+            else if (Obj.Orbit.RefPlane == L"Fixed")
+            {
+                __Add_Key_Value(&ContentTable, L"FixedPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+            }
+            else if (Obj.Orbit.RefPlane == L"Analytic")
+            {
+                __Add_Empty_Tag(&ContentTable);
+                _SC SCSTable OrbitTable;
+                ContentTable.Get().back().Key = L"Orbit";
+                __Add_Key_Value(&OrbitTable, L"RefPlane", Obj.Orbit.RefPlane, FixedOutput, Prec);
+                __Add_Key_Value(&OrbitTable, L"AnalyticModel", Obj.Orbit.AnalyticModel, FixedOutput, Prec);
+                ContentTable.Get().back().SubTable = make_shared<decltype(OrbitTable)>(OrbitTable);
+            }
+            else
+            {
+                __Add_Empty_Tag(&ContentTable);
+                _SC SCSTable OrbitTable;
+                if (Obj.Orbit.Binary)
+                {
+                    ContentTable.Get().back().Key = L"BinaryOrbit";
+                    __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+                    __Add_Key_Value(&OrbitTable, L"Separation", Obj.Orbit.Separation / AU, FixedOutput, Prec);
+                    __Add_Key_Value(&OrbitTable, L"PositionAngle", Obj.Orbit.PositionAngle, FixedOutput, Prec);
+                }
+                else
+                {
+                    ContentTable.Get().back().Key = L"Orbit";
+                    if (Obj.Type == L"Planet")
+                    {
+                        __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"SemiMajorAxisKm", _ASOBJ SemiMajorAxis(Obj) / 1000., FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"LongOfPericen", _ASOBJ LongitudeOfPerihelion(Obj), FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"MeanLongitude", _ASOBJ MeanLongitude(Obj), FixedOutput, Prec);
+                    }
+                    else if (Obj.Type == L"Comet")
+                    {
+                        __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"PericenterDist", Obj.Orbit.PericenterDist / AU, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly, FixedOutput, Prec);
+                    }
+                    else if (Obj.Type == L"Spacecraft" || Obj.Type == L"Structure" || Obj.Type == L"Artifact")
+                    {
+                        __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"MeanMotion", _ASOBJ MeanMotion(Obj), FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly, FixedOutput, Prec);
+                    }
+                    else
+                    {
+                        __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"SemiMajorAxisKm", _ASOBJ SemiMajorAxis(Obj) / 1000., FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly, FixedOutput, Prec);
+                    }
+                }
+                ContentTable.Get().back().SubTable = make_shared<decltype(OrbitTable)>(OrbitTable);
+            }
+        }
+        else
+        {
+            __Add_Key_Value(&ContentTable, L"StaticPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"FixedPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+            __Add_Empty_Tag(&ContentTable);
+            _SC SCSTable OrbitTable;
+            if (Obj.Orbit.Binary) {ContentTable.Get().back().Key = L"BinaryOrbit";}
+            else {ContentTable.Get().back().Key = L"Orbit";}
+            __Add_Key_Value(&OrbitTable, L"RefPlane", Obj.Orbit.RefPlane, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"AnalyticModel", Obj.Orbit.AnalyticModel, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"Separation", Obj.Orbit.Separation, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"PositionAngle", Obj.Orbit.PositionAngle, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"PeriodDays", Obj.Orbit.Period / SynodicDay, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"SemiMajorAxisKm", _ASOBJ SemiMajorAxis(Obj) / 1000., FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"GravParam", Obj.Orbit.GravParam, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"AscNodePreces", Obj.Orbit.AscNodePreces, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"ArgOfPeriPreces", Obj.Orbit.ArgOfPeriPreces, FixedOutput, Prec);
+            __Add_Key_Value(&OrbitTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly, FixedOutput, Prec);
+        }
+    }
+
+    MainTable.Get().front().SubTable = make_shared<decltype(ContentTable)>(ContentTable);
+    return MainTable;
+}
+
 #endif
+
+// Object Functions
+_ASOBJ_BEGIN
+
+float64 Aphelion(Object Obj)
+{
+    return SemiMajorAxis(Obj) * 2. - Perihelion(Obj);
+}
+
+float64 Perihelion(Object Obj)
+{
+    return Obj.Orbit.PericenterDist;
+}
+
+float64 SemiMajorAxis(Object Obj)
+{
+    float64 Ecc = IS_NO_DATA_DBL(Eccentricity(Obj)) ? 0 : Eccentricity(Obj);
+    return Perihelion(Obj) / (1. - Ecc);
+}
+
+float64 MeanMotion(Object Obj)
+{
+    return 360. / SiderealOrbitalPeriod(Obj); // Degrees per second
+}
+
+float64 Eccentricity(Object Obj)
+{
+    return Obj.Orbit.Eccentricity;
+}
+
+float64 SiderealOrbitalPeriod(Object Obj)
+{
+    return Obj.Orbit.Period;
+}
+
+// float64 AverageOrbitalSpeed(Object Obj)
+// {
+
+// }
+
+float64 MeanAnomaly(Object Obj)
+{
+    return Obj.Orbit.MeanAnomaly;
+}
+
+float64 MeanLongitude(Object Obj)
+{
+    float64 _AscendingNode = LongitudeOfAscendingNode(Obj);
+    float64 _ArgOfPericenter = IS_NO_DATA_DBL(ArgumentOfPerihelion(Obj)) ? 0 : ArgumentOfPerihelion(Obj);
+    float64 _MeanAnomaly = IS_NO_DATA_DBL(MeanAnomaly(Obj)) ? 0 : MeanAnomaly(Obj);
+    return _AscendingNode + _ArgOfPericenter + _MeanAnomaly;
+}
+
+float64 Inclination(Object Obj)
+{
+    return Obj.Orbit.Inclination;
+}
+
+float64 LongitudeOfAscendingNode(Object Obj)
+{
+    return Obj.Orbit.AscendingNode;
+}
+
+CSEDateTime TimeOfPerihelion(Object Obj)
+{
+    return JDToDateTime(Obj.Orbit.Epoch);
+}
+
+float64 ArgumentOfPerihelion(Object Obj)
+{
+    return Obj.Orbit.ArgOfPericenter;
+}
+
+float64 LongitudeOfPerihelion(Object Obj)
+{
+    float64 _AscendingNode = LongitudeOfAscendingNode(Obj);
+    float64 _ArgOfPericenter = IS_NO_DATA_DBL(ArgumentOfPerihelion(Obj)) ? 0 : ArgumentOfPerihelion(Obj);
+    return _AscendingNode + _ArgOfPericenter;
+}
+
+_ASOBJ_END
 
 _CSE_END

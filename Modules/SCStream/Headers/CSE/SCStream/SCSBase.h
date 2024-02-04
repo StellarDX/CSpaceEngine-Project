@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <regex>
+#include <iomanip>
 
 #include <CSE/CSEBase/CSEBase.h>
 #include <CSE/CSEBase/DateTime.h>
@@ -160,7 +161,7 @@ struct ValueType
     int Base = 10;
 
     template<typename _Tp>
-    TypeID ToTypeID()
+    static TypeID ToTypeID()
     {
         if (std::convertible_to<_Tp, float64>) {return Number;}
         else if (std::convertible_to<_Tp, ustring>) {return VString;}
@@ -329,7 +330,7 @@ using SharedTablePointer = SharedPointer<SCSTable>;
 
 _SC_END
 
-// Get Taable Helpers
+// Get Table Helpers
 inline auto __Str_Contain(ustring Left, ustring Right)
 {
     return Left.find(Right) != ustring::npos;
@@ -479,6 +480,107 @@ inline void __Get_Value_With_Unit(std::array<float64, _Nm>* Dst, const _SC Share
         *Dst = *Dst * DefMultiply;
     }
     else {*Dst = Alt;}
+}
+
+// Convert to Table Helpers
+inline ustring __Str_List_To_String(ustringlist usl, ucs2 pun = L'/')
+{
+    ustring ustr;
+    for (int i = 0; i < usl.size(); ++i)
+    {
+        ustr += usl[i];
+        if (i < usl.size() - 1) {ustr += pun;}
+    }
+    return ustr;
+}
+
+inline bool IsNoData(float64 Val)
+{
+    return IS_NO_DATA_DBL(Val);
+}
+
+inline bool IsNoData(uint64 Val)
+{
+    return IS_NO_DATA_INT(Val);
+}
+
+inline bool IsNoData(ustring Val)
+{
+    return IS_NO_DATA_STR(Val);
+}
+
+inline bool IsNoData(bool Val)
+{
+    return !Val;
+}
+
+template<typename Tp, size_t Nm>
+inline bool IsNoData(std::array<Tp, Nm> Val)
+{
+    for (auto i : Val)
+    {
+        if (IsNoData(i)) {return 1;}
+    }
+    return 0;
+}
+
+inline void __Add_Empty_Tag(_SC SCSTable* Table)
+{
+    Table->Get().push_back(_SC SCSTable::SCKeyValue());
+}
+
+template<typename genType> requires
+(
+    std::is_same_v<genType, float64> ||
+    std::is_same_v<genType, uint64> ||
+    std::is_same_v<genType, int64> ||
+    std::is_same_v<genType, ustring> ||
+    std::is_same_v<genType, bool>
+)
+inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, genType Value, bool Fixed, std::streamsize Preci)
+{
+    if (!IsNoData(Value))
+    {
+        _SC SCSTable::SCKeyValue KeyValue;
+        KeyValue.Key = Key;
+        std::wostringstream ValueStr;
+        if (Fixed) {ValueStr << std::fixed;}
+        if (std::is_same_v<genType, bool>) {ValueStr << std::boolalpha;}
+        if (std::is_same_v<genType, float64>) {ValueStr.precision(Preci);}
+        ValueStr << Value;
+        KeyValue.Value.push_back({.Type = _SC ValueType::ToTypeID<decltype(Value)>(), .Value = {ValueStr.str()}});
+        Table->Get().push_back(KeyValue);
+    }
+}
+
+template<typename Tp, size_t Nm>
+inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, std::array<Tp, Nm> Value, bool Fixed, std::streamsize Preci)
+{
+    if (!IsNoData(Value))
+    {
+        _SC SCSTable::SCKeyValue KeyValue;
+        KeyValue.Key = Key;
+        ustringlist VList;
+        for (int i = 0; i < Value.size(); ++i)
+        {
+            std::wostringstream ValueStr;
+            if (Fixed) {ValueStr << std::fixed;}
+            ValueStr.precision(Preci);
+            ValueStr << Value[i];
+            VList.push_back(ValueStr.str());
+        }
+        KeyValue.Value.push_back({.Type = _SC ValueType::TypeID(_SC ValueType::ToTypeID<decltype(Value[0])>() | _SC ValueType::Array), .Value = VList});
+        Table->Get().push_back(KeyValue);
+    }
+}
+
+inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, _TIME CSEDate Value, bool Fixed, std::streamsize Preci)
+{
+    if (Value.IsValid())
+    {
+        __Add_Key_Value(Table, Key,
+            __StelCXX_Text_Codecvt_65001().ToUnicode(Value.ToString("{}-{:02}-{:02}")), Fixed, Preci);
+    }
 }
 
 _CSE_END

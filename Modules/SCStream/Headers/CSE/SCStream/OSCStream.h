@@ -129,7 +129,7 @@ public:
     OSCStream(std::ostream& os) : output(os), _Mybase(){}
     OSCStream& operator=(const OSCStream&) = delete;
 
-    int _BaseInit()override {return 0;}
+    int _BaseInit()override {return _Fmtmask;}
     void Write()override;
 };
 
@@ -142,19 +142,19 @@ public:
     WOSCStream(std::wostream& os) : output(os), _Mybase(){}
     WOSCStream& operator=(const WOSCStream&) = delete;
 
-    int _BaseInit()override {return 0;}
+    int _BaseInit()override {return _Fmtmask;}
     void Write()override;
 };
 
 template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
-_SC SCSTable MakeTable(_SEObject Object);
+_SC SCSTable MakeTable(_SEObject Object, _SC __OSC_BASE::_Fmtflags, std::streamsize);
 
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SC SCSTable& table);
 
 template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SEObject& Object)
 {
-    os << MakeTable(Object);
+    os << MakeTable(Object, os.flags(), os.precision());
     return os;
 }
 

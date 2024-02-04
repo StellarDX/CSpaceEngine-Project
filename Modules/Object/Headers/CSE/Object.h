@@ -130,6 +130,8 @@ struct Object : public SEObject
     \*--------------------------------------------------------------*/
 
     vec3            Color                = vec3(_NoDataDbl);
+    float64         AbsMagn              = _NoDataDbl;
+    float64         SlopeParam           = _NoDataDbl;
     float64         Brightness           = _NoDataDbl;
     float64         BrightnessReal       = _NoDataDbl;
 
@@ -190,7 +192,6 @@ struct Object : public SEObject
     |                              Orbit                             |
     \*--------------------------------------------------------------*/
 
-    bool            FixedPos             = false;
     vec3            Position             = vec3(_NoDataDbl);
     struct OrbitParams
     {
@@ -597,10 +598,105 @@ struct Object : public SEObject
 #ifdef GetObject
 #undef GetObject
 #endif
+
+struct __Object_Manipulator
+{
+    static constexpr int32_t Physical   = static_cast<int32_t>(0b00000000000000000000000000000001);
+    static constexpr int32_t Optical    = static_cast<int32_t>(0b00000000000000000000000000000010);
+    static constexpr int32_t Rotation   = static_cast<int32_t>(0b00000000000000000000000000000100);
+    static constexpr int32_t Life       = static_cast<int32_t>(0b00000000000000000000000000001000);
+    static constexpr int32_t Interior   = static_cast<int32_t>(0b00000000000000000000000000010000);
+    static constexpr int32_t Surface    = static_cast<int32_t>(0b00000000000000000000000000100000);
+    static constexpr int32_t Ocean      = static_cast<int32_t>(0b00000000000000000000000001000000);
+    static constexpr int32_t Clouds     = static_cast<int32_t>(0b00000000000000000000000010000000);
+    static constexpr int32_t Atmosphere = static_cast<int32_t>(0b00000000000000000000000100000000);
+    static constexpr int32_t Aurora     = static_cast<int32_t>(0b00000000000000000000001000000000);
+    static constexpr int32_t Rings      = static_cast<int32_t>(0b00000000000000000000010000000000);
+    static constexpr int32_t AccDisk    = static_cast<int32_t>(0b00000000000000000000100000000000);
+    static constexpr int32_t Corona     = static_cast<int32_t>(0b00000000000000000001000000000000);
+    static constexpr int32_t CometTail  = static_cast<int32_t>(0b00000000000000000010000000000000);
+    static constexpr int32_t AutoOrbit  = static_cast<int32_t>(0b00000000000000000100000000000000);
+    static constexpr int32_t Climate    = static_cast<int32_t>(0b00000000000000001000000000000000);
+
+    static constexpr int32_t WaterMark  = static_cast<int32_t>(0b10000000000000000000000000000000); // Output watermark
+    static constexpr int32_t Scientific = static_cast<int32_t>(0b01000000000000000000000000000000); // Scientific output
+    static constexpr int32_t Booleans   = static_cast<int32_t>(0b00100000000000000000000000000000); // Output booleans
+    static constexpr int32_t FTidalLock = static_cast<int32_t>(0b00010000000000000000000000000000); // IAU rotation parameters will be ignored if has and force tidal-lock for objects are TidalLocked
+    static constexpr int32_t AutoRadius = static_cast<int32_t>(0b00001000000000000000000000000000); // Auto radius output, if disabled it will write dimensions instead of radius for round object.
+    static constexpr int32_t FlatObjDim = static_cast<int32_t>(0b00000100000000000000000000000000); // Output dimensions instead of radius and flattening for flattened object.
+
+    static constexpr int32_t Default    = static_cast<int32_t>(0b11111100000000001111111111111111);
+};
+
+class ManipulatableOSCStream : public __Object_Manipulator, virtual public OSCStream
+{
+public:
+    int _BaseInit()override
+    {
+        CustomMatOutputList.insert({L"PeriodicTermsDiurnal", 6});
+        CustomMatOutputList.insert({L"PeriodicTermsSecular", 6});
+        return Default;
+    }
+};
+
+class ManipulatableWOSCStream : public __Object_Manipulator, virtual public WOSCStream
+{
+public:
+    int _BaseInit()override
+    {
+        CustomMatOutputList.insert({L"PeriodicTermsDiurnal", 6});
+        CustomMatOutputList.insert({L"PeriodicTermsSecular", 6});
+        return Default;
+    }
+};
+
 Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);
 template<> Object GetObject(_SC SharedTablePointer Table, ustring Name);
-template<> _SC SCSTable MakeTable(Object Object);
+template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags Fl, std::streamsize Prec);
+
 #endif
+
+// Object Functions
+_ASOBJ_BEGIN
+
+float64 Aphelion(Object Obj);
+float64 Perihelion(Object Obj);
+float64 SemiMajorAxis(Object Obj);
+float64 MeanMotion(Object Obj);
+float64 Eccentricity(Object Obj);
+float64 SiderealOrbitalPeriod(Object Obj);
+//float64 AverageOrbitalSpeed(Object Obj);
+float64 MeanAnomaly(Object Obj);
+float64 MeanLongitude(Object Obj);
+float64 Inclination(Object Obj);
+float64 LongitudeOfAscendingNode(Object Obj);
+CSEDateTime TimeOfPerihelion(Object Obj);
+float64 ArgumentOfPerihelion(Object Obj);
+float64 LongitudeOfPerihelion(Object Obj);
+
+float64 MeanRadius(Object Obj);
+float64 EquatorialRadius(Object Obj);
+float64 PolarRadius(Object Obj);
+vec3 Flattening(Object Obj);
+float64 EquatorialCircumference(Object Obj);
+float64 MeridionalCircumference(Object Obj);
+float64 SurfaceArea(Object Obj);
+float64 Volume(Object Obj);
+float64 Mass(Object Obj);
+float64 MeanDensity(Object Obj);
+float64 SurfaceGravity(Object Obj);
+float64 MomentOfInertiaFactor(Object Obj);
+float64 EscapeVelocity(Object Obj);
+float64 SynodicRotationPeriod(Object Obj);
+float64 SiderealRotationPeriod(Object Obj);
+float64 EquatorialRotationVelocity(Object Obj);
+float64 AxialTilt(Object Obj);
+float64 GeometricAlbedo(Object Obj);
+float64 BondAlbedo(Object Obj);
+float64 EffectiveTemperature(Object Obj);
+float64 AbsoluteMagnitude(Object Obj);
+
+_ASOBJ_END
 
 _CSE_END
 
