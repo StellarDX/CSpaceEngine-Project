@@ -209,6 +209,11 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 Obj.Orbit.PericenterDist = abs(SemiMajorAxis - SemiMajorAxis *
                     (IS_NO_DATA_DBL(Obj.Orbit.Eccentricity) ? 1 : Obj.Orbit.Eccentricity));
             }
+            if ((!IS_NO_DATA_DBL(Obj.Orbit.PericenterDist) || !IS_NO_DATA_DBL(Obj.Orbit.Period))
+                    && IS_NO_DATA_STR(Obj.Orbit.RefPlane) )
+            {
+                Obj.Orbit.RefPlane = L"Extrasolar";
+            }
             __Get_Value_From_Table(&Obj.Orbit.GravParam, OrbitSubTable, L"GravParam", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Orbit.Inclination, OrbitSubTable, L"Inclination", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Orbit.AscendingNode, OrbitSubTable, L"AscendingNode", _NoDataDbl);
@@ -442,6 +447,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             auto CompTable = __Find_Table_From_List(OceanSubTable, L"Composition");
             if (CompTable != OceanSubTable->Get().end()) {Obj.Ocean.Composition = TableToCompositeMap(CompTable->SubTable);}
         }
+        else {Obj.NoOcean = true;}
 
         __Get_Value_From_Table(&Obj.NoClouds, CurrentTable, L"NoClouds", false);
         auto CloudsTables = __Find_Multi_Tables_From_List(CurrentTable, L"Clouds");
@@ -504,6 +510,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.Clouds.cycloneDensity2, FirstCloudsTable, L"cycloneDensity2", Obj.Clouds.cycloneDensity2);
             __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves2, FirstCloudsTable, L"cycloneOctaves2", Obj.Clouds.cycloneOctaves2);
         }
+        else {Obj.NoClouds = true;}
 
         __Get_Value_From_Table(&Obj.NoAtmosphere, CurrentTable, L"NoAtmosphere", false);
         auto AtmosphereTable = __Find_Table_From_List(CurrentTable, L"Atmosphere");
@@ -526,6 +533,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             auto CompTable = __Find_Table_From_List(AtmoSubTable, L"Composition");
             if (CompTable != AtmoSubTable->Get().end()) {Obj.Atmosphere.Composition = TableToCompositeMap(CompTable->SubTable);}
         }
+        else {Obj.NoAtmosphere = true;}
 
         auto ClimateTable = __Find_Table_From_List(CurrentTable, L"Climate");
         if (ClimateTable != CurrentTableEnd)
@@ -574,6 +582,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&BottomColor, AuroraSubTable, L"BottomColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
             Obj.Aurora.BottomColor = vec3(BottomColor);
         }
+        else {Obj.NoAurora = true;}
 
         __Get_Value_From_Table(&Obj.NoRings, CurrentTable, L"NoRings", false);
         auto RingsTable = __Find_Table_From_List(CurrentTable, L"Rings");
@@ -629,6 +638,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&BackDustColor, RingsSubTable, L"BackDustColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
             Obj.Rings.BackDustColor = vec3(BackDustColor);
         }
+        else {Obj.NoRings = true;}
 
         __Get_Value_From_Table(&Obj.NoAccretionDisk, CurrentTable, L"NoAccretionDisk", false);
         auto AccDiskTable = __Find_Table_From_List(CurrentTable, L"AccretionDisk");
@@ -674,6 +684,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.AccretionDisk.ShadowContrast, AccDiskSubTable, L"ShadowContrast", _NoDataDbl);
             __Get_Value_From_Table(&Obj.AccretionDisk.ShadowLength, AccDiskSubTable, L"ShadowLength", _NoDataDbl);
         }
+        else {Obj.NoAccretionDisk = true;}
 
         __Get_Value_From_Table(&Obj.NoCorona, CurrentTable, L"NoCorona", false);
         auto CoronaTable = __Find_Table_From_List(CurrentTable, L"Corona");
@@ -686,6 +697,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.Corona.RayDensity, CoronaSubTable, L"RayDensity", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Corona.RayCurv, CoronaSubTable, L"RayCurv", _NoDataDbl);
         }
+        else {Obj.NoCorona = true;}
 
         __Get_Value_From_Table(&Obj.NoCometTail, CurrentTable, L"NoCometTail", false);
         auto CometTailTable = __Find_Table_From_List(CurrentTable, L"CometTail");
@@ -704,6 +716,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&DustColor, CometTailSubTable, L"DustColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
             Obj.CometTail.DustColor = vec3(DustColor);
         }
+        else {Obj.NoCometTail = true;}
     }
 
     return Obj;
@@ -889,6 +902,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             {
                 __Add_Empty_Tag(&ContentTable);
                 _SC SCSTable OrbitTable;
+                __Add_Key_Value(&OrbitTable, L"RefPlane", Obj.Orbit.RefPlane, FixedOutput, Prec);
                 if (Obj.Orbit.Binary)
                 {
                     ContentTable.Get().back().Key = L"BinaryOrbit";
