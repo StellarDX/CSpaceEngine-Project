@@ -139,7 +139,10 @@ ustring __SC_Smart_Output_Base::__Write(const SCSTable& Table, bool DisableWM, u
             size_t count = Table._M_Elems[i].Value.front().Value.size();
             for (int j = 0; j < count; ++j)
             {
-                for (uint64 k = 0; k < Indents + 1; ++k) { _Os << L"\t"; }
+                if (j % len == 0)
+                {
+                    for (uint64 k = 0; k < Indents + 1; ++k) { _Os << L"\t"; }
+                }
                 _Os << Table._M_Elems[i].Value.front().Value[j];
                 _Os << L", ";
                 if (j % len == len - 1 || j == count - 1) {_Os << L"\n";}

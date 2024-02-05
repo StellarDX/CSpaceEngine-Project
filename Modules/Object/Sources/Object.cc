@@ -1,6 +1,7 @@
 #include "CSE/CSEBase/AdvMath.h"
 #include "CSE/CSEBase/ConstLists.h"
 #include "CSE/CSEBase/DateTime.h"
+#include "CSE/CSEBase/GLTypes.h"
 #include "CSE/Object.h"
 
 #if __has_include(<CSE/SCStream.h>)
@@ -765,7 +766,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             else
             {
                 auto Radius = array<float64, 3>(Obj.Dimensions / 2.);
-                auto MaxRad = *max(Radius.begin(), Radius.end());
+                auto MaxRad = *cse::max(Radius.begin(), Radius.end());
                 array<float64, 3> Flattening = (MaxRad - Radius) / MaxRad;
                 __Add_Key_Value(&ContentTable, L"Radius", MaxRad / 1000., FixedOutput, Prec);
                 __Add_Key_Value(&ContentTable, L"Oblateness", Flattening, FixedOutput, Prec);
@@ -1323,7 +1324,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
     }
 
     if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoRings", Obj.NoRings, FixedOutput, Prec);}
-    if ((Fl & __Object_Manipulator::Rings) && !Obj.NoRings)
+    if ((Fl & __Object_Manipulator::Rings) && Obj.Type != L"Star" && !Obj.NoRings)
     {
         __Add_Empty_Tag(&ContentTable);
         ContentTable.Get().back().Key = L"Rings";
@@ -1359,7 +1360,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
     }
 
     if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAccretionDisk", Obj.NoAccretionDisk, FixedOutput, Prec);}
-    if ((Fl & __Object_Manipulator::AccDisk) && !Obj.NoAccretionDisk)
+    if ((Fl & __Object_Manipulator::AccDisk) && Obj.Type == L"Star" && !Obj.NoAccretionDisk)
     {
         __Add_Empty_Tag(&ContentTable);
         ContentTable.Get().back().Key = L"AccretionDisk";
@@ -1402,7 +1403,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
     }
 
     if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoCorona", Obj.NoCorona, FixedOutput, Prec);}
-    if ((Fl & __Object_Manipulator::Corona)  && Obj.Type == L"Star" && !Obj.NoCorona)
+    if ((Fl & __Object_Manipulator::Corona) && Obj.Type == L"Star" && !Obj.NoCorona)
     {
         __Add_Empty_Tag(&ContentTable);
         ContentTable.Get().back().Key = L"Corona";
@@ -1419,7 +1420,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
     if ((Fl & __Object_Manipulator::CometTail) && !Obj.NoCometTail)
     {
         __Add_Empty_Tag(&ContentTable);
-        ContentTable.Get().back().Key = L"Corona";
+        ContentTable.Get().back().Key = L"CometTail";
         _SC SCSTable CometTailTable;
         __Add_Key_Value(&CometTailTable, L"MaxLength", Obj.CometTail.MaxLength, FixedOutput, Prec);
         __Add_Key_Value(&CometTailTable, L"GasToDust", Obj.CometTail.GasToDust, FixedOutput, Prec);

@@ -390,7 +390,7 @@ struct Object : public SEObject
 
         float64     Coverage          = _NoDataDbl;
         float64     mainFreq          = _NoDataDbl;
-        uint64      mainOctaves       = _NoDataDbl;
+        uint64      mainOctaves       = _NoDataInt;
         float64     stripeZones       = _NoDataDbl;
         float64     stripeFluct       = _NoDataDbl;
         float64     stripeTwist       = _NoDataDbl;
