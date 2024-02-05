@@ -39,8 +39,9 @@ struct __OSC_BASE
     enum _Fmtflags
     {
         // constants for formatting options
-        _Fmtmask = 0b11111111111111111111111111111111,
-        _Fmtzero = 0b00000000000000000000000000000000
+        _Fmtmask   = 0b11111111111111111111111111111111,
+        _Fmtzero   = 0b00000000000000000000000000000000,
+        _WaterMark = 0b10000000000000000000000000000000
     };
 
     // Custom matrix output option for keys,
@@ -126,7 +127,7 @@ public:
     using _Mybase = _SC __SC_Smart_Output_Base;
 
     std::ostream& output;
-    OSCStream(std::ostream& os) : output(os), _Mybase(){}
+    OSCStream(std::ostream& os) : output(os) {_Init();}
     OSCStream& operator=(const OSCStream&) = delete;
 
     int _BaseInit()override {return _Fmtmask;}
@@ -139,7 +140,7 @@ public:
     using _Mybase = _SC __SC_Smart_Output_Base;
 
     std::wostream& output;
-    WOSCStream(std::wostream& os) : output(os), _Mybase(){}
+    WOSCStream(std::wostream& os) : output(os) {_Init();}
     WOSCStream& operator=(const WOSCStream&) = delete;
 
     int _BaseInit()override {return _Fmtmask;}
@@ -147,12 +148,12 @@ public:
 };
 
 template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
-_SC SCSTable MakeTable(_SEObject Object, _SC __OSC_BASE::_Fmtflags, std::streamsize);
+_SC SCSTable MakeTable(_SEObject Object, int, std::streamsize);
 
 _SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SC SCSTable& table);
 
 template<typename _SEObject> requires std::is_base_of_v<SEObject, _SEObject>
-_SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, const _SEObject& Object)
+_SC __SC_Smart_Output_Base& operator<<(_SC __SC_Smart_Output_Base& os, _SEObject Object)
 {
     os << MakeTable(Object, os.flags(), os.precision());
     return os;

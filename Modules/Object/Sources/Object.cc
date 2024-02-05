@@ -42,6 +42,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         }
         else {__Get_Value_From_Table(&Obj.Class, CurrentTable, L"Class", ustring(_NoDataStr));}
         __Get_Value_From_Table(&Obj.AsterType, CurrentTable, L"AsterType", ustring(_NoDataStr));
+        __Get_Value_From_Table(&Obj.CometType, CurrentTable, L"CometType", ustring(_NoDataStr));
 
         __Get_Value_With_Unit(&Obj.Mass, CurrentTable, L"Mass", _NoDataDbl, EarthMass,
         {
@@ -235,9 +236,10 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             }
         }
 
-        __Get_Value_From_Table(&Obj.NoLife, CurrentTable, L"NoLife", false);
+        bool NoLife;
+        __Get_Value_From_Table(&NoLife, CurrentTable, L"NoLife", false);
         auto LifeTables = __Find_Multi_Tables_From_List(CurrentTable, L"Life");
-        if (!Obj.NoLife && !LifeTables.empty())
+        if (!NoLife && !LifeTables.empty())
         {
             auto GetLifeFromTable = [](_SC SharedTablePointer Table, Object::LifeParams* Dst)
             {
@@ -252,13 +254,16 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
             case 2:
                 GetLifeFromTable(LifeTables[1]->SubTable, &Obj.Life[1]);
+                ++Obj.LifeCount;
             case 1:
                 GetLifeFromTable(LifeTables[0]->SubTable, &Obj.Life[0]);
+                ++Obj.LifeCount;
                 break;
             default:
                 break;
             }
         }
+        else {Obj.LifeCount = 0;}
 
         auto TableToCompositeMap = [](_SC SharedTablePointer Table)
         {
@@ -420,6 +425,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
                 __Get_Value_From_Table(&Obj.Ocean.Height, OceanSubTable, L"Depth", _NoDataDbl);
             }
+            Obj.Ocean.Height *= 1000;
             __Get_Value_From_Table(&Obj.Ocean.Hapke, OceanSubTable, L"Hapke", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Ocean.SpotBright, OceanSubTable, L"SpotBright", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Ocean.SpotWidth, OceanSubTable, L"SpotWidth", _NoDataDbl);
@@ -471,7 +477,9 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 CloudLayer.ModulateColor = vec3(ModulateColor);
                 __Get_Value_From_Table(&CloudLayer.ModulateBright, CloudsTable, L"ModulateBright", _NoDataDbl);
                 __Get_Value_From_Table(&CloudLayer.Height, CloudsTable, L"Height", _NoDataDbl);
+                CloudLayer.Height *= 1000.;
                 __Get_Value_From_Table(&CloudLayer.Velocity, CloudsTable, L"Velocity", _NoDataDbl);
+                CloudLayer.Velocity /= 3.6;
                 __Get_Value_From_Table(&CloudLayer.RotationOffset, CloudsTable, L"RotationOffset", _NoDataDbl);
                 __Get_Value_From_Table(&CloudLayer.SubsurfScatBright, CloudsTable, L"SubsurfScatBright", _NoDataDbl);
                 __Get_Value_From_Table(&CloudLayer.SubsurfScatPower, CloudsTable, L"SubsurfScatPower", _NoDataDbl);
@@ -535,10 +543,13 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         {
             auto AuroraSubTable = AuroraTable->SubTable;
             __Get_Value_From_Table(&Obj.Aurora.Height, AuroraSubTable, L"Height", _NoDataDbl);
+            Obj.Aurora.Height *= 1000.;
             __Get_Value_From_Table(&Obj.Aurora.NorthLat, AuroraSubTable, L"NorthLat", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.NorthLon, AuroraSubTable, L"NorthLon", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.NorthRadius, AuroraSubTable, L"NorthRadius", _NoDataDbl);
+            Obj.Aurora.NorthRadius *= 1000.;
             __Get_Value_From_Table(&Obj.Aurora.NorthWidth, AuroraSubTable, L"NorthWidth", _NoDataDbl);
+            Obj.Aurora.NorthWidth *= 1000.;
             __Get_Value_From_Table(&Obj.Aurora.NorthRings, AuroraSubTable, L"NorthRings", _NoDataInt);
             __Get_Value_From_Table(&Obj.Aurora.NorthBright, AuroraSubTable, L"NorthBright", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.NorthFlashFreq, AuroraSubTable, L"NorthFlashFreq", _NoDataDbl);
@@ -547,7 +558,9 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.Aurora.SouthLat, AuroraSubTable, L"SouthLat", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.SouthLon, AuroraSubTable, L"SouthLon", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.SouthRadius, AuroraSubTable, L"SouthRadius", _NoDataDbl);
+            Obj.Aurora.SouthRadius *= 1000.;
             __Get_Value_From_Table(&Obj.Aurora.SouthWidth, AuroraSubTable, L"SouthWidth", _NoDataDbl);
+            Obj.Aurora.SouthWidth *= 1000.;
             __Get_Value_From_Table(&Obj.Aurora.SouthRings, AuroraSubTable, L"SouthRings", _NoDataInt);
             __Get_Value_From_Table(&Obj.Aurora.SouthBright, AuroraSubTable, L"SouthBright", _NoDataDbl);
             __Get_Value_From_Table(&Obj.Aurora.SouthFlashFreq, AuroraSubTable, L"SouthFlashFreq", _NoDataDbl);
@@ -642,7 +655,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.AccretionDisk.Luminosity, AccDiskSubTable, L"Luminosity", _NoDataDbl);
             Obj.AccretionDisk.Luminosity *= SolarLum;
             __Get_Value_From_Table(&Obj.AccretionDisk.LuminosityBol, AccDiskSubTable, L"LuminosityBol", _NoDataDbl);
-            Obj.AccretionDisk.Luminosity *= SolarLumBol;
+            Obj.AccretionDisk.LuminosityBol *= SolarLumBol;
             __Get_Value_From_Table(&Obj.AccretionDisk.Brightness, AccDiskSubTable, L"Brightness", _NoDataDbl);
 
             __Get_Value_With_Unit(&Obj.AccretionDisk.JetLength, AccDiskSubTable, L"JetLength", _NoDataDbl, AU, {{L"Km", 1000}});
@@ -709,10 +722,11 @@ template<> Object GetObject(_SC SharedTablePointer Table, ustring Name)
     return GetObjectFromKeyValue(*it);
 }
 
-template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags Fl, std::streamsize Prec)
+template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
 {
     _SC SCSTable MainTable, ContentTable;
     bool FixedOutput = !(Fl & __Object_Manipulator::Scientific);
+    bool NoBooleans = !(Fl & __Object_Manipulator::Booleans);
     __Add_Key_Value(&MainTable, Obj.Type, __Str_List_To_String(Obj.Name), Fl, Prec);
 
     __Add_Key_Value(&ContentTable, L"DateUpdated", Obj.DateUpdated, FixedOutput, Prec);
@@ -725,6 +739,7 @@ template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags 
     }
     else {__Add_Key_Value(&ContentTable, L"Class", Obj.Class, FixedOutput, Prec);}
     __Add_Key_Value(&ContentTable, L"AsterType", Obj.AsterType, FixedOutput, Prec);
+    __Add_Key_Value(&ContentTable, L"CometType", Obj.CometType, FixedOutput, Prec);
 
     __Add_Key_Value(&ContentTable, L"MassKg", Obj.Mass, FixedOutput, Prec);
     if (Fl & __Object_Manipulator::AutoRadius)
@@ -795,8 +810,8 @@ template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags 
         __Add_Key_Value(&ContentTable, L"Obliquity", Obj.Rotation.Obliquity, FixedOutput, Prec);
         __Add_Key_Value(&ContentTable, L"EqAscendNode", Obj.Rotation.EqAscendNode, FixedOutput, Prec);
         __Add_Key_Value(&ContentTable, L"RotationOffset", Obj.Rotation.RotationOffset, FixedOutput, Prec);
-        __Add_Key_Value(&ContentTable, L"RotationPeriod", Obj.Rotation.RotationPeriod, FixedOutput, Prec);
-        __Add_Key_Value(&ContentTable, L"Precession", Obj.Rotation.Precession, FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"RotationPeriod", Obj.Rotation.RotationPeriod / 3600., FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"Precession", Obj.Rotation.Precession / JulianYear, FixedOutput, Prec);
         if (Obj.Rotation.TidalLocked && (Fl & __Object_Manipulator::FTidalLock))
         {
             __Add_Key_Value(&ContentTable, L"TidalLocked", Obj.Rotation.TidalLocked, FixedOutput, Prec);
@@ -950,7 +965,470 @@ template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags 
             __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);
             __Add_Key_Value(&OrbitTable, L"ArgOfPeriPreces", Obj.Orbit.ArgOfPeriPreces, FixedOutput, Prec);
             __Add_Key_Value(&OrbitTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly, FixedOutput, Prec);
+            ContentTable.Get().back().SubTable = make_shared<decltype(OrbitTable)>(OrbitTable);
         }
+    }
+
+    //if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoLife", bool(Obj.LifeCount), FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Life) && Obj.LifeCount)
+    {
+        auto AddLife = [&](Object::LifeParams Life)
+        {
+            __Add_Empty_Tag(&ContentTable);
+            ContentTable.Get().back().Key = L"Life";
+            _SC SCSTable LifeTable;
+            __Add_Key_Value(&LifeTable, L"Class", Life.Class, FixedOutput, Prec);
+            __Add_Key_Value(&LifeTable, L"Type", Life.Type, FixedOutput, Prec);
+            __Add_Key_Value(&LifeTable, L"Biome", __Str_List_To_String(Life.Biome), FixedOutput, Prec);
+            __Add_Key_Value(&LifeTable, L"Panspermia", Life.Panspermia, FixedOutput, Prec);
+            ContentTable.Get().back().SubTable = make_shared<decltype(LifeTable)>(LifeTable);
+        };
+        switch (Obj.LifeCount)
+        {
+        case 2:
+            AddLife(Obj.Life[1]);
+        case 1:
+            AddLife(Obj.Life[0]);
+            break;
+        default:
+            break;
+        }
+    }
+
+    auto AddCompositeTable = [&](_SC SCSTable* Table, CompositionType Composition)
+    {
+        auto it = Composition.begin();
+        auto end = Composition.end();
+        for (; it != end; ++it)
+        {
+            __Add_Key_Value(Table, it->first, it->second, FixedOutput, Prec);
+        }
+    };
+
+    if ((Fl & __Object_Manipulator::Interior) && !Obj.Interior.empty())
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Interior";
+        _SC SCSTable InterTable;
+        __Add_Empty_Tag(&InterTable);
+        InterTable.Get().back().Key = L"Composition";
+        _SC SCSTable CompoTable;
+        AddCompositeTable(&CompoTable, Obj.Interior);
+        InterTable.Get().back().SubTable = make_shared<decltype(CompoTable)>(CompoTable);
+        ContentTable.Get().back().SubTable = make_shared<decltype(InterTable)>(InterTable);
+    }
+
+    if ((Fl & __Object_Manipulator::Surface) && Obj.EnableSurface)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Surface";
+        _SC SCSTable SurfaceTable;
+        __Add_Key_Value(&SurfaceTable, L"DiffMap", Obj.Surface.DiffMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"DiffMapAlpha", Obj.Surface.DiffMapAlpha, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"BumpMap", Obj.Surface.BumpMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"BumpHeight", Obj.Surface.BumpHeight, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"BumpOffset", Obj.Surface.BumpOffset, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"GlowMap", Obj.Surface.GlowMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"GlowMode", Obj.Surface.GlowMode, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"GlowColor", array<float64, 3>(Obj.Surface.GlowColor), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"GlowBright", Obj.Surface.GlowBright, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpecMap", Obj.Surface.SpecMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"FlipMap", Obj.Surface.FlipMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"Gamma", Obj.Surface.Gamma, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"Hapke", Obj.Surface.Hapke, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpotBright", Obj.Surface.SpotBright, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpotWidth", Obj.Surface.SpotWidth, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpotBrightCB", Obj.Surface.SpotBrightCB, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpotWidthCB", Obj.Surface.SpotWidthCB, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"TempMapMaxTemp", Obj.Surface.TempMapMaxTemp, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"DayAmbient", Obj.Surface.DayAmbient, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"RingsWinter", Obj.Surface.RingsWinter, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"ModulateColor", array<float64, 3>(Obj.Surface.ModulateColor), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"ModulateBright", Obj.Surface.ModulateBright, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"Preset", Obj.Surface.Preset, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SurfStyle", Obj.Surface.SurfStyle, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"Randomize", array<float64, 3>(Obj.Surface.Randomize), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"colorDistMagn", Obj.Surface.colorDistMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"colorDistFreq", Obj.Surface.colorDistFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"detailScale", Obj.Surface.detailScale, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"drivenDarkening", Obj.Surface.drivenDarkening, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"seaLevel", Obj.Surface.seaLevel, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"snowLevel", Obj.Surface.snowLevel, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"tropicLatitude", Obj.Surface.tropicLatitude, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"icecapLatitude", Obj.Surface.icecapLatitude, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"icecapHeight", Obj.Surface.icecapHeight, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climatePole", Obj.Surface.climatePole, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateTropic", Obj.Surface.climateTropic, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateEquator", Obj.Surface.climateEquator, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateSteppeMin", Obj.Surface.climateSteppeMin, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateSteppeMax", Obj.Surface.climateSteppeMax, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateForestMin", Obj.Surface.climateForestMin, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateForestMax", Obj.Surface.climateForestMax, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateGrassMin", Obj.Surface.climateGrassMin, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"climateGrassMax", Obj.Surface.climateGrassMax, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"humidity", Obj.Surface.humidity, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"heightTempGrad", Obj.Surface.heightTempGrad, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"beachWidth", Obj.Surface.beachWidth, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"tropicWidth", Obj.Surface.tropicWidth, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"mainFreq", Obj.Surface.mainFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"venusFreq", Obj.Surface.venusFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"venusMagn", Obj.Surface.venusMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"mareFreq", Obj.Surface.mareFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"mareDensity", Obj.Surface.mareDensity, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"terraceProb", Obj.Surface.terraceProb, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"erosion", Obj.Surface.erosion, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"montesMagn", Obj.Surface.montesMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"montesFreq", Obj.Surface.montesFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"montesSpiky", Obj.Surface.montesSpiky, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"montesFraction", Obj.Surface.montesFraction, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"dunesMagn", Obj.Surface.dunesMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"dunesFreq", Obj.Surface.dunesFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"dunesFraction", Obj.Surface.dunesFraction, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"hillsMagn", Obj.Surface.hillsMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"hillsFreq", Obj.Surface.hillsFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"hillsFraction", Obj.Surface.hillsFraction, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"hills2Fraction", Obj.Surface.hills2Fraction, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riversMagn", Obj.Surface.riversMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riversFreq", Obj.Surface.riversFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riversSin", Obj.Surface.riversSin, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riftsMagn", Obj.Surface.riftsMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riftsFreq", Obj.Surface.riftsFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"riftsSin", Obj.Surface.riftsSin, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"eqridgeMagn", Obj.Surface.eqridgeMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"eqridgeWidth", Obj.Surface.eqridgeWidth, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"eqridgeModMagn", Obj.Surface.eqridgeModMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"eqridgeModFreq", Obj.Surface.eqridgeModFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"canyonsMagn", Obj.Surface.canyonsMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"canyonsFreq", Obj.Surface.canyonsFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"canyonsFraction", Obj.Surface.canyonsFraction, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"cracksMagn", Obj.Surface.cracksMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"cracksFreq", Obj.Surface.cracksFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"cracksOctaves", Obj.Surface.cracksOctaves, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"craterMagn", Obj.Surface.craterMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"craterFreq", Obj.Surface.craterFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"craterDensity", Obj.Surface.craterDensity, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"craterOctaves", Obj.Surface.craterOctaves, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"craterRayedFactor", Obj.Surface.craterRayedFactor, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoMagn", Obj.Surface.volcanoMagn, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoFreq", Obj.Surface.volcanoFreq, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoDensity", Obj.Surface.volcanoDensity, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoOctaves", Obj.Surface.volcanoOctaves, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoActivity", Obj.Surface.volcanoActivity, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoFlows", Obj.Surface.volcanoFlows, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoRadius", Obj.Surface.volcanoRadius, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"volcanoTemp", Obj.Surface.volcanoTemp, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"lavaCoverTidal", Obj.Surface.lavaCoverTidal, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"lavaCoverSun", Obj.Surface.lavaCoverSun, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"lavaCoverYoung", Obj.Surface.lavaCoverYoung, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpecBrightWater", Obj.Surface.SpecBrightWater, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpecBrightIce", Obj.Surface.SpecBrightIce, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"RoughnessWater", Obj.Surface.RoughnessWater, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"RoughnessIce", Obj.Surface.RoughnessIce, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"SpecularScale", Obj.Surface.SpecularScale, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"RoughnessBias", Obj.Surface.RoughnessBias, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"RoughnessScale", Obj.Surface.RoughnessScale, FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(SurfaceTable)>(SurfaceTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoOcean", Obj.NoOcean, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Ocean) && !Obj.NoOcean)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Ocean";
+        _SC SCSTable OceanTable;
+        __Add_Key_Value(&OceanTable, L"Height", Obj.Ocean.Height / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"Hapke", Obj.Ocean.Hapke, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"SpotBright", Obj.Ocean.SpotBright, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"SpotWidth", Obj.Ocean.SpotWidth, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"SpotBrightCB", Obj.Ocean.SpotBrightCB, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"SpotWidthCB", Obj.Ocean.SpotWidthCB, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"TempMapMaxTemp", Obj.Ocean.TempMapMaxTemp, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"DayAmbient", Obj.Ocean.DayAmbient, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"RingsWinter", Obj.Ocean.RingsWinter, FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"ModulateColor", array<float64, 3>(Obj.Ocean.ModulateColor), FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"ModulateBright", Obj.Ocean.ModulateBright, FixedOutput, Prec);
+        if (!Obj.Ocean.Composition.empty())
+        {
+            __Add_Empty_Tag(&OceanTable);
+            OceanTable.Get().back().Key = L"Composition";
+            _SC SCSTable CompoTable;
+            AddCompositeTable(&CompoTable, Obj.Ocean.Composition);
+            OceanTable.Get().back().SubTable = make_shared<decltype(CompoTable)>(CompoTable);
+        }
+        ContentTable.Get().back().SubTable = make_shared<decltype(OceanTable)>(OceanTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoClouds", Obj.NoClouds, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Clouds) && !Obj.NoClouds)
+    {
+        auto AddClouds = [&](Object::CloudParams::CloudLayerParam Layer)
+        {
+            __Add_Empty_Tag(&ContentTable);
+            ContentTable.Get().back().Key = L"Clouds";
+            _SC SCSTable CloudLayerTable;
+            __Add_Key_Value(&CloudLayerTable, L"DiffMap", Layer.DiffMap, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"DiffMapAlpha", Layer.DiffMapAlpha, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"BumpMap", Layer.BumpMap, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"BumpHeight", Layer.BumpHeight, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"BumpOffset", Layer.BumpOffset, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"GlowMap", Layer.GlowMap, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"GlowMode", Layer.GlowMode, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"GlowColor", array<float64, 3>(Layer.GlowColor), FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"GlowBright", Layer.GlowBright, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SpecMap", Layer.SpecMap, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"FlipMap", Layer.FlipMap, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"Gamma", Layer.Gamma, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"Hapke", Layer.Hapke, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SpotBright", Layer.SpotBright, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SpotWidth", Layer.SpotWidth, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SpotBrightCB", Layer.SpotBrightCB, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SpotWidthCB", Layer.SpotWidthCB, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"TempMapMaxTemp", Layer.TempMapMaxTemp, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"DayAmbient", Layer.DayAmbient, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"RingsWinter", Layer.RingsWinter, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"ModulateColor", array<float64, 3>(Layer.ModulateColor), FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"ModulateBright", Layer.ModulateBright, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"Height", Layer.Height / 1000., FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"Velocity", Layer.Velocity * 3.6, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"RotationOffset", Layer.RotationOffset, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SubsurfScatBright", Layer.SubsurfScatBright, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"SubsurfScatPower", Layer.SubsurfScatPower, FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"Opacity", Layer.Opacity, FixedOutput, Prec);
+            ContentTable.Get().back().SubTable = make_shared<decltype(CloudLayerTable)>(CloudLayerTable);
+        };
+        if (!Obj.Clouds.Layers.empty()){AddClouds(Obj.Clouds.Layers[0]);}
+        else
+        {
+            __Add_Empty_Tag(&ContentTable);
+            ContentTable.Get().back().Key = L"Clouds";
+        }
+        auto CloudIt = ContentTable.Get().end() - 1;
+        #if STRIPE_CYCLONE_OUTPUT_TO_CLOUDS
+        auto CloudAppIt = CloudIt;
+        #else
+        auto CloudAppIt = find_if(ContentTable.Get().begin(), ContentTable.Get().end(),
+        [](_SC SCSTable::ValueType Tbl)
+        {
+            return Tbl.Key == L"Surface";
+        });
+        if (CloudAppIt == ContentTable.Get().end())
+        {
+            __Add_Empty_Tag(&ContentTable);
+            ContentTable.Get().back().Key = L"Surface";
+            CloudAppIt = ContentTable.Get().end() - 1;
+        }
+        #endif
+        _SC SCSTable CloudTable, ClApperTable;
+        __Add_Key_Value(&CloudTable, L"Coverage", Obj.Clouds.Coverage, FixedOutput, Prec);
+        __Add_Key_Value(&CloudTable, L"mainFreq", Obj.Clouds.mainFreq, FixedOutput, Prec);
+        __Add_Key_Value(&CloudTable, L"mainOctaves", Obj.Clouds.mainOctaves, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"stripeZones", Obj.Clouds.stripeZones, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"stripeFluct", Obj.Clouds.stripeFluct, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"stripeTwist", Obj.Clouds.stripeTwist, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneMagn", Obj.Clouds.cycloneMagn, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneFreq", Obj.Clouds.cycloneFreq, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneDensity", Obj.Clouds.cycloneDensity, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneOctaves", Obj.Clouds.cycloneOctaves, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneMagn2", Obj.Clouds.cycloneMagn2, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneFreq2", Obj.Clouds.cycloneFreq2, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneDensity2", Obj.Clouds.cycloneDensity2, FixedOutput, Prec);
+        __Add_Key_Value(&ClApperTable, L"cycloneOctaves2", Obj.Clouds.cycloneOctaves2, FixedOutput, Prec);
+        if (!CloudTable.Get().empty())
+        {
+            CloudIt->SubTable->Get().insert(CloudIt->SubTable->Get().end(),
+                CloudTable.Get().begin(), CloudTable.Get().end());
+        }
+        if (!ClApperTable.Get().empty())
+        {
+            CloudAppIt->SubTable->Get().insert(CloudAppIt->SubTable->Get().end(),
+                ClApperTable.Get().begin(), ClApperTable.Get().end());
+        }
+        if (Obj.Clouds.Layers.size() > 1)
+        {
+            for (int i = 1; i < Obj.Clouds.Layers.size(); ++i)
+            {
+                AddClouds(Obj.Clouds.Layers[i]);
+            }
+        }
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAtmosphere", Obj.NoAtmosphere, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Atmosphere) && !Obj.NoAtmosphere)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Atmosphere";
+        _SC SCSTable AtmosphereTable;
+        __Add_Key_Value(&AtmosphereTable, L"Model", Obj.Atmosphere.Model, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Height", Obj.Atmosphere.Height / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Density", Obj.Atmosphere.Density, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Pressure", Obj.Atmosphere.Pressure / StandardAtm, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Adiabat", Obj.Atmosphere.Adiabat, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Greenhouse", Obj.Atmosphere.Greenhouse, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Bright", Obj.Atmosphere.Bright, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Opacity", Obj.Atmosphere.Opacity, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"SkyLight", Obj.Atmosphere.SkyLight, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Hue", Obj.Atmosphere.Hue, FixedOutput, Prec);
+        __Add_Key_Value(&AtmosphereTable, L"Saturation", Obj.Atmosphere.Saturation, FixedOutput, Prec);
+        if (!Obj.Atmosphere.Composition.empty())
+        {
+            __Add_Empty_Tag(&AtmosphereTable);
+            AtmosphereTable.Get().back().Key = L"Composition";
+            _SC SCSTable CompoTable;
+            AddCompositeTable(&CompoTable, Obj.Atmosphere.Composition);
+            AtmosphereTable.Get().back().SubTable = make_shared<decltype(CompoTable)>(CompoTable);
+        }
+        ContentTable.Get().back().SubTable = make_shared<decltype(AtmosphereTable)>(AtmosphereTable);
+    }
+
+    if ((Fl & __Object_Manipulator::Climate) && Obj.EnableClimate)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Climate";
+        _SC SCSTable ClimateTable;
+        __Add_Key_Value(&ClimateTable, L"GlobalWindSpeed", Obj.Climate.GlobalWindSpeed, FixedOutput, Prec);
+        __Add_Key_Value(&ClimateTable, L"MinSurfaceTemp", Obj.Climate.MinSurfaceTemp, FixedOutput, Prec);
+        __Add_Key_Value(&ClimateTable, L"MaxSurfaceTemp", Obj.Climate.MaxSurfaceTemp, FixedOutput, Prec);
+        __Add_Key_Value(&ClimateTable, L"AtmoProfile", Obj.Climate.AtmoProfile, FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(ClimateTable)>(ClimateTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAurora", Obj.NoAurora, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Aurora) && !Obj.NoAurora)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Aurora";
+        _SC SCSTable AuroraTable;
+        __Add_Key_Value(&AuroraTable, L"Height", Obj.Aurora.Height / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthLat", Obj.Aurora.NorthLat, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthLon", Obj.Aurora.NorthLon, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthRadius", Obj.Aurora.NorthRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthWidth", Obj.Aurora.NorthWidth / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthRings", Obj.Aurora.NorthRings, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthBright", Obj.Aurora.NorthBright, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthFlashFreq", Obj.Aurora.NorthFlashFreq, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthMoveSpeed", Obj.Aurora.NorthMoveSpeed, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"NorthParticles", Obj.Aurora.NorthParticles, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthLat", Obj.Aurora.SouthLat, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthLon", Obj.Aurora.SouthLon, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthRadius", Obj.Aurora.SouthRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthWidth", Obj.Aurora.SouthWidth / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthRings", Obj.Aurora.SouthRings, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthBright", Obj.Aurora.SouthBright, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthFlashFreq", Obj.Aurora.SouthFlashFreq, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthMoveSpeed", Obj.Aurora.SouthMoveSpeed, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"SouthParticles", Obj.Aurora.SouthParticles, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"TopColor", array<float64, 3>(Obj.Aurora.TopColor), FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"BottomColor", array<float64, 3>(Obj.Aurora.BottomColor), FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(AuroraTable)>(AuroraTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoRings", Obj.NoRings, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Rings) && !Obj.NoRings)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Rings";
+        _SC SCSTable RingsTable;
+        __Add_Key_Value(&RingsTable, L"Texture", Obj.Rings.Texture, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"InnerRadius", Obj.Rings.InnerRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"OuterRadius", Obj.Rings.OuterRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"EdgeRadius", Obj.Rings.EdgeRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"MeanRadius", Obj.Rings.MeanRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"Thickness", Obj.Rings.Thickness, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"RocksMaxSize", Obj.Rings.RocksMaxSize, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"RocksSpacing", Obj.Rings.RocksSpacing, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"DustDrawDist", Obj.Rings.DustDrawDist, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"ChartRadius", Obj.Rings.ChartRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"RotationPeriod", Obj.Rings.RotationPeriod / 3600., FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"Brightness", Obj.Rings.Brightness, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"FrontBright", Obj.Rings.FrontBright, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackBright", Obj.Rings.BackBright, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"Density", Obj.Rings.Density, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"Opacity", Obj.Rings.Opacity, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"SelfShadow", Obj.Rings.SelfShadow, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"PlanetShadow", Obj.Rings.PlanetShadow, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"frequency", Obj.Rings.frequency, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"densityScale", Obj.Rings.densityScale, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"densityOffset", Obj.Rings.densityOffset, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"densityPower", Obj.Rings.densityPower, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"colorContrast", Obj.Rings.colorContrast, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"FrontColor", array<float64, 3>(Obj.Rings.FrontColor), FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackThickColor", array<float64, 3>(Obj.Rings.BackThickColor), FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackIceColor", array<float64, 3>(Obj.Rings.BackIceColor), FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackDustColor", array<float64, 3>(Obj.Rings.BackDustColor), FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(RingsTable)>(RingsTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAccretionDisk", Obj.NoAccretionDisk, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::AccDisk) && !Obj.NoAccretionDisk)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"AccretionDisk";
+        _SC SCSTable AccDiskTable;
+        __Add_Key_Value(&AccDiskTable, L"InnerRadiusKm", Obj.AccretionDisk.InnerRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OuterRadiusKm", Obj.AccretionDisk.OuterRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"InnerThicknessKm", Obj.AccretionDisk.InnerThickness / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OuterThicknessKm", Obj.AccretionDisk.OuterThickness / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"ThicknessPow", Obj.AccretionDisk.ThicknessPow, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"DetailScaleR", Obj.AccretionDisk.DetailScaleR, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"DetailScaleV", Obj.AccretionDisk.DetailScaleV, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OctaveDistortionX", Obj.AccretionDisk.OctaveDistortionX, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OctaveDistortionY", Obj.AccretionDisk.OctaveDistortionY, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OctaveDistortionZ", Obj.AccretionDisk.OctaveDistortionZ, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"OctaveScale", Obj.AccretionDisk.OctaveScale, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"DiskNoiseContrast", Obj.AccretionDisk.DiskNoiseContrast, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"DiskTempContrast", Obj.AccretionDisk.DiskTempContrast, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"DiskOuterSpin", Obj.AccretionDisk.DiskOuterSpin, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"TwistMagn", Obj.AccretionDisk.TwistMagn, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"AccretionRate", Obj.AccretionDisk.AccretionRate, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"Temperature", Obj.AccretionDisk.Temperature, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"Density", Obj.AccretionDisk.Density, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"Luminosity", Obj.AccretionDisk.Luminosity / SolarLum, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"LuminosityBol", Obj.AccretionDisk.LuminosityBol / SolarLumBol, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"Brightness", Obj.AccretionDisk.Brightness, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetLengthKm", Obj.AccretionDisk.JetLength / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetStartRadiusKm", Obj.AccretionDisk.JetStartRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetEndRadiusKm", Obj.AccretionDisk.JetEndRadius / 1000., FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetStartTemp", Obj.AccretionDisk.JetStartTemp, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetEndTemp", Obj.AccretionDisk.JetEndTemp, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetVelocity", Obj.AccretionDisk.JetVelocity, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetDistortion", Obj.AccretionDisk.JetDistortion, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetThickness", Obj.AccretionDisk.JetThickness, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetDensity", Obj.AccretionDisk.JetDensity, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"JetBrightness", Obj.AccretionDisk.JetBrightness, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"LightingBright", Obj.AccretionDisk.LightingBright, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"ShadowContrast", Obj.AccretionDisk.ShadowContrast, FixedOutput, Prec);
+        __Add_Key_Value(&AccDiskTable, L"ShadowLength", Obj.AccretionDisk.ShadowLength, FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(AccDiskTable)>(AccDiskTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoCorona", Obj.NoCorona, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::Corona)  && Obj.Type == L"Star" && !Obj.NoCorona)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Corona";
+        _SC SCSTable CoronaTable;
+        __Add_Key_Value(&CoronaTable, L"Radius", Obj.Corona.Radius, FixedOutput, Prec);
+        __Add_Key_Value(&CoronaTable, L"Period", Obj.Corona.Period, FixedOutput, Prec);
+        __Add_Key_Value(&CoronaTable, L"Brightness", Obj.Corona.Brightness, FixedOutput, Prec);
+        __Add_Key_Value(&CoronaTable, L"RayDensity", Obj.Corona.RayDensity, FixedOutput, Prec);
+        __Add_Key_Value(&CoronaTable, L"RayCurv", Obj.Corona.RayCurv, FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(CoronaTable)>(CoronaTable);
+    }
+
+    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoCometTail", Obj.NoCometTail, FixedOutput, Prec);}
+    if ((Fl & __Object_Manipulator::CometTail) && !Obj.NoCometTail)
+    {
+        __Add_Empty_Tag(&ContentTable);
+        ContentTable.Get().back().Key = L"Corona";
+        _SC SCSTable CometTailTable;
+        __Add_Key_Value(&CometTailTable, L"MaxLength", Obj.CometTail.MaxLength, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"GasToDust", Obj.CometTail.GasToDust, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"Particles", Obj.CometTail.Particles, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"GasBright", Obj.CometTail.GasBright, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"DustBright", Obj.CometTail.DustBright, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"GasColor", array<float64, 3>(Obj.CometTail.GasColor), FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"DustColor", array<float64, 3>(Obj.CometTail.DustColor), FixedOutput, Prec);
+        ContentTable.Get().back().SubTable = make_shared<decltype(CometTailTable)>(CometTailTable);
     }
 
     MainTable.Get().front().SubTable = make_shared<decltype(ContentTable)>(ContentTable);

@@ -96,7 +96,8 @@ struct Object : public SEObject
     ustring         ParentBody           = _NoDataStr;       // Parent body
     ustring         Class                = _NoDataStr;       // Classification
     ustring         AsterType            = _NoDataStr;       // Only for asteroids
-    ustring         SpecClass            = _NoDataStr;       // Only for Stars
+    ustring         CometType            = _NoDataStr;       // Only for comets
+    ustring         SpecClass            = _NoDataStr;       // Only for stars
 
     // ------------------------------------------------------------ //
 
@@ -223,7 +224,7 @@ struct Object : public SEObject
     |                              Life                              |
     \*--------------------------------------------------------------*/
 
-    bool            NoLife               = false;
+    uint64          LifeCount            = 0;
     struct LifeParams
     {
         ustring     Class             = _NoDataStr;
@@ -378,8 +379,8 @@ struct Object : public SEObject
 
         struct CloudLayerParam : public _ASOBJ SurfaceTextureParams, _ASOBJ HapkeParams
         {
-            float64 Height            = _NoDataDbl; // Km
-            float64 Velocity          = _NoDataDbl; // Km/h
+            float64 Height            = _NoDataDbl; // meters
+            float64 Velocity          = _NoDataDbl; // m/s
             float64 RotationOffset    = _NoDataDbl;
             float64 SubsurfScatBright = _NoDataDbl;
             float64 SubsurfScatPower  = _NoDataDbl;
@@ -455,27 +456,27 @@ struct Object : public SEObject
     bool            NoAurora             = false;
     struct AuroraParams
     {
-        float64     Height            = _NoDataDbl;
-        float64     NorthLat          = _NoDataDbl;
-        float64     NorthLon          = _NoDataDbl;
-        float64     NorthRadius       = _NoDataDbl;
-        float64     NorthWidth        = _NoDataDbl;
-        uint64      NorthRings        = _NoDataInt;
+        float64     Height            = _NoDataDbl; // meters
+        float64     NorthLat          = _NoDataDbl; // degrees
+        float64     NorthLon          = _NoDataDbl; // degrees
+        float64     NorthRadius       = _NoDataDbl; // meters
+        float64     NorthWidth        = _NoDataDbl; // meters
+        uint64      NorthRings        = _NoDataInt; // number of rings
         float64     NorthBright       = _NoDataDbl;
         float64     NorthFlashFreq    = _NoDataDbl;
         float64     NorthMoveSpeed    = _NoDataDbl;
         uint64      NorthParticles    = _NoDataInt;
-        float64     SouthLat          = _NoDataDbl;
-        float64     SouthLon          = _NoDataDbl;
-        float64     SouthRadius       = _NoDataDbl;
-        float64     SouthWidth        = _NoDataDbl;
-        uint64      SouthRings        = _NoDataInt;
+        float64     SouthLat          = _NoDataDbl; // degrees
+        float64     SouthLon          = _NoDataDbl; // degrees
+        float64     SouthRadius       = _NoDataDbl; // meters
+        float64     SouthWidth        = _NoDataDbl; // meters
+        uint64      SouthRings        = _NoDataInt; // number of rings
         float64     SouthBright       = _NoDataDbl;
         float64     SouthFlashFreq    = _NoDataDbl;
         float64     SouthMoveSpeed    = _NoDataDbl;
         uint64      SouthParticles    = _NoDataInt;
-        vec3        TopColor          = vec3(_NoDataDbl);
-        vec3        BottomColor       = vec3(_NoDataDbl);
+        vec3        TopColor          = vec3(_NoDataDbl); // multiplier
+        vec3        BottomColor       = vec3(_NoDataDbl); // color
     }Aurora;
 
     // ------------------------------------------------------------ //
@@ -618,7 +619,7 @@ struct __Object_Manipulator
     static constexpr int32_t AutoOrbit  = static_cast<int32_t>(0b00000000000000000100000000000000);
     static constexpr int32_t Climate    = static_cast<int32_t>(0b00000000000000001000000000000000);
 
-    static constexpr int32_t WaterMark  = static_cast<int32_t>(0b10000000000000000000000000000000); // Output watermark
+    //static constexpr int32_t WaterMark  = static_cast<int32_t>(0b10000000000000000000000000000000); // Output watermark
     static constexpr int32_t Scientific = static_cast<int32_t>(0b01000000000000000000000000000000); // Scientific output
     static constexpr int32_t Booleans   = static_cast<int32_t>(0b00100000000000000000000000000000); // Output booleans
     static constexpr int32_t FTidalLock = static_cast<int32_t>(0b00010000000000000000000000000000); // IAU rotation parameters will be ignored if has and force tidal-lock for objects are TidalLocked
@@ -631,28 +632,34 @@ struct __Object_Manipulator
 class ManipulatableOSCStream : public __Object_Manipulator, virtual public OSCStream
 {
 public:
+    using _Mybase = OSCStream;
     int _BaseInit()override
     {
         CustomMatOutputList.insert({L"PeriodicTermsDiurnal", 6});
         CustomMatOutputList.insert({L"PeriodicTermsSecular", 6});
         return Default;
     }
+    ManipulatableOSCStream(std::ostream& os) : _Mybase(os) {_Init();}
+    ManipulatableOSCStream& operator=(const ManipulatableOSCStream&) = delete;
 };
 
 class ManipulatableWOSCStream : public __Object_Manipulator, virtual public WOSCStream
 {
 public:
+    using _Mybase = WOSCStream;
     int _BaseInit()override
     {
         CustomMatOutputList.insert({L"PeriodicTermsDiurnal", 6});
         CustomMatOutputList.insert({L"PeriodicTermsSecular", 6});
         return Default;
     }
+    ManipulatableWOSCStream(std::wostream& os) : _Mybase(os) {_Init();}
+    ManipulatableWOSCStream& operator=(const ManipulatableWOSCStream&) = delete;
 };
 
 Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);
 template<> Object GetObject(_SC SharedTablePointer Table, ustring Name);
-template<> _SC SCSTable MakeTable(Object Obj, ManipulatableOSCStream::_Fmtflags Fl, std::streamsize Prec);
+template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec);
 
 #endif
 

@@ -15,7 +15,7 @@ void __SC_Smart_Output_Base::_Init()
     _Fmtfl = _BaseInit();
     _Encod = _DefEncod;
     _Buf.Get().clear();
-    _Prec = 0;
+    _Prec = 10;
     _KeyWide = 0;
 }
 
@@ -102,7 +102,7 @@ ustring __SC_Smart_Output_Base::__Write(const SCSTable& Table, bool DisableWM, u
 {
     wostringstream _Os;
 
-    if (!DisableWM && _Fmtfl >= 0)
+    if (!DisableWM && _Fmtfl < 0)
     {
         wostringstream FmtFlHex;
         FmtFlHex << hex << L"0x" << _Fmtfl;
@@ -180,12 +180,14 @@ _SC_END
 void OSCStream::Write()
 {
     output << _Mybase::encod().FromUnicode(__Write(_Mybase::_Buf));
+    unsetf(_WaterMark);
     _Mybase::_Buf.Get().clear();
 }
 
 void WOSCStream::Write()
 {
     output << __Write(_Mybase::_Buf);
+    unsetf(_WaterMark);
     _Mybase::_Buf.Get().clear();
 }
 

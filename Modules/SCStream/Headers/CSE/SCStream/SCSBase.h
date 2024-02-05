@@ -547,7 +547,8 @@ inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, genType Value, boo
         if (Fixed) {ValueStr << std::fixed;}
         if (std::is_same_v<genType, bool>) {ValueStr << std::boolalpha;}
         if (std::is_same_v<genType, float64>) {ValueStr.precision(Preci);}
-        ValueStr << Value;
+        if (std::is_same_v<genType, ustring>) {ValueStr << L'\"' << Value << L'\"';}
+        else {ValueStr << Value;}
         KeyValue.Value.push_back({.Type = _SC ValueType::ToTypeID<decltype(Value)>(), .Value = {ValueStr.str()}});
         Table->Get().push_back(KeyValue);
     }
