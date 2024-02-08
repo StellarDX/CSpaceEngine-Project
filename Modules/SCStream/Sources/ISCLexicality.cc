@@ -33,11 +33,11 @@ namespace Tokens
     // classes but I don't know which compilers support.
     REGEX_DEFINE(IdentRegex,    "^[A-Za-z_][A-Za-z0-9_]*$")
     REGEX_DEFINE(DecIntRegex,   "^[+-]?[1-9][0-9]*$")
-    REGEX_DEFINE(HexIntRegex,   "^[+-]?0[Xx][A-Fa-f0-9]*$")
+    REGEX_DEFINE(HexIntRegex,   "^[+-]?0[Xx][A-Fa-f0-9]+$")
     REGEX_DEFINE(OctIntRegex,   "^[+-]?0[0-7]*$")
-    REGEX_DEFINE(BinIntRegex,   "^[+-]?0[Bb][01]*$")
+    REGEX_DEFINE(BinIntRegex,   "^[+-]?0[Bb][01]+$")
     REGEX_DEFINE(BoolRegex,     "^(true)|(false)$")
-    REGEX_DEFINE(FloatRegex,    "^[+-]?([0-9]*\\.[0-9]+([Ee][+-]?[0-9]+)?)|([0-9]+\\.([Ee][+-]?[0-9]+)?)|([0-9]+([Ee][+-]?[0-9]+))$")
+    REGEX_DEFINE(FloatRegex,    "^[+-]?(([0-9]*\\.[0-9]+([Ee][+-]?[0-9]+)?)|([0-9]+\\.([Ee][+-]?[0-9]+)?)|([0-9]+([Ee][+-]?[0-9]+)))$")
     REGEX_DEFINE(HexFloatRegex, "^[+-]?0[Xx](([A-Fa-f0-9]*\\.[A-Fa-f0-9]+[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+\\.[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+[Pp][+-]?[0-9]+))$")
     REGEX_DEFINE(StringRegex,   "\".*\"")
 
