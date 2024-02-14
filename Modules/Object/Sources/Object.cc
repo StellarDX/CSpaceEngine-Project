@@ -842,26 +842,29 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             __Add_Key_Value(&IAUTable, L"PrimeMeridian", Obj.RotationIAU.PrimeMeridian, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"RotationRate", Obj.RotationIAU.RotationRate, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"RotationAccel", Obj.RotationIAU.RotationAccel, FixedOutput, Prec);
-            _SC ValueType PeriodicTerms;
-            ustringlist VList;
-            for (int i = 0; i < Obj.RotationIAU.PeriodicTerms.size(); ++i)
+            if (!Obj.RotationIAU.PeriodicTerms.empty())
             {
-                for (int j = 0; j < 6; ++j)
+                _SC ValueType PeriodicTerms;
+                ustringlist VList;
+                for (int i = 0; i < Obj.RotationIAU.PeriodicTerms.size(); ++i)
                 {
-                    std::wostringstream ValueStr;
-                    if (FixedOutput) {ValueStr << fixed;}
-                    ValueStr.precision(Prec);
-                    ValueStr << Obj.RotationIAU.PeriodicTerms[i][j];
-                    VList.push_back(ValueStr.str());
+                    for (int j = 0; j < 6; ++j)
+                    {
+                        std::wostringstream ValueStr;
+                        if (FixedOutput) {ValueStr << fixed;}
+                        ValueStr.precision(Prec);
+                        ValueStr << Obj.RotationIAU.PeriodicTerms[i][j];
+                        VList.push_back(ValueStr.str());
+                    }
                 }
+                PeriodicTerms.Type = PeriodicTerms.Matrix;
+                PeriodicTerms.Value = VList;
+                _SC SCSTable::SCKeyValue PTKV;
+                if (Obj.RotationIAU.UsingSecular) {PTKV.Key = L"PeriodicTermsSecular";}
+                else {PTKV.Key = L"PeriodicTermsDiurnal";}
+                PTKV.Value.push_back(PeriodicTerms);
+                IAUTable.Get().push_back(PTKV);
             }
-            PeriodicTerms.Type = PeriodicTerms.Matrix;
-            PeriodicTerms.Value = VList;
-            _SC SCSTable::SCKeyValue PTKV;
-            if (Obj.RotationIAU.UsingSecular) {PTKV.Key = L"PeriodicTermsSecular";}
-            else {PTKV.Key = L"PeriodicTermsDiurnal";}
-            PTKV.Value.push_back(PeriodicTerms);
-            IAUTable.Get().push_back(PTKV);
             ContentTable.Get().back().SubTable = make_shared<decltype(IAUTable)>(IAUTable);
         }
     }
