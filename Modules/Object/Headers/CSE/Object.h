@@ -6,14 +6,14 @@
 #ifndef __SEOBJECT__
 #define __SEOBJECT__
 
-#include <CSE/CSEBase/CSEBase.h>
-#include <CSE/CSEBase/DateTime.h>
-#include <CSE/CSEBase/GLTypes.h>
+#include <CSE/Base/CSEBase.h>
+#include <CSE/Base/DateTime.h>
+#include <CSE/Base/GLTypes.h>
 #include <vector>
 #include <map>
 
-#if __has_include(<CSE/SCStream.h>)
-#include <CSE/SCStream.h>
+#if __has_include(<CSE/Parser.h>)
+#include <CSE/Parser.h>
 #endif
 
 #if defined _MSC_VER
@@ -356,7 +356,7 @@ struct Object : public SEObject
     |                              Ocean                             |
     \*--------------------------------------------------------------*/
 
-    bool            NoOcean              = false;
+    bool            NoOcean              = true;
     struct OceanParams : public _ASOBJ HapkeParams
     {
         float64     Height            = _NoDataDbl;
@@ -372,7 +372,7 @@ struct Object : public SEObject
     |                             Clouds                             |
     \*--------------------------------------------------------------*/
 
-    bool            NoClouds             = false;
+    bool            NoClouds             = true;
     struct CloudParams
     {
         bool        TidalLocked       = false;
@@ -411,7 +411,7 @@ struct Object : public SEObject
     |                           Atmosphere                           |
     \*--------------------------------------------------------------*/
 
-    bool            NoAtmosphere         = false;
+    bool            NoAtmosphere         = true;
     struct AtmoParams
     {
         ustring     Model             = _NoDataStr;
@@ -453,7 +453,7 @@ struct Object : public SEObject
     |                             Aurora                             |
     \*--------------------------------------------------------------*/
 
-    bool            NoAurora             = false;
+    bool            NoAurora             = true;
     struct AuroraParams
     {
         float64     Height            = _NoDataDbl; // meters
@@ -486,7 +486,7 @@ struct Object : public SEObject
     |                              Rings                             |
     \*--------------------------------------------------------------*/
 
-    bool            NoRings              = false;
+    bool            NoRings              = true;
     struct RingsParams : public _ASOBJ HapkeParams
     {
         ustring     Texture           = _NoDataStr;
@@ -522,7 +522,7 @@ struct Object : public SEObject
     |                         Accretion Disk                         |
     \*--------------------------------------------------------------*/
 
-    bool            NoAccretionDisk      = false;
+    bool            NoAccretionDisk      = true;
     struct DiskParams
     {
         float64     InnerRadius       = _NoDataDbl;
@@ -567,7 +567,7 @@ struct Object : public SEObject
     |                             Corona                             |
     \*--------------------------------------------------------------*/
 
-    bool            NoCorona             = false;
+    bool            NoCorona             = true;
     struct CoronaParams
     {
         float64     Radius            = _NoDataDbl;
@@ -581,7 +581,7 @@ struct Object : public SEObject
     |                           Comet Tail                           |
     \*--------------------------------------------------------------*/
 
-    bool            NoCometTail         = false;
+    bool            NoCometTail         = true;
     struct CometTailParams
     {
         float64     MaxLength         = _NoDataDbl;
@@ -641,20 +641,6 @@ public:
     }
     ManipulatableOSCStream(std::ostream& os) : _Mybase(os) {_Init();}
     ManipulatableOSCStream& operator=(const ManipulatableOSCStream&) = delete;
-};
-
-class ManipulatableWOSCStream : public __Object_Manipulator, virtual public WOSCStream
-{
-public:
-    using _Mybase = WOSCStream;
-    int _BaseInit()override
-    {
-        CustomMatOutputList.insert({L"PeriodicTermsDiurnal", 6});
-        CustomMatOutputList.insert({L"PeriodicTermsSecular", 6});
-        return Default;
-    }
-    ManipulatableWOSCStream(std::wostream& os) : _Mybase(os) {_Init();}
-    ManipulatableWOSCStream& operator=(const ManipulatableWOSCStream&) = delete;
 };
 
 Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);

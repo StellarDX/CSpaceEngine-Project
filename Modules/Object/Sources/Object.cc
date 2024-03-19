@@ -1,15 +1,15 @@
-#include "CSE/CSEBase/AdvMath.h"
-#include "CSE/CSEBase/ConstLists.h"
-#include "CSE/CSEBase/DateTime.h"
-#include "CSE/CSEBase/GLTypes.h"
+#include "CSE/Base/AdvMath.h"
+#include "CSE/Base/ConstLists.h"
+#include "CSE/Base/DateTime.h"
+#include "CSE/Base/GLTypes.h"
 #include "CSE/Object.h"
 
-#if __has_include(<CSE/SCStream.h>)
-#include <CSE/SCStream.h>
+#if __has_include("CSE/Parser.h")
+#include "CSE/Parser.h"
 #endif
 
-#if __has_include(<CSE/Extensions/Hyperbolic.h>)
-#include <CSE/Extensions/Hyperbolic.h>
+#if __has_include("CSE/Extensions/Hyperbolic.h")
+#include "CSE/Extensions/Hyperbolic.h"
 #endif
 
 using namespace std;
@@ -17,6 +17,8 @@ using namespace std;
 _CSE_BEGIN
 
 #ifdef _CSE_SCSTREAM
+
+using namespace __scstream_table_helpers;
 
 Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
 {
@@ -32,31 +34,31 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         auto& CurrentTable = KeyValue.SubTable;
         auto CurrentTableEnd = CurrentTable->Get().end();
 
-        __Get_Value_From_Table(&Obj.DateUpdated, CurrentTable, L"DateUpdated", _TIME CSEDate());
-        __Get_Value_From_Table(&Obj.DiscMethod, CurrentTable, L"DiscMethod", ustring(_NoDataStr));
-        __Get_Value_From_Table(&Obj.DiscDate, CurrentTable, L"DiscDate", _TIME CSEDate());
-        __Get_Value_From_Table(&Obj.ParentBody, CurrentTable, L"ParentBody", ustring(_NoDataStr));
+        __Get_Value_From_Table(&Obj.DateUpdated, CurrentTable, L"DateUpdated", Obj.DateUpdated);
+        __Get_Value_From_Table(&Obj.DiscMethod, CurrentTable, L"DiscMethod", Obj.DiscMethod);
+        __Get_Value_From_Table(&Obj.DiscDate, CurrentTable, L"DiscDate", Obj.DiscDate);
+        __Get_Value_From_Table(&Obj.ParentBody, CurrentTable, L"ParentBody", Obj.ParentBody);
         if (Obj.Type == L"Star")
         {
             Obj.Class = L"Sun";
-            __Get_Value_From_Table(&Obj.SpecClass, CurrentTable, L"Class", ustring(_NoDataStr));
+            __Get_Value_From_Table(&Obj.SpecClass, CurrentTable, L"Class", Obj.SpecClass);
         }
-        else {__Get_Value_From_Table(&Obj.Class, CurrentTable, L"Class", ustring(_NoDataStr));}
-        __Get_Value_From_Table(&Obj.AsterType, CurrentTable, L"AsterType", ustring(_NoDataStr));
-        __Get_Value_From_Table(&Obj.CometType, CurrentTable, L"CometType", ustring(_NoDataStr));
+        else {__Get_Value_From_Table(&Obj.Class, CurrentTable, L"Class", Obj.Class);}
+        __Get_Value_From_Table(&Obj.AsterType, CurrentTable, L"AsterType", Obj.AsterType);
+        __Get_Value_From_Table(&Obj.CometType, CurrentTable, L"CometType", Obj.CometType);
 
         __Get_Value_With_Unit(&Obj.Mass, CurrentTable, L"Mass", _NoDataDbl, EarthMass,
         {
             {L"Kg", 1},
             {L"Sol", SolarMass}
         });
-        array<float64, 3> Dimensions;
+        vec3 Dimensions;
         __Get_Value_With_Unit(&Dimensions, CurrentTable, L"Dimensions",
         {_NoDataDbl, _NoDataDbl, _NoDataDbl}, 1000, {{L"Sol", SolarRadius}});
         if (IS_NO_DATA_DBL(Dimensions[0]))
         {
             float64 Radius;
-            array<float64, 3> Flattening;
+            vec3 Flattening(0, 0, 0);
             __Get_Value_With_Unit(&Radius, CurrentTable, L"Radius", _NoDataDbl, 1000,
             {
                 {L"Sol", SolarRadius}
@@ -76,45 +78,43 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 else {OblateTable->Value.front().GetQualified(&Flattening[1]);}
             }
             else {Flattening = {0, 0, 0};}
-            Obj.Dimensions = 2. * (Radius - Radius * vec3(Flattening));
+            Obj.Dimensions = 2. * (Radius - Radius * Flattening);
         }
         else {Obj.Dimensions = vec3(Dimensions);}
-        __Get_Value_From_Table(&Obj.InertiaMoment, CurrentTable, L"InertiaMoment", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.AlbedoBond, CurrentTable, L"AlbedoBond", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.AlbedoGeom, CurrentTable, L"AlbedoGeom", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.EndogenousHeating, CurrentTable, L"EndogenousHeating", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.ThermalLuminosity, CurrentTable, L"ThermalLuminosity", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.ThermalLuminosityBol, CurrentTable, L"ThermalLuminosityBol", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.Temperature, CurrentTable, L"Teff", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.InertiaMoment, CurrentTable, L"InertiaMoment", Obj.InertiaMoment);
+        __Get_Value_From_Table(&Obj.AlbedoBond, CurrentTable, L"AlbedoBond", Obj.AlbedoBond);
+        __Get_Value_From_Table(&Obj.AlbedoGeom, CurrentTable, L"AlbedoGeom", Obj.AlbedoGeom);
+        __Get_Value_From_Table(&Obj.EndogenousHeating, CurrentTable, L"EndogenousHeating", Obj.EndogenousHeating);
+        __Get_Value_From_Table(&Obj.ThermalLuminosity, CurrentTable, L"ThermalLuminosity", Obj.ThermalLuminosity);
+        __Get_Value_From_Table(&Obj.ThermalLuminosityBol, CurrentTable, L"ThermalLuminosityBol", Obj.ThermalLuminosityBol);
+        __Get_Value_From_Table(&Obj.Temperature, CurrentTable, L"Teff", Obj.Temperature);
         if (IS_NO_DATA_DBL(Obj.Temperature))
         {
-            __Get_Value_From_Table(&Obj.Temperature, CurrentTable, L"Temperature", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Temperature, CurrentTable, L"Temperature", Obj.Temperature);
         }
-        __Get_Value_From_Table(&Obj.Luminosity, CurrentTable, L"Luminosity", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.Luminosity, CurrentTable, L"Luminosity", Obj.Luminosity);
         if (IS_NO_DATA_DBL(Obj.Luminosity))
         {
-            __Get_Value_From_Table(&Obj.Luminosity, CurrentTable, L"Lum", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Luminosity, CurrentTable, L"Lum", Obj.Luminosity);
         }
-        __Get_Value_From_Table(&Obj.LumBol, CurrentTable, L"LumBol", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.LumBol, CurrentTable, L"LumBol", Obj.LumBol);
         if (IS_NO_DATA_DBL(Obj.LumBol))
         {
-            __Get_Value_From_Table(&Obj.LumBol, CurrentTable, L"LuminosityBol", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.LumBol, CurrentTable, L"LuminosityBol", Obj.LumBol);
         }
         Obj.Luminosity *= SolarLum;
         Obj.LumBol *= SolarLumBol;
-        __Get_Value_From_Table(&Obj.FeH, CurrentTable, L"FeH", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.CtoO, CurrentTable, L"CtoO", _NoDataDbl);
-        __Get_Value_With_Unit(&Obj.Age, CurrentTable, L"Age", _NoDataDbl, 1E12, {});
-        __Get_Value_From_Table(&Obj.KerrSpin, CurrentTable, L"KerrSpin", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.KerrCharge, CurrentTable, L"KerrCharge", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.FeH, CurrentTable, L"FeH", Obj.FeH);
+        __Get_Value_From_Table(&Obj.CtoO, CurrentTable, L"CtoO", Obj.CtoO);
+        __Get_Value_With_Unit(&Obj.Age, CurrentTable, L"Age", Obj.Age, 1E12, {});
+        __Get_Value_From_Table(&Obj.KerrSpin, CurrentTable, L"KerrSpin", Obj.KerrSpin);
+        __Get_Value_From_Table(&Obj.KerrCharge, CurrentTable, L"KerrCharge", Obj.KerrCharge);
 
-        std::array<float64, 3> Color;
-        __Get_Value_From_Table(&Color, CurrentTable, L"Color", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-        Obj.Color = vec3(Color);
-        __Get_Value_From_Table(&Obj.AbsMagn, CurrentTable, L"AbsMagn", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.SlopeParam, CurrentTable, L"SlopeParam", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.Brightness, CurrentTable, L"Brightness", _NoDataDbl);
-        __Get_Value_From_Table(&Obj.BrightnessReal, CurrentTable, L"BrightnessReal", _NoDataDbl);
+        __Get_Value_From_Table(&Obj.Color, CurrentTable, L"Color", Obj.Color);
+        __Get_Value_From_Table(&Obj.AbsMagn, CurrentTable, L"AbsMagn", Obj.AbsMagn);
+        __Get_Value_From_Table(&Obj.SlopeParam, CurrentTable, L"SlopeParam", Obj.SlopeParam);
+        __Get_Value_From_Table(&Obj.Brightness, CurrentTable, L"Brightness", Obj.Brightness);
+        __Get_Value_From_Table(&Obj.BrightnessReal, CurrentTable, L"BrightnessReal", Obj.BrightnessReal);
 
         auto RotModelTable = __Find_Table_From_List(CurrentTable, L"RotationModel");
         if (RotModelTable != CurrentTableEnd)
@@ -125,11 +125,11 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         //if (Obj.RotationModel == L"Simple")
         //{
             __Get_Value_From_Table(&Obj.Rotation.RotationEpoch, CurrentTable, L"RotationEpoch", float64(J2000));
-            __Get_Value_From_Table(&Obj.Rotation.Obliquity, CurrentTable, L"Obliquity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rotation.EqAscendNode, CurrentTable, L"EqAscendNode", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rotation.RotationOffset, CurrentTable, L"RotationOffset", _NoDataDbl);
-            __Get_Value_With_Unit(&Obj.Rotation.RotationPeriod, CurrentTable, L"RotationPeriod", _NoDataDbl, 3600, {});
-            __Get_Value_With_Unit(&Obj.Rotation.Precession, CurrentTable, L"Precession", _NoDataDbl, JulianYear, {});
+            __Get_Value_From_Table(&Obj.Rotation.Obliquity, CurrentTable, L"Obliquity", Obj.Rotation.Obliquity);
+            __Get_Value_From_Table(&Obj.Rotation.EqAscendNode, CurrentTable, L"EqAscendNode", Obj.Rotation.EqAscendNode);
+            __Get_Value_From_Table(&Obj.Rotation.RotationOffset, CurrentTable, L"RotationOffset", Obj.Rotation.RotationOffset);
+            __Get_Value_With_Unit(&Obj.Rotation.RotationPeriod, CurrentTable, L"RotationPeriod", Obj.Rotation.RotationPeriod, 3600, {});
+            __Get_Value_With_Unit(&Obj.Rotation.Precession, CurrentTable, L"Precession", Obj.Rotation.Precession, JulianYear, {});
             __Get_Value_From_Table(&Obj.Rotation.TidalLocked, CurrentTable, L"TidalLocked", false);
         //}
         if (Obj.RotationModel == L"IAU" && RotModelTable->SubTable)
@@ -137,13 +137,13 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             auto RotModelSubTable = RotModelTable->SubTable;
             auto RotModelSubTableEnd = RotModelSubTable->Get().end();
             __Get_Value_From_Table(&Obj.RotationIAU.Epoch, RotModelSubTable, L"Epoch", float64(J2000));
-            __Get_Value_From_Table(&Obj.RotationIAU.PoleRA, RotModelSubTable, L"PoleRA", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.PoleRARate, RotModelSubTable, L"PoleRARate", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.PoleDec, RotModelSubTable, L"PoleDec", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.PoleDecRate, RotModelSubTable, L"PoleDecRate", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.PrimeMeridian, RotModelSubTable, L"PrimeMeridian", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.RotationRate, RotModelSubTable, L"RotationRate", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.RotationIAU.RotationAccel, RotModelSubTable, L"RotationAccel", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.RotationIAU.PoleRA, RotModelSubTable, L"PoleRA", Obj.RotationIAU.PoleRA);
+            __Get_Value_From_Table(&Obj.RotationIAU.PoleRARate, RotModelSubTable, L"PoleRARate", Obj.RotationIAU.PoleRARate);
+            __Get_Value_From_Table(&Obj.RotationIAU.PoleDec, RotModelSubTable, L"PoleDec", Obj.RotationIAU.PoleDec);
+            __Get_Value_From_Table(&Obj.RotationIAU.PoleDecRate, RotModelSubTable, L"PoleDecRate", Obj.RotationIAU.PoleDecRate);
+            __Get_Value_From_Table(&Obj.RotationIAU.PrimeMeridian, RotModelSubTable, L"PrimeMeridian", Obj.RotationIAU.PrimeMeridian);
+            __Get_Value_From_Table(&Obj.RotationIAU.RotationRate, RotModelSubTable, L"RotationRate", Obj.RotationIAU.RotationRate);
+            __Get_Value_From_Table(&Obj.RotationIAU.RotationAccel, RotModelSubTable, L"RotationAccel", Obj.RotationIAU.RotationAccel);
             auto PTTable = __Find_Table_With_Unit(RotModelSubTable, L"PeriodicTerms");
             if (PTTable != RotModelSubTableEnd)
             {
@@ -165,7 +165,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         auto StaticPosTable = __Find_Table_With_Unit(CurrentTable, L"StaticPos");
         if (StaticPosTable != CurrentTableEnd)
         {
-            std::array<float64, 3> StaticPos;
+            vec3 StaticPos;
             StaticPosTable->Value.front().GetAsArray(&StaticPos);
             if (StaticPosTable->Key == L"StaticPosPolar")
             {
@@ -177,7 +177,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         auto FixedPosTable = __Find_Table_With_Unit(CurrentTable, L"Fixed");
         if (FixedPosTable != CurrentTableEnd)
         {
-            std::array<float64, 3> FixedPos;
+            vec3 FixedPos;
             FixedPosTable->Value.front().GetAsArray(&FixedPos);
             if (StaticPosTable->Key == L"FixedPosPolar")
             {
@@ -192,15 +192,15 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             auto OrbitSubTable = OrbitTable->SubTable;
             if (OrbitTable->Key == L"BinaryOrbit") {Obj.Orbit.Binary = true;}
             __Get_Value_From_Table(&Obj.Orbit.RefPlane, OrbitSubTable, L"RefPlane", Obj.Orbit.RefPlane);
-            __Get_Value_From_Table(&Obj.Orbit.Separation, OrbitSubTable, L"Separation", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Orbit.Separation, OrbitSubTable, L"Separation", Obj.Orbit.Separation);
             Obj.Orbit.Separation *= AU;
-            __Get_Value_From_Table(&Obj.Orbit.PositionAngle, OrbitSubTable, L"PositionAngle", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.AnalyticModel, OrbitSubTable, L"AnalyticModel", ustring(_NoDataStr));
+            __Get_Value_From_Table(&Obj.Orbit.PositionAngle, OrbitSubTable, L"PositionAngle", Obj.Orbit.PositionAngle);
+            __Get_Value_From_Table(&Obj.Orbit.AnalyticModel, OrbitSubTable, L"AnalyticModel", Obj.Orbit.AnalyticModel);
             if (Obj.Orbit.AnalyticModel != _NoDataStr) {Obj.Orbit.RefPlane = L"Analytic";}
             __Get_Value_From_Table(&Obj.Orbit.Epoch, OrbitSubTable, L"Epoch", float64(J2000));
-            __Get_Value_With_Unit(&Obj.Orbit.Period, OrbitSubTable, L"Period", _NoDataDbl, JulianYear, {{L"Days", SynodicDay}});
-            __Get_Value_With_Unit(&Obj.Orbit.PericenterDist, OrbitSubTable, L"PericenterDist", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_From_Table(&Obj.Orbit.Eccentricity, OrbitSubTable, L"Eccentricity", _NoDataDbl);
+            __Get_Value_With_Unit(&Obj.Orbit.Period, OrbitSubTable, L"Period", Obj.Orbit.Period, JulianYear, {{L"Days", SynodicDay}});
+            __Get_Value_With_Unit(&Obj.Orbit.PericenterDist, OrbitSubTable, L"PericenterDist", Obj.Orbit.PericenterDist, AU, {{L"Km", 1000}});
+            __Get_Value_From_Table(&Obj.Orbit.Eccentricity, OrbitSubTable, L"Eccentricity", Obj.Orbit.Eccentricity);
             if (IS_NO_DATA_DBL(Obj.Orbit.PericenterDist))
             {
                 float64 SemiMajorAxis;
@@ -214,14 +214,14 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
                 Obj.Orbit.RefPlane = L"Extrasolar";
             }
-            __Get_Value_From_Table(&Obj.Orbit.GravParam, OrbitSubTable, L"GravParam", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.Inclination, OrbitSubTable, L"Inclination", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.AscendingNode, OrbitSubTable, L"AscendingNode", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.AscNodePreces, OrbitSubTable, L"AscNodePreces", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.ArgOfPericenter, OrbitSubTable, L"ArgOfPericenter", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Orbit.GravParam, OrbitSubTable, L"GravParam", Obj.Orbit.GravParam);
+            __Get_Value_From_Table(&Obj.Orbit.Inclination, OrbitSubTable, L"Inclination", Obj.Orbit.Inclination);
+            __Get_Value_From_Table(&Obj.Orbit.AscendingNode, OrbitSubTable, L"AscendingNode", Obj.Orbit.AscendingNode);
+            __Get_Value_From_Table(&Obj.Orbit.AscNodePreces, OrbitSubTable, L"AscNodePreces", Obj.Orbit.AscNodePreces);
+            __Get_Value_From_Table(&Obj.Orbit.ArgOfPericenter, OrbitSubTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter);
             if (IS_NO_DATA_DBL(Obj.Orbit.ArgOfPericenter))
             {
-                __Get_Value_From_Table(&Obj.Orbit.ArgOfPericenter, OrbitSubTable, L"ArgOfPericen", _NoDataDbl);
+                __Get_Value_From_Table(&Obj.Orbit.ArgOfPericenter, OrbitSubTable, L"ArgOfPericen", Obj.Orbit.ArgOfPericenter);
             }
             if (IS_NO_DATA_DBL(Obj.Orbit.ArgOfPericenter))
             {
@@ -230,8 +230,8 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 Obj.Orbit.ArgOfPericenter = LongOfPericen -
                     (IS_NO_DATA_DBL(Obj.Orbit.AscendingNode) ? 0 : Obj.Orbit.AscendingNode);
             }
-            __Get_Value_From_Table(&Obj.Orbit.ArgOfPeriPreces, OrbitSubTable, L"ArgOfPeriPreces", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Orbit.MeanAnomaly, OrbitSubTable, L"MeanAnomaly", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Orbit.ArgOfPeriPreces, OrbitSubTable, L"ArgOfPeriPreces", Obj.Orbit.ArgOfPeriPreces);
+            __Get_Value_From_Table(&Obj.Orbit.MeanAnomaly, OrbitSubTable, L"MeanAnomaly", Obj.Orbit.MeanAnomaly);
             if (IS_NO_DATA_DBL(Obj.Orbit.MeanAnomaly))
             {
                 float64 MeanLongitude;
@@ -249,8 +249,8 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         {
             auto GetLifeFromTable = [](_SC SharedTablePointer Table, Object::LifeParams* Dst)
             {
-                __Get_Value_From_Table(&Dst->Class, Table, L"Class", ustring(_NoDataStr));
-                __Get_Value_From_Table(&Dst->Type, Table, L"Type", ustring(_NoDataStr));
+                __Get_Value_From_Table(&Dst->Class, Table, L"Class", Dst->Class);
+                __Get_Value_From_Table(&Dst->Type, Table, L"Type", Dst->Type);
                 ustring Biomes;
                 __Get_Value_From_Table(&Biomes, Table, L"Biome", ustring(_NoDataStr));
                 Dst->Biome = __Str_Split(Biomes);
@@ -269,7 +269,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 break;
             }
         }
-        else {Obj.LifeCount = 0;}
+        //else {Obj.LifeCount = 0;}
 
         auto TableToCompositeMap = [](_SC SharedTablePointer Table)
         {
@@ -298,206 +298,196 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         {
             Obj.EnableSurface = true;
             auto SurfaceSubTable = SurfaceTable->SubTable;
-            __Get_Value_From_Table(&Obj.Surface.DiffMap, SurfaceSubTable, L"DiffMap", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.DiffMapAlpha, SurfaceSubTable, L"DiffMapAlpha", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.BumpMap, SurfaceSubTable, L"BumpMap", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.BumpHeight, SurfaceSubTable, L"BumpHeight", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.BumpOffset, SurfaceSubTable, L"BumpOffset", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.GlowMap, SurfaceSubTable, L"GlowMap", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.GlowMode, SurfaceSubTable, L"GlowMode", ustring(_NoDataStr));
-            std::array<float64, 3> GlowColor;
-            __Get_Value_From_Table(&GlowColor, SurfaceSubTable, L"GlowColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Surface.GlowColor = vec3(GlowColor);
-            __Get_Value_From_Table(&Obj.Surface.GlowBright, SurfaceSubTable, L"GlowBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpecMap, SurfaceSubTable, L"SpecMap", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.FlipMap, SurfaceSubTable, L"FlipMap", false);
-            __Get_Value_From_Table(&Obj.Surface.Gamma, SurfaceSubTable, L"Gamma", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.Hapke, SurfaceSubTable, L"Hapke", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpotBright, SurfaceSubTable, L"SpotBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpotWidth, SurfaceSubTable, L"SpotWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpotBrightCB, SurfaceSubTable, L"SpotBrightCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpotWidthCB, SurfaceSubTable, L"SpotWidthCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.TempMapMaxTemp, SurfaceSubTable, L"TempMapMaxTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.DayAmbient, SurfaceSubTable, L"DayAmbient", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.RingsWinter, SurfaceSubTable, L"RingsWinter", _NoDataDbl);
-            std::array<float64, 3> ModulateColor;
-            __Get_Value_From_Table(&ModulateColor, SurfaceSubTable, L"ModulateColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Surface.ModulateColor = vec3(ModulateColor);
-            __Get_Value_From_Table(&Obj.Surface.ModulateBright, SurfaceSubTable, L"ModulateBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpecBrightWater, SurfaceSubTable, L"SpecBrightWater", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpecBrightIce, SurfaceSubTable, L"SpecBrightIce", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.RoughnessWater, SurfaceSubTable, L"RoughnessWater", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.RoughnessIce, SurfaceSubTable, L"RoughnessIce", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.SpecularScale, SurfaceSubTable, L"SpecularScale", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.RoughnessBias, SurfaceSubTable, L"RoughnessBias", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.RoughnessScale, SurfaceSubTable, L"RoughnessScale", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.Preset, SurfaceSubTable, L"Preset", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Surface.SurfStyle, SurfaceSubTable, L"SurfStyle", _NoDataDbl);
-            std::array<float64, 3> Randomize;
-            __Get_Value_From_Table(&Randomize, SurfaceSubTable, L"Randomize", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Surface.Randomize = vec3(Randomize);
-            __Get_Value_From_Table(&Obj.Surface.colorDistMagn, SurfaceSubTable, L"colorDistMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.colorDistFreq, SurfaceSubTable, L"colorDistFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.detailScale, SurfaceSubTable, L"detailScale", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.drivenDarkening, SurfaceSubTable, L"drivenDarkening", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.seaLevel, SurfaceSubTable, L"seaLevel", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.snowLevel, SurfaceSubTable, L"snowLevel", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.tropicLatitude, SurfaceSubTable, L"tropicLatitude", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.icecapLatitude, SurfaceSubTable, L"icecapLatitude", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.icecapHeight, SurfaceSubTable, L"icecapHeight", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climatePole, SurfaceSubTable, L"climatePole", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateTropic, SurfaceSubTable, L"climateTropic", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateEquator, SurfaceSubTable, L"climateEquator", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateSteppeMin, SurfaceSubTable, L"climateSteppeMin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateSteppeMax, SurfaceSubTable, L"climateSteppeMax", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateForestMin, SurfaceSubTable, L"climateForestMin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateForestMax, SurfaceSubTable, L"climateForestMax", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateGrassMin, SurfaceSubTable, L"climateGrassMin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.climateGrassMax, SurfaceSubTable, L"climateGrassMax", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.humidity, SurfaceSubTable, L"humidity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.heightTempGrad, SurfaceSubTable, L"heightTempGrad", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.beachWidth, SurfaceSubTable, L"beachWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.tropicWidth, SurfaceSubTable, L"tropicWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.mainFreq, SurfaceSubTable, L"mainFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.venusFreq, SurfaceSubTable, L"venusFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.venusMagn, SurfaceSubTable, L"venusMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.mareFreq, SurfaceSubTable, L"mareFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.mareDensity, SurfaceSubTable, L"mareDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.terraceProb, SurfaceSubTable, L"terraceProb", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.erosion, SurfaceSubTable, L"erosion", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.montesMagn, SurfaceSubTable, L"montesMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.montesFreq, SurfaceSubTable, L"montesFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.montesSpiky, SurfaceSubTable, L"montesSpiky", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.montesFraction, SurfaceSubTable, L"montesFraction", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.dunesMagn, SurfaceSubTable, L"dunesMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.dunesFreq, SurfaceSubTable, L"dunesFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.dunesFraction, SurfaceSubTable, L"dunesFraction", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.hillsMagn, SurfaceSubTable, L"hillsMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.hillsFreq, SurfaceSubTable, L"hillsFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.hillsFraction, SurfaceSubTable, L"hillsFraction", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.hills2Fraction, SurfaceSubTable, L"hills2Fraction", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riversMagn, SurfaceSubTable, L"riversMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riversFreq, SurfaceSubTable, L"riversFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riversSin, SurfaceSubTable, L"riversSin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riftsMagn, SurfaceSubTable, L"riftsMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riftsFreq, SurfaceSubTable, L"riftsFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.riftsSin, SurfaceSubTable, L"riftsSin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.eqridgeMagn, SurfaceSubTable, L"eqridgeMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.eqridgeWidth, SurfaceSubTable, L"eqridgeWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.eqridgeModMagn, SurfaceSubTable, L"eqridgeModMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.eqridgeModFreq, SurfaceSubTable, L"eqridgeModFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.canyonsMagn, SurfaceSubTable, L"canyonsMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.canyonsFreq, SurfaceSubTable, L"canyonsFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.canyonsFraction, SurfaceSubTable, L"canyonsFraction", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.cracksMagn, SurfaceSubTable, L"cracksMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.cracksFreq, SurfaceSubTable, L"cracksFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.cracksOctaves, SurfaceSubTable, L"cracksOctaves", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Surface.craterMagn, SurfaceSubTable, L"craterMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.craterFreq, SurfaceSubTable, L"craterFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.craterDensity, SurfaceSubTable, L"craterDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.craterOctaves, SurfaceSubTable, L"craterOctaves", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Surface.craterRayedFactor, SurfaceSubTable, L"craterRayedFactor", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Surface.volcanoMagn, SurfaceSubTable, L"volcanoMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoFreq, SurfaceSubTable, L"volcanoFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoDensity, SurfaceSubTable, L"volcanoDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoOctaves, SurfaceSubTable, L"volcanoOctaves", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Surface.volcanoActivity, SurfaceSubTable, L"volcanoActivity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoFlows, SurfaceSubTable, L"volcanoFlows", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoRadius, SurfaceSubTable, L"volcanoRadius", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.volcanoTemp, SurfaceSubTable, L"volcanoTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.lavaCoverTidal, SurfaceSubTable, L"lavaCoverTidal", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.lavaCoverSun, SurfaceSubTable, L"lavaCoverSun", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Surface.lavaCoverYoung, SurfaceSubTable, L"lavaCoverYoung", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.stripeZones, SurfaceSubTable, L"stripeZones", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.stripeFluct, SurfaceSubTable, L"stripeFluct", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.stripeTwist, SurfaceSubTable, L"stripeTwist", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneMagn, SurfaceSubTable, L"cycloneMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneFreq, SurfaceSubTable, L"cycloneFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneDensity, SurfaceSubTable, L"cycloneDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves, SurfaceSubTable, L"cycloneOctaves", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneMagn2, SurfaceSubTable, L"cycloneMagn2", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneFreq2, SurfaceSubTable, L"cycloneFreq2", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneDensity2, SurfaceSubTable, L"cycloneDensity2", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves2, SurfaceSubTable, L"cycloneOctaves2", _NoDataInt);
+            __Get_Value_From_Table(&Obj.Surface.DiffMap, SurfaceSubTable, L"DiffMap", Obj.Surface.DiffMap);
+            __Get_Value_From_Table(&Obj.Surface.DiffMapAlpha, SurfaceSubTable, L"DiffMapAlpha", Obj.Surface.DiffMapAlpha);
+            __Get_Value_From_Table(&Obj.Surface.BumpMap, SurfaceSubTable, L"BumpMap", Obj.Surface.BumpMap);
+            __Get_Value_From_Table(&Obj.Surface.BumpHeight, SurfaceSubTable, L"BumpHeight", Obj.Surface.BumpHeight);
+            __Get_Value_From_Table(&Obj.Surface.BumpOffset, SurfaceSubTable, L"BumpOffset", Obj.Surface.BumpOffset);
+            __Get_Value_From_Table(&Obj.Surface.GlowMap, SurfaceSubTable, L"GlowMap", Obj.Surface.GlowMap);
+            __Get_Value_From_Table(&Obj.Surface.GlowMode, SurfaceSubTable, L"GlowMode", Obj.Surface.GlowMode);
+            __Get_Value_From_Table(&Obj.Surface.GlowColor, SurfaceSubTable, L"GlowColor", Obj.Surface.GlowColor);
+            __Get_Value_From_Table(&Obj.Surface.GlowBright, SurfaceSubTable, L"GlowBright", Obj.Surface.GlowBright);
+            __Get_Value_From_Table(&Obj.Surface.SpecMap, SurfaceSubTable, L"SpecMap", Obj.Surface.SpecMap);
+            __Get_Value_From_Table(&Obj.Surface.FlipMap, SurfaceSubTable, L"FlipMap", Obj.Surface.FlipMap);
+            __Get_Value_From_Table(&Obj.Surface.Gamma, SurfaceSubTable, L"Gamma", Obj.Surface.Gamma);
+            __Get_Value_From_Table(&Obj.Surface.Hapke, SurfaceSubTable, L"Hapke", Obj.Surface.Hapke);
+            __Get_Value_From_Table(&Obj.Surface.SpotBright, SurfaceSubTable, L"SpotBright", Obj.Surface.SpotBright);
+            __Get_Value_From_Table(&Obj.Surface.SpotWidth, SurfaceSubTable, L"SpotWidth", Obj.Surface.SpotWidth);
+            __Get_Value_From_Table(&Obj.Surface.SpotBrightCB, SurfaceSubTable, L"SpotBrightCB", Obj.Surface.SpotBrightCB);
+            __Get_Value_From_Table(&Obj.Surface.SpotWidthCB, SurfaceSubTable, L"SpotWidthCB", Obj.Surface.SpotWidthCB);
+            __Get_Value_From_Table(&Obj.Surface.TempMapMaxTemp, SurfaceSubTable, L"TempMapMaxTemp", Obj.Surface.TempMapMaxTemp);
+            __Get_Value_From_Table(&Obj.Surface.DayAmbient, SurfaceSubTable, L"DayAmbient", Obj.Surface.DayAmbient);
+            __Get_Value_From_Table(&Obj.Surface.RingsWinter, SurfaceSubTable, L"RingsWinter", Obj.Surface.RingsWinter);
+            __Get_Value_From_Table(&Obj.Surface.ModulateColor, SurfaceSubTable, L"ModulateColor", Obj.Surface.ModulateColor);
+            __Get_Value_From_Table(&Obj.Surface.ModulateBright, SurfaceSubTable, L"ModulateBright", Obj.Surface.ModulateBright);
+            __Get_Value_From_Table(&Obj.Surface.SpecBrightWater, SurfaceSubTable, L"SpecBrightWater", Obj.Surface.SpecBrightWater);
+            __Get_Value_From_Table(&Obj.Surface.SpecBrightIce, SurfaceSubTable, L"SpecBrightIce", Obj.Surface.SpecBrightIce);
+            __Get_Value_From_Table(&Obj.Surface.RoughnessWater, SurfaceSubTable, L"RoughnessWater", Obj.Surface.RoughnessWater);
+            __Get_Value_From_Table(&Obj.Surface.RoughnessIce, SurfaceSubTable, L"RoughnessIce", Obj.Surface.RoughnessIce);
+            __Get_Value_From_Table(&Obj.Surface.SpecularScale, SurfaceSubTable, L"SpecularScale", Obj.Surface.SpecularScale);
+            __Get_Value_From_Table(&Obj.Surface.RoughnessBias, SurfaceSubTable, L"RoughnessBias", Obj.Surface.RoughnessBias);
+            __Get_Value_From_Table(&Obj.Surface.RoughnessScale, SurfaceSubTable, L"RoughnessScale", Obj.Surface.RoughnessScale);
+            __Get_Value_From_Table(&Obj.Surface.Preset, SurfaceSubTable, L"Preset", Obj.Surface.Preset);
+            __Get_Value_From_Table(&Obj.Surface.SurfStyle, SurfaceSubTable, L"SurfStyle", Obj.Surface.SurfStyle);
+            __Get_Value_From_Table(&Obj.Surface.Randomize, SurfaceSubTable, L"Randomize", Obj.Surface.Randomize);
+            __Get_Value_From_Table(&Obj.Surface.colorDistMagn, SurfaceSubTable, L"colorDistMagn", Obj.Surface.colorDistMagn);
+            __Get_Value_From_Table(&Obj.Surface.colorDistFreq, SurfaceSubTable, L"colorDistFreq", Obj.Surface.colorDistFreq);
+            __Get_Value_From_Table(&Obj.Surface.detailScale, SurfaceSubTable, L"detailScale", Obj.Surface.detailScale);
+            __Get_Value_From_Table(&Obj.Surface.drivenDarkening, SurfaceSubTable, L"drivenDarkening", Obj.Surface.drivenDarkening);
+            __Get_Value_From_Table(&Obj.Surface.seaLevel, SurfaceSubTable, L"seaLevel", Obj.Surface.seaLevel);
+            __Get_Value_From_Table(&Obj.Surface.snowLevel, SurfaceSubTable, L"snowLevel", Obj.Surface.snowLevel);
+            __Get_Value_From_Table(&Obj.Surface.tropicLatitude, SurfaceSubTable, L"tropicLatitude", Obj.Surface.tropicLatitude);
+            __Get_Value_From_Table(&Obj.Surface.icecapLatitude, SurfaceSubTable, L"icecapLatitude", Obj.Surface.icecapLatitude);
+            __Get_Value_From_Table(&Obj.Surface.icecapHeight, SurfaceSubTable, L"icecapHeight", Obj.Surface.icecapHeight);
+            __Get_Value_From_Table(&Obj.Surface.climatePole, SurfaceSubTable, L"climatePole", Obj.Surface.climatePole);
+            __Get_Value_From_Table(&Obj.Surface.climateTropic, SurfaceSubTable, L"climateTropic", Obj.Surface.climateTropic);
+            __Get_Value_From_Table(&Obj.Surface.climateEquator, SurfaceSubTable, L"climateEquator", Obj.Surface.climateEquator);
+            __Get_Value_From_Table(&Obj.Surface.climateSteppeMin, SurfaceSubTable, L"climateSteppeMin", Obj.Surface.climateSteppeMin);
+            __Get_Value_From_Table(&Obj.Surface.climateSteppeMax, SurfaceSubTable, L"climateSteppeMax", Obj.Surface.climateSteppeMax);
+            __Get_Value_From_Table(&Obj.Surface.climateForestMin, SurfaceSubTable, L"climateForestMin", Obj.Surface.climateForestMin);
+            __Get_Value_From_Table(&Obj.Surface.climateForestMax, SurfaceSubTable, L"climateForestMax", Obj.Surface.climateForestMax);
+            __Get_Value_From_Table(&Obj.Surface.climateGrassMin, SurfaceSubTable, L"climateGrassMin", Obj.Surface.climateGrassMin);
+            __Get_Value_From_Table(&Obj.Surface.climateGrassMax, SurfaceSubTable, L"climateGrassMax", Obj.Surface.climateGrassMax);
+            __Get_Value_From_Table(&Obj.Surface.humidity, SurfaceSubTable, L"humidity", Obj.Surface.humidity);
+            __Get_Value_From_Table(&Obj.Surface.heightTempGrad, SurfaceSubTable, L"heightTempGrad", Obj.Surface.heightTempGrad);
+            __Get_Value_From_Table(&Obj.Surface.beachWidth, SurfaceSubTable, L"beachWidth", Obj.Surface.beachWidth);
+            __Get_Value_From_Table(&Obj.Surface.tropicWidth, SurfaceSubTable, L"tropicWidth", Obj.Surface.tropicWidth);
+            __Get_Value_From_Table(&Obj.Surface.mainFreq, SurfaceSubTable, L"mainFreq", Obj.Surface.mainFreq);
+            __Get_Value_From_Table(&Obj.Surface.venusFreq, SurfaceSubTable, L"venusFreq", Obj.Surface.venusFreq);
+            __Get_Value_From_Table(&Obj.Surface.venusMagn, SurfaceSubTable, L"venusMagn", Obj.Surface.venusMagn);
+            __Get_Value_From_Table(&Obj.Surface.mareFreq, SurfaceSubTable, L"mareFreq", Obj.Surface.mareFreq);
+            __Get_Value_From_Table(&Obj.Surface.mareDensity, SurfaceSubTable, L"mareDensity", Obj.Surface.mareDensity);
+            __Get_Value_From_Table(&Obj.Surface.terraceProb, SurfaceSubTable, L"terraceProb", Obj.Surface.terraceProb);
+            __Get_Value_From_Table(&Obj.Surface.erosion, SurfaceSubTable, L"erosion", Obj.Surface.erosion);
+            __Get_Value_From_Table(&Obj.Surface.montesMagn, SurfaceSubTable, L"montesMagn", Obj.Surface.montesMagn);
+            __Get_Value_From_Table(&Obj.Surface.montesFreq, SurfaceSubTable, L"montesFreq", Obj.Surface.montesFreq);
+            __Get_Value_From_Table(&Obj.Surface.montesSpiky, SurfaceSubTable, L"montesSpiky", Obj.Surface.montesSpiky);
+            __Get_Value_From_Table(&Obj.Surface.montesFraction, SurfaceSubTable, L"montesFraction", Obj.Surface.montesFraction);
+            __Get_Value_From_Table(&Obj.Surface.dunesMagn, SurfaceSubTable, L"dunesMagn", Obj.Surface.dunesMagn);
+            __Get_Value_From_Table(&Obj.Surface.dunesFreq, SurfaceSubTable, L"dunesFreq", Obj.Surface.dunesFreq);
+            __Get_Value_From_Table(&Obj.Surface.dunesFraction, SurfaceSubTable, L"dunesFraction", Obj.Surface.dunesFraction);
+            __Get_Value_From_Table(&Obj.Surface.hillsMagn, SurfaceSubTable, L"hillsMagn", Obj.Surface.hillsMagn);
+            __Get_Value_From_Table(&Obj.Surface.hillsFreq, SurfaceSubTable, L"hillsFreq", Obj.Surface.hillsFreq);
+            __Get_Value_From_Table(&Obj.Surface.hillsFraction, SurfaceSubTable, L"hillsFraction", Obj.Surface.hillsFraction);
+            __Get_Value_From_Table(&Obj.Surface.hills2Fraction, SurfaceSubTable, L"hills2Fraction", Obj.Surface.hills2Fraction);
+            __Get_Value_From_Table(&Obj.Surface.riversMagn, SurfaceSubTable, L"riversMagn", Obj.Surface.riversMagn);
+            __Get_Value_From_Table(&Obj.Surface.riversFreq, SurfaceSubTable, L"riversFreq", Obj.Surface.riversFreq);
+            __Get_Value_From_Table(&Obj.Surface.riversSin, SurfaceSubTable, L"riversSin", Obj.Surface.riversSin);
+            __Get_Value_From_Table(&Obj.Surface.riftsMagn, SurfaceSubTable, L"riftsMagn", Obj.Surface.riftsMagn);
+            __Get_Value_From_Table(&Obj.Surface.riftsFreq, SurfaceSubTable, L"riftsFreq", Obj.Surface.riftsFreq);
+            __Get_Value_From_Table(&Obj.Surface.riftsSin, SurfaceSubTable, L"riftsSin", Obj.Surface.riftsSin);
+            __Get_Value_From_Table(&Obj.Surface.eqridgeMagn, SurfaceSubTable, L"eqridgeMagn", Obj.Surface.eqridgeMagn);
+            __Get_Value_From_Table(&Obj.Surface.eqridgeWidth, SurfaceSubTable, L"eqridgeWidth", Obj.Surface.eqridgeWidth);
+            __Get_Value_From_Table(&Obj.Surface.eqridgeModMagn, SurfaceSubTable, L"eqridgeModMagn", Obj.Surface.eqridgeModMagn);
+            __Get_Value_From_Table(&Obj.Surface.eqridgeModFreq, SurfaceSubTable, L"eqridgeModFreq", Obj.Surface.eqridgeModFreq);
+            __Get_Value_From_Table(&Obj.Surface.canyonsMagn, SurfaceSubTable, L"canyonsMagn", Obj.Surface.canyonsMagn);
+            __Get_Value_From_Table(&Obj.Surface.canyonsFreq, SurfaceSubTable, L"canyonsFreq", Obj.Surface.canyonsFreq);
+            __Get_Value_From_Table(&Obj.Surface.canyonsFraction, SurfaceSubTable, L"canyonsFraction", Obj.Surface.canyonsFraction);
+            __Get_Value_From_Table(&Obj.Surface.cracksMagn, SurfaceSubTable, L"cracksMagn", Obj.Surface.cracksMagn);
+            __Get_Value_From_Table(&Obj.Surface.cracksFreq, SurfaceSubTable, L"cracksFreq", Obj.Surface.cracksFreq);
+            __Get_Value_From_Table(&Obj.Surface.cracksOctaves, SurfaceSubTable, L"cracksOctaves", Obj.Surface.cracksOctaves);
+            __Get_Value_From_Table(&Obj.Surface.craterMagn, SurfaceSubTable, L"craterMagn", Obj.Surface.craterMagn);
+            __Get_Value_From_Table(&Obj.Surface.craterFreq, SurfaceSubTable, L"craterFreq", Obj.Surface.craterFreq);
+            __Get_Value_From_Table(&Obj.Surface.craterDensity, SurfaceSubTable, L"craterDensity", Obj.Surface.craterDensity);
+            __Get_Value_From_Table(&Obj.Surface.craterOctaves, SurfaceSubTable, L"craterOctaves", Obj.Surface.craterOctaves);
+            __Get_Value_From_Table(&Obj.Surface.craterRayedFactor, SurfaceSubTable, L"craterRayedFactor", Obj.Surface.craterRayedFactor);
+            __Get_Value_From_Table(&Obj.Surface.volcanoMagn, SurfaceSubTable, L"volcanoMagn", Obj.Surface.volcanoMagn);
+            __Get_Value_From_Table(&Obj.Surface.volcanoFreq, SurfaceSubTable, L"volcanoFreq", Obj.Surface.volcanoFreq);
+            __Get_Value_From_Table(&Obj.Surface.volcanoDensity, SurfaceSubTable, L"volcanoDensity", Obj.Surface.volcanoDensity);
+            __Get_Value_From_Table(&Obj.Surface.volcanoOctaves, SurfaceSubTable, L"volcanoOctaves", Obj.Surface.volcanoOctaves);
+            __Get_Value_From_Table(&Obj.Surface.volcanoActivity, SurfaceSubTable, L"volcanoActivity", Obj.Surface.volcanoActivity);
+            __Get_Value_From_Table(&Obj.Surface.volcanoFlows, SurfaceSubTable, L"volcanoFlows", Obj.Surface.volcanoFlows);
+            __Get_Value_From_Table(&Obj.Surface.volcanoRadius, SurfaceSubTable, L"volcanoRadius", Obj.Surface.volcanoRadius);
+            __Get_Value_From_Table(&Obj.Surface.volcanoTemp, SurfaceSubTable, L"volcanoTemp", Obj.Surface.volcanoTemp);
+            __Get_Value_From_Table(&Obj.Surface.lavaCoverTidal, SurfaceSubTable, L"lavaCoverTidal", Obj.Surface.lavaCoverTidal);
+            __Get_Value_From_Table(&Obj.Surface.lavaCoverSun, SurfaceSubTable, L"lavaCoverSun", Obj.Surface.lavaCoverSun);
+            __Get_Value_From_Table(&Obj.Surface.lavaCoverYoung, SurfaceSubTable, L"lavaCoverYoung", Obj.Surface.lavaCoverYoung);
+            __Get_Value_From_Table(&Obj.Clouds.stripeZones, SurfaceSubTable, L"stripeZones", Obj.Clouds.stripeZones);
+            __Get_Value_From_Table(&Obj.Clouds.stripeFluct, SurfaceSubTable, L"stripeFluct", Obj.Clouds.stripeFluct);
+            __Get_Value_From_Table(&Obj.Clouds.stripeTwist, SurfaceSubTable, L"stripeTwist", Obj.Clouds.stripeTwist);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneMagn, SurfaceSubTable, L"cycloneMagn", Obj.Clouds.cycloneMagn);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneFreq, SurfaceSubTable, L"cycloneFreq", Obj.Clouds.cycloneFreq);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneDensity, SurfaceSubTable, L"cycloneDensity", Obj.Clouds.cycloneDensity);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves, SurfaceSubTable, L"cycloneOctaves", Obj.Clouds.cycloneOctaves);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneMagn2, SurfaceSubTable, L"cycloneMagn2", Obj.Clouds.cycloneMagn2);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneFreq2, SurfaceSubTable, L"cycloneFreq2", Obj.Clouds.cycloneFreq2);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneDensity2, SurfaceSubTable, L"cycloneDensity2", Obj.Clouds.cycloneDensity2);
+            __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves2, SurfaceSubTable, L"cycloneOctaves2", Obj.Clouds.cycloneOctaves2);
         }
 
-        __Get_Value_From_Table(&Obj.NoOcean, CurrentTable, L"NoOcean", false);
+        __Get_Value_From_Table(&Obj.NoOcean, CurrentTable, L"NoOcean", Obj.NoOcean);
         auto OceanTable = __Find_Table_From_List(CurrentTable, L"Ocean");
-        if (!Obj.NoOcean && OceanTable != CurrentTableEnd)
+        if (OceanTable != CurrentTableEnd)
         {
+            Obj.NoOcean = false;
             auto OceanSubTable = OceanTable->SubTable;
-            __Get_Value_From_Table(&Obj.Ocean.Height, OceanSubTable, L"Height", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Ocean.Height, OceanSubTable, L"Height", Obj.Ocean.Height);
             if (IS_NO_DATA_DBL(Obj.Ocean.Height))
             {
-                __Get_Value_From_Table(&Obj.Ocean.Height, OceanSubTable, L"Depth", _NoDataDbl);
+                __Get_Value_From_Table(&Obj.Ocean.Height, OceanSubTable, L"Depth", Obj.Ocean.Height);
             }
             Obj.Ocean.Height *= 1000;
-            __Get_Value_From_Table(&Obj.Ocean.Hapke, OceanSubTable, L"Hapke", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.SpotBright, OceanSubTable, L"SpotBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.SpotWidth, OceanSubTable, L"SpotWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.SpotBrightCB, OceanSubTable, L"SpotBrightCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.SpotWidthCB, OceanSubTable, L"SpotWidthCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.TempMapMaxTemp, OceanSubTable, L"TempMapMaxTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.DayAmbient, OceanSubTable, L"DayAmbient", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Ocean.RingsWinter, OceanSubTable, L"RingsWinter", _NoDataDbl);
-            std::array<float64, 3> ModulateColor;
-            __Get_Value_From_Table(&ModulateColor, OceanSubTable, L"ModulateColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Ocean.ModulateColor = vec3(ModulateColor);
-            __Get_Value_From_Table(&Obj.Ocean.ModulateBright, OceanSubTable, L"ModulateBright", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Ocean.Hapke, OceanSubTable, L"Hapke", Obj.Ocean.Hapke);
+            __Get_Value_From_Table(&Obj.Ocean.SpotBright, OceanSubTable, L"SpotBright", Obj.Ocean.SpotBright);
+            __Get_Value_From_Table(&Obj.Ocean.SpotWidth, OceanSubTable, L"SpotWidth", Obj.Ocean.SpotWidth);
+            __Get_Value_From_Table(&Obj.Ocean.SpotBrightCB, OceanSubTable, L"SpotBrightCB", Obj.Ocean.SpotBrightCB);
+            __Get_Value_From_Table(&Obj.Ocean.SpotWidthCB, OceanSubTable, L"SpotWidthCB", Obj.Ocean.SpotWidthCB);
+            __Get_Value_From_Table(&Obj.Ocean.TempMapMaxTemp, OceanSubTable, L"TempMapMaxTemp", Obj.Ocean.TempMapMaxTemp);
+            __Get_Value_From_Table(&Obj.Ocean.DayAmbient, OceanSubTable, L"DayAmbient", Obj.Ocean.DayAmbient);
+            __Get_Value_From_Table(&Obj.Ocean.RingsWinter, OceanSubTable, L"RingsWinter", Obj.Ocean.RingsWinter);
+            __Get_Value_From_Table(&Obj.Ocean.ModulateColor, OceanSubTable, L"ModulateColor", Obj.Ocean.ModulateColor);
+            __Get_Value_From_Table(&Obj.Ocean.ModulateBright, OceanSubTable, L"ModulateBright", Obj.Ocean.ModulateBright);
             auto CompTable = __Find_Table_From_List(OceanSubTable, L"Composition");
             if (CompTable != OceanSubTable->Get().end()) {Obj.Ocean.Composition = TableToCompositeMap(CompTable->SubTable);}
         }
-        else {Obj.NoOcean = true;}
+        //else {Obj.NoOcean = true;}
 
-        __Get_Value_From_Table(&Obj.NoClouds, CurrentTable, L"NoClouds", false);
+        __Get_Value_From_Table(&Obj.NoClouds, CurrentTable, L"NoClouds", Obj.NoClouds);
         auto CloudsTables = __Find_Multi_Tables_From_List(CurrentTable, L"Clouds");
-        if (!Obj.NoClouds && !CloudsTables.empty())
+        if (!CloudsTables.empty())
         {
+            Obj.NoClouds = false;
             for (int i = 0; i < CloudsTables.size(); ++i)
             {
                 auto CloudsTable = CloudsTables[i]->SubTable;
                 Object::CloudParams::CloudLayerParam CloudLayer;
-                __Get_Value_From_Table(&CloudLayer.DiffMap, CloudsTable, L"DiffMap", ustring(_NoDataStr));
-                __Get_Value_From_Table(&CloudLayer.DiffMapAlpha, CloudsTable, L"DiffMapAlpha", ustring(_NoDataStr));
-                __Get_Value_From_Table(&CloudLayer.BumpMap, CloudsTable, L"BumpMap", ustring(_NoDataStr));
-                __Get_Value_From_Table(&CloudLayer.BumpHeight, CloudsTable, L"BumpHeight", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.BumpOffset, CloudsTable, L"BumpOffset", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.GlowMap, CloudsTable, L"GlowMap", ustring(_NoDataStr));
-                __Get_Value_From_Table(&CloudLayer.GlowMode, CloudsTable, L"GlowMode", ustring(_NoDataStr));
-                std::array<float64, 3> GlowColor;
-                __Get_Value_From_Table(&GlowColor, CloudsTable, L"GlowColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-                CloudLayer.GlowColor = vec3(GlowColor);
-                __Get_Value_From_Table(&CloudLayer.GlowBright, CloudsTable, L"GlowBright", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SpecMap, CloudsTable, L"SpecMap", ustring(_NoDataStr));
-                __Get_Value_From_Table(&CloudLayer.FlipMap, CloudsTable, L"FlipMap", false);
-                __Get_Value_From_Table(&CloudLayer.Gamma, CloudsTable, L"Gamma", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.Hapke, CloudsTable, L"Hapke", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SpotBright, CloudsTable, L"SpotBright", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SpotWidth, CloudsTable, L"SpotWidth", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SpotBrightCB, CloudsTable, L"SpotBrightCB", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SpotWidthCB, CloudsTable, L"SpotWidthCB", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.TempMapMaxTemp, CloudsTable, L"TempMapMaxTemp", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.DayAmbient, CloudsTable, L"DayAmbient", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.RingsWinter, CloudsTable, L"RingsWinter", _NoDataDbl);
-                std::array<float64, 3> ModulateColor;
-                __Get_Value_From_Table(&ModulateColor, CloudsTable, L"ModulateColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-                CloudLayer.ModulateColor = vec3(ModulateColor);
-                __Get_Value_From_Table(&CloudLayer.ModulateBright, CloudsTable, L"ModulateBright", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.Height, CloudsTable, L"Height", _NoDataDbl);
+                __Get_Value_From_Table(&CloudLayer.DiffMap, CloudsTable, L"DiffMap", CloudLayer.DiffMap);
+                __Get_Value_From_Table(&CloudLayer.DiffMapAlpha, CloudsTable, L"DiffMapAlpha", CloudLayer.DiffMapAlpha);
+                __Get_Value_From_Table(&CloudLayer.BumpMap, CloudsTable, L"BumpMap", CloudLayer.BumpMap);
+                __Get_Value_From_Table(&CloudLayer.BumpHeight, CloudsTable, L"BumpHeight", CloudLayer.BumpHeight);
+                __Get_Value_From_Table(&CloudLayer.BumpOffset, CloudsTable, L"BumpOffset", CloudLayer.BumpOffset);
+                __Get_Value_From_Table(&CloudLayer.GlowMap, CloudsTable, L"GlowMap", CloudLayer.GlowMap);
+                __Get_Value_From_Table(&CloudLayer.GlowMode, CloudsTable, L"GlowMode", CloudLayer.GlowMode);
+                __Get_Value_From_Table(&CloudLayer.GlowColor, CloudsTable, L"GlowColor", CloudLayer.GlowColor);
+                __Get_Value_From_Table(&CloudLayer.GlowBright, CloudsTable, L"GlowBright", CloudLayer.GlowBright);
+                __Get_Value_From_Table(&CloudLayer.SpecMap, CloudsTable, L"SpecMap", CloudLayer.SpecMap);
+                __Get_Value_From_Table(&CloudLayer.FlipMap, CloudsTable, L"FlipMap", CloudLayer.FlipMap);
+                __Get_Value_From_Table(&CloudLayer.Gamma, CloudsTable, L"Gamma", CloudLayer.Gamma);
+                __Get_Value_From_Table(&CloudLayer.Hapke, CloudsTable, L"Hapke", CloudLayer.Hapke);
+                __Get_Value_From_Table(&CloudLayer.SpotBright, CloudsTable, L"SpotBright", CloudLayer.SpotBright);
+                __Get_Value_From_Table(&CloudLayer.SpotWidth, CloudsTable, L"SpotWidth", CloudLayer.SpotWidth);
+                __Get_Value_From_Table(&CloudLayer.SpotBrightCB, CloudsTable, L"SpotBrightCB", CloudLayer.SpotBrightCB);
+                __Get_Value_From_Table(&CloudLayer.SpotWidthCB, CloudsTable, L"SpotWidthCB", CloudLayer.SpotWidthCB);
+                __Get_Value_From_Table(&CloudLayer.TempMapMaxTemp, CloudsTable, L"TempMapMaxTemp", CloudLayer.TempMapMaxTemp);
+                __Get_Value_From_Table(&CloudLayer.DayAmbient, CloudsTable, L"DayAmbient", CloudLayer.DayAmbient);
+                __Get_Value_From_Table(&CloudLayer.RingsWinter, CloudsTable, L"RingsWinter", CloudLayer.RingsWinter);
+                __Get_Value_From_Table(&CloudLayer.ModulateColor, CloudsTable, L"ModulateColor", CloudLayer.ModulateColor);
+                __Get_Value_From_Table(&CloudLayer.ModulateBright, CloudsTable, L"ModulateBright", CloudLayer.ModulateBright);
+                __Get_Value_From_Table(&CloudLayer.Height, CloudsTable, L"Height", CloudLayer.Height);
                 CloudLayer.Height *= 1000.;
-                __Get_Value_From_Table(&CloudLayer.Velocity, CloudsTable, L"Velocity", _NoDataDbl);
+                __Get_Value_From_Table(&CloudLayer.Velocity, CloudsTable, L"Velocity", CloudLayer.Velocity);
                 CloudLayer.Velocity /= 3.6;
-                __Get_Value_From_Table(&CloudLayer.RotationOffset, CloudsTable, L"RotationOffset", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SubsurfScatBright, CloudsTable, L"SubsurfScatBright", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.SubsurfScatPower, CloudsTable, L"SubsurfScatPower", _NoDataDbl);
-                __Get_Value_From_Table(&CloudLayer.Opacity, CloudsTable, L"Opacity", _NoDataDbl);
+                __Get_Value_From_Table(&CloudLayer.RotationOffset, CloudsTable, L"RotationOffset", CloudLayer.RotationOffset);
+                __Get_Value_From_Table(&CloudLayer.SubsurfScatBright, CloudsTable, L"SubsurfScatBright", CloudLayer.SubsurfScatBright);
+                __Get_Value_From_Table(&CloudLayer.SubsurfScatPower, CloudsTable, L"SubsurfScatPower", CloudLayer.SubsurfScatPower);
+                __Get_Value_From_Table(&CloudLayer.Opacity, CloudsTable, L"Opacity", CloudLayer.Opacity);
                 Obj.Clouds.Layers.push_back(CloudLayer);
             }
             auto FirstCloudsTable = CloudsTables[0]->SubTable;
-            __Get_Value_From_Table(&Obj.Clouds.TidalLocked, FirstCloudsTable, L"TidalLocked", false);
-            __Get_Value_From_Table(&Obj.Clouds.Coverage, FirstCloudsTable, L"Coverage", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.mainFreq, FirstCloudsTable, L"mainFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Clouds.mainOctaves, FirstCloudsTable, L"mainOctaves", _NoDataInt);
+            __Get_Value_From_Table(&Obj.Clouds.TidalLocked, FirstCloudsTable, L"TidalLocked", Obj.Clouds.TidalLocked);
+            __Get_Value_From_Table(&Obj.Clouds.Coverage, FirstCloudsTable, L"Coverage", Obj.Clouds.Coverage);
+            __Get_Value_From_Table(&Obj.Clouds.mainFreq, FirstCloudsTable, L"mainFreq", Obj.Clouds.mainFreq);
+            __Get_Value_From_Table(&Obj.Clouds.mainOctaves, FirstCloudsTable, L"mainOctaves", Obj.Clouds.mainOctaves);
             __Get_Value_From_Table(&Obj.Clouds.stripeZones, FirstCloudsTable, L"stripeZones", Obj.Clouds.stripeZones);
             __Get_Value_From_Table(&Obj.Clouds.stripeFluct, FirstCloudsTable, L"stripeFluct", Obj.Clouds.stripeFluct);
             __Get_Value_From_Table(&Obj.Clouds.stripeTwist, FirstCloudsTable, L"stripeTwist", Obj.Clouds.stripeTwist);
@@ -510,213 +500,203 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.Clouds.cycloneDensity2, FirstCloudsTable, L"cycloneDensity2", Obj.Clouds.cycloneDensity2);
             __Get_Value_From_Table(&Obj.Clouds.cycloneOctaves2, FirstCloudsTable, L"cycloneOctaves2", Obj.Clouds.cycloneOctaves2);
         }
-        else {Obj.NoClouds = true;}
+        //else {Obj.NoClouds = true;}
 
-        __Get_Value_From_Table(&Obj.NoAtmosphere, CurrentTable, L"NoAtmosphere", false);
+        __Get_Value_From_Table(&Obj.NoAtmosphere, CurrentTable, L"NoAtmosphere", Obj.NoAtmosphere);
         auto AtmosphereTable = __Find_Table_From_List(CurrentTable, L"Atmosphere");
-        if (!Obj.NoAtmosphere && AtmosphereTable != CurrentTableEnd)
+        if (AtmosphereTable != CurrentTableEnd)
         {
+            Obj.NoAtmosphere = false;
             auto AtmoSubTable = AtmosphereTable->SubTable;
-            __Get_Value_From_Table(&Obj.Atmosphere.Model, AtmoSubTable, L"Model", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Atmosphere.Height, AtmoSubTable, L"Height", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Atmosphere.Model, AtmoSubTable, L"Model", Obj.Atmosphere.Model);
+            __Get_Value_From_Table(&Obj.Atmosphere.Height, AtmoSubTable, L"Height", Obj.Atmosphere.Height);
             Obj.Atmosphere.Height *= 1000;
-            __Get_Value_From_Table(&Obj.Atmosphere.Density, AtmoSubTable, L"Density", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Pressure, AtmoSubTable, L"Pressure", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Atmosphere.Density, AtmoSubTable, L"Density", Obj.Atmosphere.Density);
+            __Get_Value_From_Table(&Obj.Atmosphere.Pressure, AtmoSubTable, L"Pressure", Obj.Atmosphere.Pressure);
             Obj.Atmosphere.Pressure *= StandardAtm;
-            __Get_Value_From_Table(&Obj.Atmosphere.Adiabat, AtmoSubTable, L"Adiabat", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Greenhouse, AtmoSubTable, L"Greenhouse", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Bright, AtmoSubTable, L"Bright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Opacity, AtmoSubTable, L"Opacity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.SkyLight, AtmoSubTable, L"SkyLight", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Hue, AtmoSubTable, L"Hue", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Atmosphere.Saturation, AtmoSubTable, L"Saturation", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Atmosphere.Adiabat, AtmoSubTable, L"Adiabat", Obj.Atmosphere.Adiabat);
+            __Get_Value_From_Table(&Obj.Atmosphere.Greenhouse, AtmoSubTable, L"Greenhouse", Obj.Atmosphere.Greenhouse);
+            __Get_Value_From_Table(&Obj.Atmosphere.Bright, AtmoSubTable, L"Bright", Obj.Atmosphere.Bright);
+            __Get_Value_From_Table(&Obj.Atmosphere.Opacity, AtmoSubTable, L"Opacity", Obj.Atmosphere.Opacity);
+            __Get_Value_From_Table(&Obj.Atmosphere.SkyLight, AtmoSubTable, L"SkyLight", Obj.Atmosphere.SkyLight);
+            __Get_Value_From_Table(&Obj.Atmosphere.Hue, AtmoSubTable, L"Hue", Obj.Atmosphere.Hue);
+            __Get_Value_From_Table(&Obj.Atmosphere.Saturation, AtmoSubTable, L"Saturation", Obj.Atmosphere.Saturation);
             auto CompTable = __Find_Table_From_List(AtmoSubTable, L"Composition");
             if (CompTable != AtmoSubTable->Get().end()) {Obj.Atmosphere.Composition = TableToCompositeMap(CompTable->SubTable);}
         }
-        else {Obj.NoAtmosphere = true;}
+        //else {Obj.NoAtmosphere = true;}
 
         auto ClimateTable = __Find_Table_From_List(CurrentTable, L"Climate");
         if (ClimateTable != CurrentTableEnd)
         {
             Obj.EnableClimate = true;
             auto ClimateSubTable = ClimateTable->SubTable;
-            __Get_Value_From_Table(&Obj.Climate.GlobalWindSpeed, ClimateSubTable, L"GlobalWindSpeed", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Climate.MinSurfaceTemp, ClimateSubTable, L"MinSurfaceTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Climate.MaxSurfaceTemp, ClimateSubTable, L"MaxSurfaceTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Climate.AtmoProfile, ClimateSubTable, L"AtmoProfile", ustring(_NoDataStr));
+            __Get_Value_From_Table(&Obj.Climate.GlobalWindSpeed, ClimateSubTable, L"GlobalWindSpeed", Obj.Climate.GlobalWindSpeed);
+            __Get_Value_From_Table(&Obj.Climate.MinSurfaceTemp, ClimateSubTable, L"MinSurfaceTemp", Obj.Climate.MinSurfaceTemp);
+            __Get_Value_From_Table(&Obj.Climate.MaxSurfaceTemp, ClimateSubTable, L"MaxSurfaceTemp", Obj.Climate.MaxSurfaceTemp);
+            __Get_Value_From_Table(&Obj.Climate.AtmoProfile, ClimateSubTable, L"AtmoProfile", Obj.Climate.AtmoProfile);
         }
 
-        __Get_Value_From_Table(&Obj.NoAurora, CurrentTable, L"NoAurora", false);
+        __Get_Value_From_Table(&Obj.NoAurora, CurrentTable, L"NoAurora", Obj.NoAurora);
         auto AuroraTable = __Find_Table_From_List(CurrentTable, L"Aurora");
-        if (!Obj.NoAurora && AuroraTable != CurrentTableEnd)
+        if (AuroraTable != CurrentTableEnd)
         {
+            Obj.NoAurora = false;
             auto AuroraSubTable = AuroraTable->SubTable;
-            __Get_Value_From_Table(&Obj.Aurora.Height, AuroraSubTable, L"Height", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Aurora.Height, AuroraSubTable, L"Height", Obj.Aurora.Height);
             Obj.Aurora.Height *= 1000.;
-            __Get_Value_From_Table(&Obj.Aurora.NorthLat, AuroraSubTable, L"NorthLat", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.NorthLon, AuroraSubTable, L"NorthLon", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.NorthRadius, AuroraSubTable, L"NorthRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Aurora.NorthLat, AuroraSubTable, L"NorthLat", Obj.Aurora.NorthLat);
+            __Get_Value_From_Table(&Obj.Aurora.NorthLon, AuroraSubTable, L"NorthLon", Obj.Aurora.NorthLon);
+            __Get_Value_From_Table(&Obj.Aurora.NorthRadius, AuroraSubTable, L"NorthRadius", Obj.Aurora.NorthRadius);
             Obj.Aurora.NorthRadius *= 1000.;
-            __Get_Value_From_Table(&Obj.Aurora.NorthWidth, AuroraSubTable, L"NorthWidth", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Aurora.NorthWidth, AuroraSubTable, L"NorthWidth", Obj.Aurora.NorthWidth);
             Obj.Aurora.NorthWidth *= 1000.;
-            __Get_Value_From_Table(&Obj.Aurora.NorthRings, AuroraSubTable, L"NorthRings", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Aurora.NorthBright, AuroraSubTable, L"NorthBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.NorthFlashFreq, AuroraSubTable, L"NorthFlashFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.NorthMoveSpeed, AuroraSubTable, L"NorthMoveSpeed", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.NorthParticles, AuroraSubTable, L"NorthParticles", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Aurora.SouthLat, AuroraSubTable, L"SouthLat", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.SouthLon, AuroraSubTable, L"SouthLon", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.SouthRadius, AuroraSubTable, L"SouthRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Aurora.NorthRings, AuroraSubTable, L"NorthRings", Obj.Aurora.NorthRings);
+            __Get_Value_From_Table(&Obj.Aurora.NorthBright, AuroraSubTable, L"NorthBright", Obj.Aurora.NorthBright);
+            __Get_Value_From_Table(&Obj.Aurora.NorthFlashFreq, AuroraSubTable, L"NorthFlashFreq", Obj.Aurora.NorthFlashFreq);
+            __Get_Value_From_Table(&Obj.Aurora.NorthMoveSpeed, AuroraSubTable, L"NorthMoveSpeed", Obj.Aurora.NorthMoveSpeed);
+            __Get_Value_From_Table(&Obj.Aurora.NorthParticles, AuroraSubTable, L"NorthParticles", Obj.Aurora.NorthParticles);
+            __Get_Value_From_Table(&Obj.Aurora.SouthLat, AuroraSubTable, L"SouthLat", Obj.Aurora.SouthLat);
+            __Get_Value_From_Table(&Obj.Aurora.SouthLon, AuroraSubTable, L"SouthLon", Obj.Aurora.SouthLon);
+            __Get_Value_From_Table(&Obj.Aurora.SouthRadius, AuroraSubTable, L"SouthRadius", Obj.Aurora.SouthRadius);
             Obj.Aurora.SouthRadius *= 1000.;
-            __Get_Value_From_Table(&Obj.Aurora.SouthWidth, AuroraSubTable, L"SouthWidth", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Aurora.SouthWidth, AuroraSubTable, L"SouthWidth", Obj.Aurora.SouthWidth);
             Obj.Aurora.SouthWidth *= 1000.;
-            __Get_Value_From_Table(&Obj.Aurora.SouthRings, AuroraSubTable, L"SouthRings", _NoDataInt);
-            __Get_Value_From_Table(&Obj.Aurora.SouthBright, AuroraSubTable, L"SouthBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.SouthFlashFreq, AuroraSubTable, L"SouthFlashFreq", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.SouthMoveSpeed, AuroraSubTable, L"SouthMoveSpeed", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Aurora.SouthParticles, AuroraSubTable, L"SouthParticles", _NoDataInt);
-            std::array<float64, 3> TopColor;
-            __Get_Value_From_Table(&TopColor, AuroraSubTable, L"TopColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Aurora.TopColor = vec3(TopColor);
-            std::array<float64, 3> BottomColor;
-            __Get_Value_From_Table(&BottomColor, AuroraSubTable, L"BottomColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Aurora.BottomColor = vec3(BottomColor);
+            __Get_Value_From_Table(&Obj.Aurora.SouthRings, AuroraSubTable, L"SouthRings", Obj.Aurora.SouthRings);
+            __Get_Value_From_Table(&Obj.Aurora.SouthBright, AuroraSubTable, L"SouthBright", Obj.Aurora.SouthBright);
+            __Get_Value_From_Table(&Obj.Aurora.SouthFlashFreq, AuroraSubTable, L"SouthFlashFreq", Obj.Aurora.SouthFlashFreq);
+            __Get_Value_From_Table(&Obj.Aurora.SouthMoveSpeed, AuroraSubTable, L"SouthMoveSpeed", Obj.Aurora.SouthMoveSpeed);
+            __Get_Value_From_Table(&Obj.Aurora.SouthParticles, AuroraSubTable, L"SouthParticles", Obj.Aurora.SouthParticles);
+            __Get_Value_From_Table(&Obj.Aurora.TopColor, AuroraSubTable, L"TopColor", Obj.Aurora.TopColor);
+            __Get_Value_From_Table(&Obj.Aurora.BottomColor, AuroraSubTable, L"BottomColor", Obj.Aurora.BottomColor);
         }
-        else {Obj.NoAurora = true;}
+        //else {Obj.NoAurora = true;}
 
-        __Get_Value_From_Table(&Obj.NoRings, CurrentTable, L"NoRings", false);
+        __Get_Value_From_Table(&Obj.NoRings, CurrentTable, L"NoRings", Obj.NoRings);
         auto RingsTable = __Find_Table_From_List(CurrentTable, L"Rings");
-        if (!Obj.NoRings && RingsTable != CurrentTableEnd)
+        if (RingsTable != CurrentTableEnd)
         {
+            Obj.NoRings = false;
             auto RingsSubTable = RingsTable->SubTable;
-            __Get_Value_From_Table(&Obj.Rings.Texture, RingsSubTable, L"Texture", ustring(_NoDataStr));
-            __Get_Value_From_Table(&Obj.Rings.InnerRadius, RingsSubTable, L"InnerRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.Texture, RingsSubTable, L"Texture", Obj.Rings.Texture);
+            __Get_Value_From_Table(&Obj.Rings.InnerRadius, RingsSubTable, L"InnerRadius", Obj.Rings.InnerRadius);
             Obj.Rings.InnerRadius *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.OuterRadius, RingsSubTable, L"OuterRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.OuterRadius, RingsSubTable, L"OuterRadius", Obj.Rings.OuterRadius);
             Obj.Rings.OuterRadius *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.EdgeRadius, RingsSubTable, L"EdgeRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.EdgeRadius, RingsSubTable, L"EdgeRadius", Obj.Rings.EdgeRadius);
             Obj.Rings.EdgeRadius *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.MeanRadius, RingsSubTable, L"MeanRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.MeanRadius, RingsSubTable, L"MeanRadius", Obj.Rings.MeanRadius);
             Obj.Rings.MeanRadius *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.Thickness, RingsSubTable, L"Thickness", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.Thickness, RingsSubTable, L"Thickness", Obj.Rings.Thickness);
             Obj.Rings.Thickness *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.RocksMaxSize, RingsSubTable, L"RocksMaxSize", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.RocksMaxSize, RingsSubTable, L"RocksMaxSize", Obj.Rings.RocksMaxSize);
             Obj.Rings.RocksMaxSize *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.RocksSpacing, RingsSubTable, L"RocksSpacing", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.DustDrawDist, RingsSubTable, L"DustDrawDist", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.ChartRadius, RingsSubTable, L"ChartRadius", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.RocksSpacing, RingsSubTable, L"RocksSpacing", Obj.Rings.RocksSpacing);
+            __Get_Value_From_Table(&Obj.Rings.DustDrawDist, RingsSubTable, L"DustDrawDist", Obj.Rings.DustDrawDist);
+            __Get_Value_From_Table(&Obj.Rings.ChartRadius, RingsSubTable, L"ChartRadius", Obj.Rings.ChartRadius);
             Obj.Rings.ChartRadius *= 1000;
-            __Get_Value_From_Table(&Obj.Rings.RotationPeriod, RingsSubTable, L"RotationPeriod", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Rings.RotationPeriod, RingsSubTable, L"RotationPeriod", Obj.Rings.RotationPeriod);
             Obj.Rings.RotationPeriod *= 3600;
-            __Get_Value_From_Table(&Obj.Rings.Brightness, RingsSubTable, L"Brightness", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.FrontBright, RingsSubTable, L"FrontBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.BackBright, RingsSubTable, L"BackBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.Density, RingsSubTable, L"Density", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.Opacity, RingsSubTable, L"Opacity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.SelfShadow, RingsSubTable, L"SelfShadow", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.PlanetShadow, RingsSubTable, L"PlanetShadow", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.Hapke, RingsSubTable, L"Hapke", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.SpotBright, RingsSubTable, L"SpotBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.SpotWidth, RingsSubTable, L"SpotWidth", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.SpotBrightCB, RingsSubTable, L"SpotBrightCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.SpotWidthCB, RingsSubTable, L"SpotWidthCB", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.frequency, RingsSubTable, L"frequency", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.densityScale, RingsSubTable, L"densityScale", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.densityOffset, RingsSubTable, L"densityOffset", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.densityPower, RingsSubTable, L"densityPower", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Rings.colorContrast, RingsSubTable, L"colorContrast", _NoDataDbl);
-            std::array<float64, 3> FrontColor;
-            __Get_Value_From_Table(&FrontColor, RingsSubTable, L"FrontColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Rings.FrontColor = vec3(FrontColor);
-            std::array<float64, 3> BackThickColor;
-            __Get_Value_From_Table(&BackThickColor, RingsSubTable, L"BackThickColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Rings.BackThickColor = vec3(BackThickColor);
-            std::array<float64, 3> BackIceColor;
-            __Get_Value_From_Table(&BackIceColor, RingsSubTable, L"BackIceColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Rings.BackIceColor = vec3(BackIceColor);
-            std::array<float64, 3> BackDustColor;
-            __Get_Value_From_Table(&BackDustColor, RingsSubTable, L"BackDustColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.Rings.BackDustColor = vec3(BackDustColor);
+            __Get_Value_From_Table(&Obj.Rings.Brightness, RingsSubTable, L"Brightness", Obj.Rings.Brightness);
+            __Get_Value_From_Table(&Obj.Rings.FrontBright, RingsSubTable, L"FrontBright", Obj.Rings.FrontBright);
+            __Get_Value_From_Table(&Obj.Rings.BackBright, RingsSubTable, L"BackBright", Obj.Rings.BackBright);
+            __Get_Value_From_Table(&Obj.Rings.Density, RingsSubTable, L"Density", Obj.Rings.Density);
+            __Get_Value_From_Table(&Obj.Rings.Opacity, RingsSubTable, L"Opacity", Obj.Rings.Opacity);
+            __Get_Value_From_Table(&Obj.Rings.SelfShadow, RingsSubTable, L"SelfShadow", Obj.Rings.SelfShadow);
+            __Get_Value_From_Table(&Obj.Rings.PlanetShadow, RingsSubTable, L"PlanetShadow", Obj.Rings.PlanetShadow);
+            __Get_Value_From_Table(&Obj.Rings.Hapke, RingsSubTable, L"Hapke", Obj.Rings.Hapke);
+            __Get_Value_From_Table(&Obj.Rings.SpotBright, RingsSubTable, L"SpotBright", Obj.Rings.SpotBright);
+            __Get_Value_From_Table(&Obj.Rings.SpotWidth, RingsSubTable, L"SpotWidth", Obj.Rings.SpotWidth);
+            __Get_Value_From_Table(&Obj.Rings.SpotBrightCB, RingsSubTable, L"SpotBrightCB", Obj.Rings.SpotBrightCB);
+            __Get_Value_From_Table(&Obj.Rings.SpotWidthCB, RingsSubTable, L"SpotWidthCB", Obj.Rings.SpotWidthCB);
+            __Get_Value_From_Table(&Obj.Rings.frequency, RingsSubTable, L"frequency", Obj.Rings.frequency);
+            __Get_Value_From_Table(&Obj.Rings.densityScale, RingsSubTable, L"densityScale", Obj.Rings.densityScale);
+            __Get_Value_From_Table(&Obj.Rings.densityOffset, RingsSubTable, L"densityOffset", Obj.Rings.densityOffset);
+            __Get_Value_From_Table(&Obj.Rings.densityPower, RingsSubTable, L"densityPower", Obj.Rings.densityPower);
+            __Get_Value_From_Table(&Obj.Rings.colorContrast, RingsSubTable, L"colorContrast", Obj.Rings.colorContrast);
+            __Get_Value_From_Table(&Obj.Rings.FrontColor, RingsSubTable, L"FrontColor", Obj.Rings.FrontColor);
+            __Get_Value_From_Table(&Obj.Rings.BackThickColor, RingsSubTable, L"BackThickColor", Obj.Rings.BackThickColor);
+            __Get_Value_From_Table(&Obj.Rings.BackIceColor, RingsSubTable, L"BackIceColor", Obj.Rings.BackIceColor);
+            __Get_Value_From_Table(&Obj.Rings.BackDustColor, RingsSubTable, L"BackDustColor", Obj.Rings.BackDustColor);
         }
-        else {Obj.NoRings = true;}
+        //else {Obj.NoRings = true;}
 
-        __Get_Value_From_Table(&Obj.NoAccretionDisk, CurrentTable, L"NoAccretionDisk", false);
+        __Get_Value_From_Table(&Obj.NoAccretionDisk, CurrentTable, L"NoAccretionDisk", Obj.NoAccretionDisk);
         auto AccDiskTable = __Find_Table_From_List(CurrentTable, L"AccretionDisk");
-        if (!Obj.NoAccretionDisk && AccDiskTable != CurrentTableEnd)
+        if (AccDiskTable != CurrentTableEnd)
         {
+            Obj.NoAccretionDisk = false;
             auto AccDiskSubTable = AccDiskTable->SubTable;
-            __Get_Value_With_Unit(&Obj.AccretionDisk.InnerRadius, AccDiskSubTable, L"InnerRadius", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_With_Unit(&Obj.AccretionDisk.OuterRadius, AccDiskSubTable, L"OuterRadius", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_With_Unit(&Obj.AccretionDisk.InnerThickness, AccDiskSubTable, L"InnerThickness", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_With_Unit(&Obj.AccretionDisk.OuterThickness, AccDiskSubTable, L"OuterThickness", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_From_Table(&Obj.AccretionDisk.ThicknessPow, AccDiskSubTable, L"ThicknessPow", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.DetailScaleR, AccDiskSubTable, L"DetailScaleR", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.DetailScaleV, AccDiskSubTable, L"DetailScaleV", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionX, AccDiskSubTable, L"OctaveDistortionX", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionY, AccDiskSubTable, L"OctaveDistortionY", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionZ, AccDiskSubTable, L"OctaveDistortionZ", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveScale, AccDiskSubTable, L"OctaveScale", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.DiskNoiseContrast, AccDiskSubTable, L"DiskNoiseContrast", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.DiskTempContrast, AccDiskSubTable, L"DiskTempContrast", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.DiskOuterSpin, AccDiskSubTable, L"DiskOuterSpin", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.TwistMagn, AccDiskSubTable, L"TwistMagn", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.AccretionRate, AccDiskSubTable, L"AccretionRate", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.Temperature, AccDiskSubTable, L"Temperature", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.Density, AccDiskSubTable, L"Density", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.Luminosity, AccDiskSubTable, L"Luminosity", _NoDataDbl);
+            __Get_Value_With_Unit(&Obj.AccretionDisk.InnerRadius, AccDiskSubTable, L"InnerRadius", Obj.AccretionDisk.InnerRadius, AU, {{L"Km", 1000}});
+            __Get_Value_With_Unit(&Obj.AccretionDisk.OuterRadius, AccDiskSubTable, L"OuterRadius", Obj.AccretionDisk.OuterRadius, AU, {{L"Km", 1000}});
+            __Get_Value_With_Unit(&Obj.AccretionDisk.InnerThickness, AccDiskSubTable, L"InnerThickness", Obj.AccretionDisk.InnerThickness, AU, {{L"Km", 1000}});
+            __Get_Value_With_Unit(&Obj.AccretionDisk.OuterThickness, AccDiskSubTable, L"OuterThickness", Obj.AccretionDisk.OuterThickness, AU, {{L"Km", 1000}});
+            __Get_Value_From_Table(&Obj.AccretionDisk.ThicknessPow, AccDiskSubTable, L"ThicknessPow", Obj.AccretionDisk.ThicknessPow);
+            __Get_Value_From_Table(&Obj.AccretionDisk.DetailScaleR, AccDiskSubTable, L"DetailScaleR", Obj.AccretionDisk.DetailScaleR);
+            __Get_Value_From_Table(&Obj.AccretionDisk.DetailScaleV, AccDiskSubTable, L"DetailScaleV", Obj.AccretionDisk.DetailScaleV);
+            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionX, AccDiskSubTable, L"OctaveDistortionX", Obj.AccretionDisk.OctaveDistortionX);
+            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionY, AccDiskSubTable, L"OctaveDistortionY", Obj.AccretionDisk.OctaveDistortionY);
+            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveDistortionZ, AccDiskSubTable, L"OctaveDistortionZ", Obj.AccretionDisk.OctaveDistortionZ);
+            __Get_Value_From_Table(&Obj.AccretionDisk.OctaveScale, AccDiskSubTable, L"OctaveScale", Obj.AccretionDisk.OctaveScale);
+            __Get_Value_From_Table(&Obj.AccretionDisk.DiskNoiseContrast, AccDiskSubTable, L"DiskNoiseContrast", Obj.AccretionDisk.DiskNoiseContrast);
+            __Get_Value_From_Table(&Obj.AccretionDisk.DiskTempContrast, AccDiskSubTable, L"DiskTempContrast", Obj.AccretionDisk.DiskTempContrast);
+            __Get_Value_From_Table(&Obj.AccretionDisk.DiskOuterSpin, AccDiskSubTable, L"DiskOuterSpin", Obj.AccretionDisk.DiskOuterSpin);
+            __Get_Value_From_Table(&Obj.AccretionDisk.TwistMagn, AccDiskSubTable, L"TwistMagn", Obj.AccretionDisk.TwistMagn);
+            __Get_Value_From_Table(&Obj.AccretionDisk.AccretionRate, AccDiskSubTable, L"AccretionRate", Obj.AccretionDisk.AccretionRate);
+            __Get_Value_From_Table(&Obj.AccretionDisk.Temperature, AccDiskSubTable, L"Temperature", Obj.AccretionDisk.Temperature);
+            __Get_Value_From_Table(&Obj.AccretionDisk.Density, AccDiskSubTable, L"Density", Obj.AccretionDisk.Density);
+            __Get_Value_From_Table(&Obj.AccretionDisk.Luminosity, AccDiskSubTable, L"Luminosity", Obj.AccretionDisk.Luminosity);
             Obj.AccretionDisk.Luminosity *= SolarLum;
-            __Get_Value_From_Table(&Obj.AccretionDisk.LuminosityBol, AccDiskSubTable, L"LuminosityBol", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.AccretionDisk.LuminosityBol, AccDiskSubTable, L"LuminosityBol", Obj.AccretionDisk.LuminosityBol);
             Obj.AccretionDisk.LuminosityBol *= SolarLumBol;
-            __Get_Value_From_Table(&Obj.AccretionDisk.Brightness, AccDiskSubTable, L"Brightness", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.AccretionDisk.Brightness, AccDiskSubTable, L"Brightness", Obj.AccretionDisk.Brightness);
 
-            __Get_Value_With_Unit(&Obj.AccretionDisk.JetLength, AccDiskSubTable, L"JetLength", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_With_Unit(&Obj.AccretionDisk.JetStartRadius, AccDiskSubTable, L"JetStartRadius", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_With_Unit(&Obj.AccretionDisk.JetEndRadius, AccDiskSubTable, L"JetEndRadius", _NoDataDbl, AU, {{L"Km", 1000}});
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetStartTemp, AccDiskSubTable, L"JetStartTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetEndTemp, AccDiskSubTable, L"JetEndTemp", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetVelocity, AccDiskSubTable, L"JetVelocity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetDistortion, AccDiskSubTable, L"JetDistortion", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetThickness, AccDiskSubTable, L"JetThickness", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetDensity, AccDiskSubTable, L"JetDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.JetBrightness, AccDiskSubTable, L"JetBrightness", _NoDataDbl);
+            __Get_Value_With_Unit(&Obj.AccretionDisk.JetLength, AccDiskSubTable, L"JetLength", Obj.AccretionDisk.JetLength, AU, {{L"Km", 1000}});
+            __Get_Value_With_Unit(&Obj.AccretionDisk.JetStartRadius, AccDiskSubTable, L"JetStartRadius", Obj.AccretionDisk.JetStartRadius, AU, {{L"Km", 1000}});
+            __Get_Value_With_Unit(&Obj.AccretionDisk.JetEndRadius, AccDiskSubTable, L"JetEndRadius", Obj.AccretionDisk.JetEndRadius, AU, {{L"Km", 1000}});
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetStartTemp, AccDiskSubTable, L"JetStartTemp", Obj.AccretionDisk.JetStartTemp);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetEndTemp, AccDiskSubTable, L"JetEndTemp", Obj.AccretionDisk.JetEndTemp);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetVelocity, AccDiskSubTable, L"JetVelocity", Obj.AccretionDisk.JetVelocity);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetDistortion, AccDiskSubTable, L"JetDistortion", Obj.AccretionDisk.JetDistortion);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetThickness, AccDiskSubTable, L"JetThickness", Obj.AccretionDisk.JetThickness);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetDensity, AccDiskSubTable, L"JetDensity", Obj.AccretionDisk.JetDensity);
+            __Get_Value_From_Table(&Obj.AccretionDisk.JetBrightness, AccDiskSubTable, L"JetBrightness", Obj.AccretionDisk.JetBrightness);
 
-            __Get_Value_From_Table(&Obj.AccretionDisk.LightingBright, AccDiskSubTable, L"LightingBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.ShadowContrast, AccDiskSubTable, L"ShadowContrast", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.AccretionDisk.ShadowLength, AccDiskSubTable, L"ShadowLength", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.AccretionDisk.LightingBright, AccDiskSubTable, L"LightingBright", Obj.AccretionDisk.LightingBright);
+            __Get_Value_From_Table(&Obj.AccretionDisk.ShadowContrast, AccDiskSubTable, L"ShadowContrast", Obj.AccretionDisk.ShadowContrast);
+            __Get_Value_From_Table(&Obj.AccretionDisk.ShadowLength, AccDiskSubTable, L"ShadowLength", Obj.AccretionDisk.ShadowLength);
         }
-        else {Obj.NoAccretionDisk = true;}
+        //else {Obj.NoAccretionDisk = true;}
 
-        __Get_Value_From_Table(&Obj.NoCorona, CurrentTable, L"NoCorona", false);
+        __Get_Value_From_Table(&Obj.NoCorona, CurrentTable, L"NoCorona", Obj.NoCorona);
         auto CoronaTable = __Find_Table_From_List(CurrentTable, L"Corona");
-        if (!Obj.NoCorona && CoronaTable != CurrentTableEnd)
+        if (CoronaTable != CurrentTableEnd)
         {
+            Obj.NoCorona = false;
             auto CoronaSubTable = CoronaTable->SubTable;
-            __Get_Value_From_Table(&Obj.Corona.Radius, CoronaSubTable, L"Radius", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Corona.Period, CoronaSubTable, L"Period", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Corona.Brightness, CoronaSubTable, L"Brightness", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Corona.RayDensity, CoronaSubTable, L"RayDensity", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.Corona.RayCurv, CoronaSubTable, L"RayCurv", _NoDataDbl);
+            __Get_Value_From_Table(&Obj.Corona.Radius, CoronaSubTable, L"Radius", Obj.Corona.Radius);
+            __Get_Value_From_Table(&Obj.Corona.Period, CoronaSubTable, L"Period", Obj.Corona.Period);
+            __Get_Value_From_Table(&Obj.Corona.Brightness, CoronaSubTable, L"Brightness", Obj.Corona.Brightness);
+            __Get_Value_From_Table(&Obj.Corona.RayDensity, CoronaSubTable, L"RayDensity", Obj.Corona.RayDensity);
+            __Get_Value_From_Table(&Obj.Corona.RayCurv, CoronaSubTable, L"RayCurv", Obj.Corona.RayCurv);
         }
-        else {Obj.NoCorona = true;}
+        //else {Obj.NoCorona = true;}
 
-        __Get_Value_From_Table(&Obj.NoCometTail, CurrentTable, L"NoCometTail", false);
+        __Get_Value_From_Table(&Obj.NoCometTail, CurrentTable, L"NoCometTail", Obj.NoCometTail);
         auto CometTailTable = __Find_Table_From_List(CurrentTable, L"CometTail");
-        if (!Obj.NoCometTail && CometTailTable != CurrentTableEnd)
+        if (CometTailTable != CurrentTableEnd)
         {
+            Obj.NoCometTail = false;
             auto CometTailSubTable = CometTailTable->SubTable;
-            __Get_Value_From_Table(&Obj.CometTail.MaxLength, CometTailSubTable, L"MaxLength", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.CometTail.GasToDust, CometTailSubTable, L"GasToDust", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.CometTail.Particles, CometTailSubTable, L"Particles", _NoDataInt);
-            __Get_Value_From_Table(&Obj.CometTail.GasBright, CometTailSubTable, L"GasBright", _NoDataDbl);
-            __Get_Value_From_Table(&Obj.CometTail.DustBright, CometTailSubTable, L"DustBright", _NoDataDbl);
-            std::array<float64, 3> GasColor;
-            __Get_Value_From_Table(&GasColor, CometTailSubTable, L"GasColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.CometTail.GasColor = vec3(GasColor);
-            std::array<float64, 3> DustColor;
-            __Get_Value_From_Table(&DustColor, CometTailSubTable, L"DustColor", {_NoDataDbl, _NoDataDbl, _NoDataDbl});
-            Obj.CometTail.DustColor = vec3(DustColor);
+            __Get_Value_From_Table(&Obj.CometTail.MaxLength, CometTailSubTable, L"MaxLength", Obj.CometTail.MaxLength);
+            __Get_Value_From_Table(&Obj.CometTail.GasToDust, CometTailSubTable, L"GasToDust", Obj.CometTail.GasToDust);
+            __Get_Value_From_Table(&Obj.CometTail.Particles, CometTailSubTable, L"Particles", Obj.CometTail.Particles);
+            __Get_Value_From_Table(&Obj.CometTail.GasBright, CometTailSubTable, L"GasBright", Obj.CometTail.GasBright);
+            __Get_Value_From_Table(&Obj.CometTail.DustBright, CometTailSubTable, L"DustBright", Obj.CometTail.DustBright);
+            __Get_Value_From_Table(&Obj.CometTail.GasColor, CometTailSubTable, L"GasColor", Obj.CometTail.GasColor);
+            __Get_Value_From_Table(&Obj.CometTail.DustColor, CometTailSubTable, L"DustColor", Obj.CometTail.DustColor);
         }
-        else {Obj.NoCometTail = true;}
+        //else {Obj.NoCometTail = true;}
     }
 
     return Obj;
@@ -726,7 +706,7 @@ template<> Object GetObject(_SC SharedTablePointer Table, ustring Name)
 {
     auto it = find_if(Table->Get().begin(), Table->Get().end(), [&](_SC SCSTable::ValueType Tbl)
     {
-        if (Tbl.Value.front().GetTypeID() != Tbl.Value.front().VString) {return false;}
+        if (Tbl.Value.front().GetTypeID() != Tbl.Value.front().String) {return false;}
         ustring NameStr;
         Tbl.Value.front().GetQualified(&NameStr);
         auto NameList = __Str_Split(NameStr);
@@ -767,26 +747,26 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             else
             {
                 __Add_Key_Value(&ContentTable, L"Radius", Obj.Dimensions.x / 2. / 1000., FixedOutput, Prec);
-                __Add_Key_Value(&ContentTable, L"Oblateness", array<float64, 3>{0, 0, 0}, FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"Oblateness", vec3{0, 0, 0}, FixedOutput, Prec);
             }
         }
         else
         {
             if (Fl & __Object_Manipulator::FlatObjDim)
             {
-                __Add_Key_Value(&ContentTable, L"Dimensions", array<float64, 3>(Obj.Dimensions / 1000.), FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"Dimensions", vec3(Obj.Dimensions / 1000.), FixedOutput, Prec);
             }
             else
             {
-                auto Radius = array<float64, 3>(Obj.Dimensions / 2.);
-                auto MaxRad = *cse::max(Radius.begin(), Radius.end());
-                array<float64, 3> Flattening = (MaxRad - Radius) / MaxRad;
+                auto Radius = vec3(Obj.Dimensions / 2.);
+                auto MaxRad = cse::max({Radius.x, Radius.y, Radius.z});
+                vec3 Flattening = (MaxRad - Radius) / MaxRad;
                 __Add_Key_Value(&ContentTable, L"Radius", MaxRad / 1000., FixedOutput, Prec);
                 __Add_Key_Value(&ContentTable, L"Oblateness", Flattening, FixedOutput, Prec);
             }
         }
     }
-    else {__Add_Key_Value(&ContentTable, L"Dimensions", array<float64, 3>(Obj.Dimensions / 1000.), FixedOutput, Prec);}
+    else {__Add_Key_Value(&ContentTable, L"Dimensions", vec3(Obj.Dimensions / 1000.), FixedOutput, Prec);}
 
     if (Fl & __Object_Manipulator::Physical)
     {
@@ -811,7 +791,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
 
     if (Fl & __Object_Manipulator::Optical)
     {
-        __Add_Key_Value(&ContentTable, L"Color", array<float64, 3>(Obj.Color), FixedOutput, Prec);
+        __Add_Key_Value(&ContentTable, L"Color", Obj.Color, FixedOutput, Prec);
         __Add_Key_Value(&ContentTable, L"AbsMagn", Obj.AbsMagn, FixedOutput, Prec);
         __Add_Key_Value(&ContentTable, L"SlopeParam", Obj.SlopeParam, FixedOutput, Prec);
         __Add_Key_Value(&ContentTable, L"Brightness", Obj.Brightness, FixedOutput, Prec);
@@ -854,7 +834,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
                         if (FixedOutput) {ValueStr << fixed;}
                         ValueStr.precision(Prec);
                         ValueStr << Obj.RotationIAU.PeriodicTerms[i][j];
-                        VList.push_back(ValueStr.str());
+                        VList.push_back(ustring(ValueStr.str()));
                     }
                 }
                 PeriodicTerms.Type = PeriodicTerms.Matrix;
@@ -886,11 +866,11 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         {
             if (Obj.Orbit.RefPlane == L"Static")
             {
-                __Add_Key_Value(&ContentTable, L"StaticPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"StaticPosXYZ", Obj.Position, FixedOutput, Prec);
             }
             else if (Obj.Orbit.RefPlane == L"Fixed")
             {
-                __Add_Key_Value(&ContentTable, L"FixedPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"FixedPosXYZ", Obj.Position, FixedOutput, Prec);
             }
             else if (Obj.Orbit.RefPlane == L"Analytic")
             {
@@ -962,8 +942,8 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         }
         else
         {
-            __Add_Key_Value(&ContentTable, L"StaticPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
-            __Add_Key_Value(&ContentTable, L"FixedPosXYZ", array<float64, 3>(Obj.Position), FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"StaticPosXYZ", Obj.Position, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"FixedPosXYZ", Obj.Position, FixedOutput, Prec);
             __Add_Empty_Tag(&ContentTable);
             _SC SCSTable OrbitTable;
             if (Obj.Orbit.Binary) {ContentTable.Get().back().Key = L"BinaryOrbit";}
@@ -1048,7 +1028,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&SurfaceTable, L"BumpOffset", Obj.Surface.BumpOffset, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"GlowMap", Obj.Surface.GlowMap, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"GlowMode", Obj.Surface.GlowMode, FixedOutput, Prec);
-        __Add_Key_Value(&SurfaceTable, L"GlowColor", array<float64, 3>(Obj.Surface.GlowColor), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"GlowColor", Obj.Surface.GlowColor, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"GlowBright", Obj.Surface.GlowBright, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"SpecMap", Obj.Surface.SpecMap, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"FlipMap", Obj.Surface.FlipMap, FixedOutput, Prec);
@@ -1061,11 +1041,11 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&SurfaceTable, L"TempMapMaxTemp", Obj.Surface.TempMapMaxTemp, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"DayAmbient", Obj.Surface.DayAmbient, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"RingsWinter", Obj.Surface.RingsWinter, FixedOutput, Prec);
-        __Add_Key_Value(&SurfaceTable, L"ModulateColor", array<float64, 3>(Obj.Surface.ModulateColor), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"ModulateColor", Obj.Surface.ModulateColor, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"ModulateBright", Obj.Surface.ModulateBright, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"Preset", Obj.Surface.Preset, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"SurfStyle", Obj.Surface.SurfStyle, FixedOutput, Prec);
-        __Add_Key_Value(&SurfaceTable, L"Randomize", array<float64, 3>(Obj.Surface.Randomize), FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"Randomize", Obj.Surface.Randomize, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"colorDistMagn", Obj.Surface.colorDistMagn, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"colorDistFreq", Obj.Surface.colorDistFreq, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"detailScale", Obj.Surface.detailScale, FixedOutput, Prec);
@@ -1163,7 +1143,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&OceanTable, L"TempMapMaxTemp", Obj.Ocean.TempMapMaxTemp, FixedOutput, Prec);
         __Add_Key_Value(&OceanTable, L"DayAmbient", Obj.Ocean.DayAmbient, FixedOutput, Prec);
         __Add_Key_Value(&OceanTable, L"RingsWinter", Obj.Ocean.RingsWinter, FixedOutput, Prec);
-        __Add_Key_Value(&OceanTable, L"ModulateColor", array<float64, 3>(Obj.Ocean.ModulateColor), FixedOutput, Prec);
+        __Add_Key_Value(&OceanTable, L"ModulateColor", Obj.Ocean.ModulateColor, FixedOutput, Prec);
         __Add_Key_Value(&OceanTable, L"ModulateBright", Obj.Ocean.ModulateBright, FixedOutput, Prec);
         if (!Obj.Ocean.Composition.empty())
         {
@@ -1191,7 +1171,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             __Add_Key_Value(&CloudLayerTable, L"BumpOffset", Layer.BumpOffset, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"GlowMap", Layer.GlowMap, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"GlowMode", Layer.GlowMode, FixedOutput, Prec);
-            __Add_Key_Value(&CloudLayerTable, L"GlowColor", array<float64, 3>(Layer.GlowColor), FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"GlowColor", Layer.GlowColor, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"GlowBright", Layer.GlowBright, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"SpecMap", Layer.SpecMap, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"FlipMap", Layer.FlipMap, FixedOutput, Prec);
@@ -1204,7 +1184,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             __Add_Key_Value(&CloudLayerTable, L"TempMapMaxTemp", Layer.TempMapMaxTemp, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"DayAmbient", Layer.DayAmbient, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"RingsWinter", Layer.RingsWinter, FixedOutput, Prec);
-            __Add_Key_Value(&CloudLayerTable, L"ModulateColor", array<float64, 3>(Layer.ModulateColor), FixedOutput, Prec);
+            __Add_Key_Value(&CloudLayerTable, L"ModulateColor", Layer.ModulateColor, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"ModulateBright", Layer.ModulateBright, FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"Height", Layer.Height / 1000., FixedOutput, Prec);
             __Add_Key_Value(&CloudLayerTable, L"Velocity", Layer.Velocity * 3.6, FixedOutput, Prec);
@@ -1335,8 +1315,8 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&AuroraTable, L"SouthFlashFreq", Obj.Aurora.SouthFlashFreq, FixedOutput, Prec);
         __Add_Key_Value(&AuroraTable, L"SouthMoveSpeed", Obj.Aurora.SouthMoveSpeed, FixedOutput, Prec);
         __Add_Key_Value(&AuroraTable, L"SouthParticles", Obj.Aurora.SouthParticles, FixedOutput, Prec);
-        __Add_Key_Value(&AuroraTable, L"TopColor", array<float64, 3>(Obj.Aurora.TopColor), FixedOutput, Prec);
-        __Add_Key_Value(&AuroraTable, L"BottomColor", array<float64, 3>(Obj.Aurora.BottomColor), FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"TopColor", Obj.Aurora.TopColor, FixedOutput, Prec);
+        __Add_Key_Value(&AuroraTable, L"BottomColor", Obj.Aurora.BottomColor, FixedOutput, Prec);
         ContentTable.Get().back().SubTable = make_shared<decltype(AuroraTable)>(AuroraTable);
     }
 
@@ -1369,10 +1349,10 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&RingsTable, L"densityOffset", Obj.Rings.densityOffset, FixedOutput, Prec);
         __Add_Key_Value(&RingsTable, L"densityPower", Obj.Rings.densityPower, FixedOutput, Prec);
         __Add_Key_Value(&RingsTable, L"colorContrast", Obj.Rings.colorContrast, FixedOutput, Prec);
-        __Add_Key_Value(&RingsTable, L"FrontColor", array<float64, 3>(Obj.Rings.FrontColor), FixedOutput, Prec);
-        __Add_Key_Value(&RingsTable, L"BackThickColor", array<float64, 3>(Obj.Rings.BackThickColor), FixedOutput, Prec);
-        __Add_Key_Value(&RingsTable, L"BackIceColor", array<float64, 3>(Obj.Rings.BackIceColor), FixedOutput, Prec);
-        __Add_Key_Value(&RingsTable, L"BackDustColor", array<float64, 3>(Obj.Rings.BackDustColor), FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"FrontColor", Obj.Rings.FrontColor, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackThickColor", Obj.Rings.BackThickColor, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackIceColor", Obj.Rings.BackIceColor, FixedOutput, Prec);
+        __Add_Key_Value(&RingsTable, L"BackDustColor", Obj.Rings.BackDustColor, FixedOutput, Prec);
         ContentTable.Get().back().SubTable = make_shared<decltype(RingsTable)>(RingsTable);
     }
 
@@ -1444,8 +1424,8 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&CometTailTable, L"Particles", Obj.CometTail.Particles, FixedOutput, Prec);
         __Add_Key_Value(&CometTailTable, L"GasBright", Obj.CometTail.GasBright, FixedOutput, Prec);
         __Add_Key_Value(&CometTailTable, L"DustBright", Obj.CometTail.DustBright, FixedOutput, Prec);
-        __Add_Key_Value(&CometTailTable, L"GasColor", array<float64, 3>(Obj.CometTail.GasColor), FixedOutput, Prec);
-        __Add_Key_Value(&CometTailTable, L"DustColor", array<float64, 3>(Obj.CometTail.DustColor), FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"GasColor", Obj.CometTail.GasColor, FixedOutput, Prec);
+        __Add_Key_Value(&CometTailTable, L"DustColor", Obj.CometTail.DustColor, FixedOutput, Prec);
         ContentTable.Get().back().SubTable = make_shared<decltype(CometTailTable)>(CometTailTable);
     }
 

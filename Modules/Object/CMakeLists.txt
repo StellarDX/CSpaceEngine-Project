@@ -1,17 +1,9 @@
-# Scan Files
-file(GLOB_RECURSE Sources CONFIGURE_DEPENDS Sources/*.cc Headers/*.h)
-add_library(Object STATIC "${Sources}")
-add_library(CSE::Object ALIAS Object)
-
-target_include_directories(Object PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Headers>
-    $<INSTALL_INTERFACE:Headers>)
-target_link_libraries(Object PUBLIC CSEBase)
-
-if(BUILD_SCStream)
-    target_link_libraries(Object PUBLIC SCStream)
+AddModule(Object CSE_Base OPTIONAL CSE_Parser)
+AddSources()
+if(FMT_BACKUP_SOLUTION AND FMT_HEADERS_DIR)
+    message(STATUS "${Name} : FMT_BACKUP_SOLUTION is enabled, adding fmtlib... (At ${FMT_HEADERS_DIR})")
+    AddHeaders(${Name} ${FMT_HEADERS_DIR})
+else()
+    AddHeaders(${Name})
 endif()
-
-# Installations
-include(Installation)
-Installation(Object)
+CreateModule()
