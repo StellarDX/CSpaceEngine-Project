@@ -41,6 +41,7 @@ float64 __cdecl csc(Angle _X) {return csc(_X.ToDegrees());}
 
 int64 __cdecl __Quadrant(float64 _X)
 {
+    if (isinf(_X) || isnan(_X)) {return -2;}
     if (_X >= 360 || _X < 0)
     {
         float64 IntPart;

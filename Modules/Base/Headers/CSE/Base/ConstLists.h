@@ -55,6 +55,7 @@ namespace consts{
 #define FineStructConst _CONSTS Equation24   // Measured in 2020
 #define AtomMassConst   1.66053906660E-27    // 2018 CODATA Value
 #define StandardAtm     101325               // Standard atmosphere, on sea level
+#define StdSurfGravity  9.80665              // Standard Surface garvity of Earth
 // -------------------------------------------------------------------------
 extern const double Equation21;
 extern const double Equation22;

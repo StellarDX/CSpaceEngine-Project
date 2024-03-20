@@ -131,6 +131,12 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_With_Unit(&Obj.Rotation.RotationPeriod, CurrentTable, L"RotationPeriod", Obj.Rotation.RotationPeriod, 3600, {});
             __Get_Value_With_Unit(&Obj.Rotation.Precession, CurrentTable, L"Precession", Obj.Rotation.Precession, JulianYear, {});
             __Get_Value_From_Table(&Obj.Rotation.TidalLocked, CurrentTable, L"TidalLocked", false);
+            if (Quadrant(Obj.Rotation.Obliquity) >= 2 &&
+                Quadrant(Obj.Rotation.Obliquity) < 6 &&
+                Obj.Rotation.RotationPeriod > 0)
+            {
+                Obj.Rotation.RotationPeriod = -Obj.Rotation.RotationPeriod;
+            }
         //}
         if (Obj.RotationModel == L"IAU" && RotModelTable->SubTable)
         {
@@ -216,6 +222,12 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             }
             __Get_Value_From_Table(&Obj.Orbit.GravParam, OrbitSubTable, L"GravParam", Obj.Orbit.GravParam);
             __Get_Value_From_Table(&Obj.Orbit.Inclination, OrbitSubTable, L"Inclination", Obj.Orbit.Inclination);
+            if (Quadrant(Obj.Orbit.Inclination) >= 2 &&
+                Quadrant(Obj.Orbit.Inclination) < 6 &&
+                Obj.Orbit.Period > 0)
+            {
+                Obj.Orbit.Period = -Obj.Orbit.Period;
+            }
             __Get_Value_From_Table(&Obj.Orbit.AscendingNode, OrbitSubTable, L"AscendingNode", Obj.Orbit.AscendingNode);
             __Get_Value_From_Table(&Obj.Orbit.AscNodePreces, OrbitSubTable, L"AscNodePreces", Obj.Orbit.AscNodePreces);
             __Get_Value_From_Table(&Obj.Orbit.ArgOfPericenter, OrbitSubTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter);
@@ -760,9 +772,8 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             {
                 auto Radius = vec3(Obj.Dimensions / 2.);
                 auto MaxRad = cse::max({Radius.x, Radius.y, Radius.z});
-                vec3 Flattening = (MaxRad - Radius) / MaxRad;
                 __Add_Key_Value(&ContentTable, L"Radius", MaxRad / 1000., FixedOutput, Prec);
-                __Add_Key_Value(&ContentTable, L"Oblateness", Flattening, FixedOutput, Prec);
+                __Add_Key_Value(&ContentTable, L"Oblateness", _ASOBJ Flattening(Obj), FixedOutput, Prec);
             }
         }
     }
@@ -1512,6 +1523,184 @@ float64 LongitudeOfPerihelion(Object Obj)
     float64 _AscendingNode = LongitudeOfAscendingNode(Obj);
     float64 _ArgOfPericenter = IS_NO_DATA_DBL(ArgumentOfPerihelion(Obj)) ? 0 : ArgumentOfPerihelion(Obj);
     return _AscendingNode + _ArgOfPericenter;
+}
+
+
+
+float64 MeanRadius(Object Obj)
+{
+    return cbrt(Obj.Dimensions.x * Obj.Dimensions.y * Obj.Dimensions.z) / 2.; // Geometric mean
+}
+
+float64 EquatorialRadius(Object Obj)
+{
+    return max(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
+}
+
+float64 PolarRadius(Object Obj)
+{
+    return Obj.Dimensions.y / 2.;
+}
+
+vec3 Flattening(Object Obj)
+{
+    auto Radius = vec3(Obj.Dimensions / 2.);
+    auto MaxRad = cse::max({Radius.x, Radius.y, Radius.z});
+    return (MaxRad - Radius) / MaxRad;
+}
+
+float64 EquatorialCircumference(Object Obj)
+{
+    float64 a = max(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
+    float64 b = min(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
+    if (a == b) {return 2. * CSE_PI * a;}
+
+    float64 e2 = 1. - pow(b / a, 2);
+    IntegralFunction E = [e2](float64 tet)
+    {
+        return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
+    };
+    return 4. * a * E(0, CSE_PI_D2);
+}
+
+float64 MeridionalCircumference(Object Obj)
+{
+    float64 a = EquatorialRadius(Obj);
+    float64 b = PolarRadius(Obj);
+    if (a == b) {return 2. * CSE_PI * a;}
+
+    float64 e2 = 1. - pow(b / a, 2);
+    IntegralFunction E = [e2](float64 tet)
+    {
+        return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
+    };
+    return 4. * a * E(0, CSE_PI_D2);
+}
+
+float64 SurfaceArea(Object Obj)
+{
+    std::array<float64, 3> Radius = Obj.Dimensions / 2.;
+    std::sort(Radius.begin(), Radius.end());
+    float64 a = Radius[2], b = Radius[1], c = Radius[0];
+    if (a == b && b == c) {return 4. * CSE_PI * a * a;}
+
+    auto F = [](float64 phi, float64 k2)
+    {
+        IntegralFunction EllipticalIntegral1st = [k2](float64 tet)
+        {
+            return inversesqrt(1. - k2 * pow(sin(Angle::FromRadians(tet)), 2));
+        };
+        return EllipticalIntegral1st(0, phi);
+    };
+
+    auto E = [](float64 phi, float64 k2)
+    {
+        IntegralFunction EllipticalIntegral2nd = [k2](float64 tet)
+        {
+            return sqrt(1. - k2 * pow(sin(Angle::FromRadians(tet)), 2));
+        };
+        return EllipticalIntegral2nd(0, phi);
+    };
+
+    Angle phi = arccos(c / a);
+    float64 k2 = (a * a * (b * b - c * c)) / (b * b * (a * a - c * c));
+    return 2. * CSE_PI * c * c + (2. * CSE_PI * a * b) / sin(phi) *
+        (E(phi.ToRadians(), k2) * pow(sin(phi), 2) + F(phi.ToRadians(), k2) * pow(cos(phi), 2));
+}
+
+float64 Volume(Object Obj)
+{
+    vec3 Radius = Obj.Dimensions / 2.;
+    return (4. / 3.) * CSE_PI * Radius.x * Radius.y * Radius.z;
+}
+
+float64 Mass(Object Obj)
+{
+    return Obj.Mass;
+}
+
+float64 MeanDensity(Object Obj)
+{
+    return Mass(Obj) / Volume(Obj);
+}
+
+float64 SurfaceGravity(Object Obj)
+{
+    return GravConstant * Mass(Obj) / pow(MeanRadius(Obj), 2);
+}
+
+float64 EscapeVelocity(Object Obj)
+{
+    return sqrt(2. * GravConstant * Mass(Obj) / EquatorialRadius(Obj));
+}
+
+float64 SynodicRotationPeriod(Object Obj)
+{
+    if (Obj.Rotation.TidalLocked || Obj.Rotation.RotationPeriod == Obj.Orbit.Period)
+    {
+        return __Float64::FromBytes(POS_INF_DOUBLE);
+    }
+
+    float64 RotationPeriod, OrbitalPeriod;
+    if (Quadrant(Obj.Rotation.Obliquity) >= 2 &&
+        Quadrant(Obj.Rotation.Obliquity) < 6 &&
+        Obj.Rotation.RotationPeriod > 0)
+    {
+        RotationPeriod = -Obj.Rotation.RotationPeriod;
+    }
+    else {RotationPeriod = Obj.Rotation.RotationPeriod;}
+
+    if (Quadrant(Obj.Orbit.Inclination) >= 2 &&
+        Quadrant(Obj.Orbit.Inclination) < 6 &&
+        Obj.Orbit.Period > 0)
+    {
+        OrbitalPeriod = -Obj.Orbit.Period;
+    }
+    else {OrbitalPeriod = Obj.Orbit.Period;}
+
+    return (RotationPeriod * OrbitalPeriod) / (OrbitalPeriod - RotationPeriod);
+}
+
+float64 SiderealRotationPeriod(Object Obj)
+{
+    if (Obj.Rotation.TidalLocked) {return Obj.Orbit.Period;}
+    return Obj.Rotation.RotationPeriod;
+}
+
+float64 EquatorialRotationVelocity(Object Obj)
+{
+    return EquatorialCircumference(Obj) / SiderealRotationPeriod(Obj);
+}
+
+float64 AxialTilt(Object Obj)
+{
+    return Obj.Rotation.Obliquity;
+}
+
+float64 GeometricAlbedo(Object Obj)
+{
+    return Obj.AlbedoGeom;
+}
+
+float64 BondAlbedo(Object Obj)
+{
+    return Obj.AlbedoBond;
+}
+
+float64 EffectiveTemperature(Object Obj)
+{
+    return Obj.Temperature;
+}
+
+float64 EquilibriumTemperature(Object Parent, Object Companion, float64 Separation)
+{
+    return yroot((Parent.LumBol / (4. * CSE_PI * Separation * Separation)) *
+        ((1. - Companion.AlbedoBond) / (StBConstant * (Companion.Rotation.TidalLocked ? 2 : 4))), 4);
+}
+
+float64 AbsoluteMagnitude(Object Obj)
+{
+    return Obj.AbsMagn;
 }
 
 _ASOBJ_END

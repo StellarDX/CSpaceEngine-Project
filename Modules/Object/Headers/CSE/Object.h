@@ -29,9 +29,9 @@ _STL_DISABLE_CLANG_WARNINGS
 
 _CSE_BEGIN
 
-#define _ASOBJ_BEGIN namespace AsObject {
+#define _ASOBJ_BEGIN namespace ObjectLiterals {
 #define _ASOBJ_END   }
-#define _ASOBJ       AsObject::
+#define _ASOBJ       ObjectLiterals::
 
 using CompositionType = std::map<ustring, float64>;
 
@@ -678,7 +678,7 @@ float64 Volume(Object Obj);
 float64 Mass(Object Obj);
 float64 MeanDensity(Object Obj);
 float64 SurfaceGravity(Object Obj);
-float64 MomentOfInertiaFactor(Object Obj);
+//float64 MomentOfInertiaFactor(Object Obj);
 float64 EscapeVelocity(Object Obj);
 float64 SynodicRotationPeriod(Object Obj);
 float64 SiderealRotationPeriod(Object Obj);
@@ -687,6 +687,7 @@ float64 AxialTilt(Object Obj);
 float64 GeometricAlbedo(Object Obj);
 float64 BondAlbedo(Object Obj);
 float64 EffectiveTemperature(Object Obj);
+float64 EquilibriumTemperature(Object Parent, Object Companion, float64 Separation);
 float64 AbsoluteMagnitude(Object Obj);
 
 _ASOBJ_END
