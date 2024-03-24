@@ -391,7 +391,7 @@ fvec<N> __cdecl csc(fvec<N> _X)
  * 7 -> Quadrant IV
  */
 int64 __cdecl Quadrant(Angle _X);
-float64 __cdecl Arctan2(Angle _Y, Angle _X);
+Angle __cdecl Arctan2(float64 _Y, float64 _X);
 
 ///////////////////////////////////// INVERSE ////////////////////////////////////
 

@@ -65,9 +65,9 @@ void __Real_Time_Satellite_Tracker_And_Predictor::_Check_Params()
 {
     if (IS_NO_DATA_DBL(_M_OrbitElems.Epoch)) {_M_OrbitElems.Epoch = J2000;}
     if (IS_NO_DATA_DBL(_M_OrbitElems.PericenterDist))
-    {throw std::logic_error("Pericenter distance is required");}
+    {throw OrbitCalculateException("Pericenter distance is required");}
     if (IS_NO_DATA_DBL(_M_OrbitElems.Period) && IS_NO_DATA_DBL(_M_OrbitElems.GravParam))
-    {throw std::logic_error("Period or Parent body's mass is required");}
+    {throw OrbitCalculateException("Period or Parent body's mass is required");}
     else if (!IS_NO_DATA_DBL(_M_OrbitElems.Period) && IS_NO_DATA_DBL(_M_OrbitElems.GravParam))
     {
         _GetCenterObjectMass();
@@ -75,7 +75,7 @@ void __Real_Time_Satellite_Tracker_And_Predictor::_Check_Params()
     if (IS_NO_DATA_DBL(_M_OrbitElems.Eccentricity)) {_M_OrbitElems.Eccentricity = 0;}
     if (_M_OrbitElems.Eccentricity >= 1)
     {
-        throw std::logic_error("Runaway objects tracking is not supported.");
+        throw OrbitCalculateException("Runaway objects tracking is not supported.");
         _M_OrbitElems.Period = __Float64::FromBytes(POS_INF_DOUBLE);
     }
     if (IS_NO_DATA_DBL(_M_OrbitElems.Inclination)) {_M_OrbitElems.Inclination = 0;}
@@ -96,8 +96,8 @@ __Real_Time_Satellite_Tracker_And_Predictor::__Real_Time_Satellite_Tracker_And_P
     (const OrbitElemsType &Orbit, float64 ParentMass)
     : _M_OrbitElems(Orbit), _M_Epoch(Orbit.Epoch)
 {
+    if (!IS_NO_DATA_DBL(ParentMass)) {_M_OrbitElems.GravParam = GravConstant * ParentMass;}
     _Check_Params();
-    _M_OrbitElems.GravParam = GravConstant * ParentMass;
 }
 
 __Real_Time_Satellite_Tracker_And_Predictor::__Real_Time_Satellite_Tracker_And_Predictor
@@ -356,5 +356,4 @@ __Real_Time_Satellite_Tracker_And_Predictor::CurrentState() const
 }
 
 _ORBIT_END
-
 _CSE_END
