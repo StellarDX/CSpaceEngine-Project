@@ -92,11 +92,52 @@ extern const double Equation41;
 
 // List5: Base densities of compositions
 // -------------------------------------------------------------------------
-//      Name            Value    Note
-#define MetalDensity    7874  // near room temperature
-#define SilicateDensity 2800  // Simulated by universe sandbox (Aluminium silicate?)
-#define IceDensity      1000  // Simulated by universe sandbox, real value is 916.7Kg/m^3
-#define HydrogenDensity 82.5  // Simulated by universe sandbox, real value is 89.88Kg/m^3 in STP
+//      Name               Simulated Value    Real value    Note
+#define FerrumDensity      7874            // 7874        | Near Room temp.
+#define FerrumLiqDensity   6980            // 6980        | At melting point
+#define HexaferrumDensity  9225            // 10690       |
+#define SilicateDensity    3726            // variable    | commonly applied to chemical compounds which are derived from metal oxide and silicon dioxide.
+#define MgSiO3Density      3192            // 3192        |
+#define Al2SiO5Density     2800            // 2800 - 2900 |
+#define ArgonDensity       1400            //             |
+#define ArgonSTPDensity    1.784           // 1.784       | At STP
+#define ArgonLiqDensity    1395.4          // 1395.4      | At boiling point
+#define ArgonGasDensity    1.633           // 1.633       |
+#define ArgonTriDensity    1623            // 1623        | At triple point
+#define SO2Density         1500            //             |
+#define SO2LiqDensity      1434            // 1434        | at 0 °C (liquid); vapor pressure: 2538 mm Hg at 21.1 °C
+#define SO2GasDensity      2.619           // 2.619       |
+#define OxygenDensity      1360            //             |
+#define OxygenLiqDensity   1140            // 1140        | at -183 °C (Boiling point)
+#define OxygenGasDensity   1.429           // 1.429       | At STP
+#define CO2Density         1600            //             |
+#define CO2SolDensity      1562            // 1562        | at 1 atm and −78.5 °C
+#define CO2LiqDensity      1101            // 1101        | at saturation −37 °C
+#define CO2GasDensity      1.977           // 1101        | at 1 atm and 0 °C
+#define IceDensity         916.7           // 916.7       |
+#define Water0DCDensity    999.84283       // 999.84283   | 1 atm, VSMOW
+#define WaterMaxDensity    999.97495       // 999.97495   | at 3.983035(670) °C, maximum value
+#define WaterDensity       997.04702       // 997.04702   | at 25 °C
+#define Water95DCDensity   961.88791       // 961.88791   | at 95 °C
+#define NitrogenDensity    850             //             |
+#define NitrogenLiqDensity 808             // 808         | At boiling point
+#define NitrogenGasDensity 1.2506          // 1.2506      | at 0 °C, 1013 mbar
+#define NH3Density         860             //             |
+#define NH3GasDensity      0.86            // 0.86        | 1.013 bar at boiling point
+#define NH3STPDensity      0.769           // 0.769       | At STP
+#define NH315DCDensity     0.73            // 0.73        | 1.013 bar at 15 °C
+#define NH3LiqDensity      681.9           // 681.9       | at −33.3 °C
+#define NH3SolDensity      817             // 817         | at −80 °C (transparent solid)
+#define CH4Density         900             //             |
+#define CH4GasDensity      0.717           // 0.717       | at 0 °C, 1 atm
+#define CH425DCDensity     0.657           // 0.657       | at 25 °C, 1 atm
+#define CH4LiqDensity      422.8           // 422.8       | at −162 °C
+#define HeliumDensity      125             // 125         | At boiling point
+#define HeliumGasDensity   0.1786          // 0.1786      | at STP
+#define HydrogenDensity    70.8            //             |
+#define HydrogenGasDensity 0.08988         // 0.08988     |
+#define HydrogenLiqDensity 70.99           // 70.99       | At boiling point
+#define HydrogenSolDensity 76.3            // 76.3        | At melting point
 
 
 // List6: Units of Time

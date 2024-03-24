@@ -129,5 +129,17 @@ KeplerianOrbitElems StateVectorsToKeplerianElements(OrbitStateType State, PSatel
     return Orbit;
 }
 
+void BinaryOrbitToKeplerianElems(KeplerianOrbitElems *Par)
+{
+    Par->PericenterDist = Par->Separation;
+    Par->Separation = _NoDataDbl; // Move Separation to PericenterDist, and clear it.
+    if (!IS_NO_DATA_DBL(Par->PositionAngle))
+    {
+        Par->ArgOfPericenter = Par->PositionAngle;
+        Par->PositionAngle = _NoDataDbl;
+    }
+    Par->Binary = false;
+}
+
 _ORBIT_END
 _CSE_END
