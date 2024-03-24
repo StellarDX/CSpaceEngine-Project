@@ -37,15 +37,6 @@ using CompositionType = std::map<ustring, float64>;
 
 _ASOBJ_BEGIN
 
-struct OrbitState
-{
-    ustring   RefPlane       = _NoDataStr;
-    float64   GravParam      = _NoDataDbl;
-    float64   Time           = _NoDataDbl;
-    vec3      Position       = vec3(_NoDataDbl);
-    vec3      Velocity       = vec3(_NoDataDbl);
-};
-
 struct SurfaceTextureParams
 {
     ustring   DiffMap        = _NoDataStr;       // Surface map path
@@ -593,6 +584,8 @@ struct Object : public SEObject
         vec3        DustColor         = vec3(_NoDataDbl);
     }CometTail;
 };
+
+typedef std::shared_ptr<Object> ObjectPtr_t;
 
 // IOSCStream Compatibility
 #ifdef _CSE_SCSTREAM

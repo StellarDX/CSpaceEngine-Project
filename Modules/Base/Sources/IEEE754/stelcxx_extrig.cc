@@ -62,6 +62,17 @@ int64 __cdecl __Quadrant(float64 _X)
 
 int64 __cdecl Quadrant(Angle _X) {return __Quadrant(_X.ToDegrees());}
 
+float64 __cdecl Arctan2(Angle _Y, Angle _X)
+{
+    // By defination
+    if (_X > 0) {return arctan(_Y / _X);}
+    if (_X < 0 && _Y >= 0) {return arctan(_Y / _X) + Angle::FromDegrees(180);}
+    if (_X < 0 && _Y < 0) {return arctan(_Y / _X) - Angle::FromDegrees(180);}
+    if (_X == 0 && _Y > 0) {return Angle::FromDegrees(90);}
+    if (_X == 0 && _Y < 0) {return Angle::FromDegrees(-90);}
+    else {return __Float64::FromBytes(BIG_NAN_DOUBLE);}
+}
+
 ///////////////////////////////////// EXPAND ////////////////////////////////////
 
 // Chord and Arcs
