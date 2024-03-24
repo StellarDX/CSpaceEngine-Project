@@ -23,7 +23,7 @@
 <div class="Head" align="center" style="width:100%;">
     <h1 style="font-weight: bold;background: -webkit-linear-gradient(-66.5607189deg, rgb(41,82,190), rgb(41,82,190) 40%, rgb(254,226,223) 60%, rgb(251,172,19) 75%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;color: transparent;">CSpaceEngine·聚力新生</h1>
     <p>开源的SpaceEngine静态库，适配SE0.990</p>
-    <p>许可证：<a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPL-2.0</a></p>
+    <p>许可证：<a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPL-3.0</a></p>
 </div>
 <h2>功能</h2>
 <ul>
@@ -54,6 +54,10 @@
 <ul>
     <li>一个经历了至少3次的更新换代的，基于LR(1)算法的sc文件读取</li>
     <li>SC文件输出流</li>
+</ul>
+<h3>轨道工具(可选组件)</h3>
+<ul>
+    <li>轨道跟踪器，用于轨道根数和状态向量的转换，可以实时跟踪(目前只支持椭圆轨道，Bug多慎用)</li>
 </ul>
 <h2>编译</h2>
 <p>此版本已经<b>放弃VS2022并迁移到CMake平台</b>，编译就正常使用CMake即可。</p>
