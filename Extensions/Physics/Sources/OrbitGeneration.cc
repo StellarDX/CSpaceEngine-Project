@@ -72,9 +72,31 @@ float64 __Blagg_Titius_Bode_Array::operator[](int64 _Idx)
         return Ax0 * pow(1.7275, (float64)n) * (Bx0 + f);
     }
     }
+    return 0; // Unreachable, make compiler happy - _ -
 }
 
+/**
+ * @brief Orbital resonance model based on Dermott's period law
+ * @link Wikipedia. Dermott's law
+ * https://en.wikipedia.org/wiki/Dermott%27s_law
+ */
+float64 Dermott_Period_Array::operator[](int64 _Idx)
+{
+    return Tx0 * pow(Cx0, (float64)_Idx);
+}
 
+/**
+ * @brief Another exponential fittong model for Extrasolar system
+ * @link Reference:
+ * Poveda, Arcadio & Lara, Patricia (2008). "The
+ * exo-planetary system of 55 Cancri and the
+ * Titus–Bode law". Revista Mexicana de
+ * Astronomía y Astrofísica (44): 243–246.
+ */
+float64 Exponential_Fitting_Array::operator[](int64 _Idx)
+{
+    return Cx0 * exp(Cx1 * _Idx);
+}
 
 _ORBIT_END
 _CSE_END

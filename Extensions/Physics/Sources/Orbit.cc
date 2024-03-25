@@ -24,6 +24,8 @@ using namespace _CSE linalg;
 _CSE_BEGIN
 _ORBIT_BEGIN
 
+// 「说出来你们可能不信，尽管我们花了巨量的时间测试和修Bug，但是这功能依然还有一堆Bug」
+
 void __Fix_Angle(float64* _Angle, vec3 _Ref1, vec3 _Ref2)
 {
     if (dot(_Ref1, _Ref2) > 0)
