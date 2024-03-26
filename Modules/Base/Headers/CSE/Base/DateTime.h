@@ -345,6 +345,11 @@ int DayInYear(const int year, const int month, const int day);
 double YearFraction(const int year, const int month, const double day);
 
 /**
+ * @brief
+ */
+ivec3 DateFromDayYear(const int day, const int year);
+
+/**
  * @brief Return the Julian Date matching the ISO8601 date string.
  * Also handles negative and distant years.
  */

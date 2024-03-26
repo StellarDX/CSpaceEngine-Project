@@ -442,36 +442,9 @@ int CSEDate::DayOfWeek() const
 
 int64 CSEDate::ToJulianDay() const // Convert a Date class to julian day(without fraction).
 {
-    /*
-     * This algorithm is taken from
-     * "Numerical Recipes in C, 2nd Ed." (1992), pp. 11-12
-    */
-    static const long IGREG = 588829; // (15 + 31L * (10 + 12L * 1582))
-
-    long ja, jy = years, jm;
-
-    if (jy == 0){throw logic_error("julday: there is no year zero.");}
-
-    if (jy < 0) { ++jy; }
-    if (months > 2)
-    {
-        jm = months + 1;
-    }
-    else
-    {
-        --jy;
-        jm = months + 13;
-    }
-
-    long Jul = (long)(floor(365.25 * jy) + floor(30.6001 * jm) + days + 1720995);
-
-    if (days + 31L * (months + 12L * years) >= IGREG)
-    {
-        ja = jy / 100;
-        Jul += 2 - ja + (ja / 4);
-    }
-
-    return Jul;
+    float64 JD;
+    GetJDFromDate(&JD, year(), month(), day(), 12, 0, 0);
+    return JD;
 }
 
 CSEDate CSEDate::CurrentDate()
@@ -484,61 +457,8 @@ CSEDate CSEDate::CurrentDate()
 
 CSEDate CSEDate::FromJulianDay(const double JD) // From Stellarium
 {
-    /*
-     * This algorithm is taken from
-     * "Numerical Recipes in C, 2nd Ed." (1992), pp. 14-15
-     * and converted to integer math.
-    */
-
-    static const long JD_GREG_CAL = 2299161;
-    static const int JB_MAX_WITHOUT_OVERFLOW = 107374182;
-    const long julian = static_cast<long>(floor(JD + 0.5));
-
-    long ta, jalpha, tb, tc, td, te;
-
-    if (julian >= JD_GREG_CAL)
-    {
-        jalpha = (4 * (julian - 1867216) - 1) / 146097;
-        ta = julian + 1 + jalpha - jalpha / 4;
-    }
-    else if (julian < 0)
-    {
-        ta = julian + 36525 * (1 - julian / 36525);
-    }
-    else
-    {
-        ta = julian;
-    }
-
-    tb = ta + 1524;
-    if (tb <= JB_MAX_WITHOUT_OVERFLOW)
-    {
-        tc = (tb * 20 - 2442) / 7305;
-    }
-    else
-    {
-        tc = static_cast<long>((static_cast<unsigned long long>(tb) * 20 - 2442) / 7305);
-    }
-    td = 365 * tc + tc / 4;
-    te = ((tb - td) * 10000) / 306001;
-
-    int dd = tb - td - (306001 * te) / 10000;
-
-    int mm = te - 1;
-    if (mm > 12)
-    {
-        mm -= 12;
-    }
-    int yy = tc - 4715;
-    if (mm > 2)
-    {
-        --(yy);
-    }
-    if (julian < 0)
-    {
-        yy -= 100 * (1 - julian / 36525);
-    }
-
+    int yy, mm, dd;
+    GetDateFromJulianDay(JD, &yy, &mm, &dd);
     return CSEDate(yy, mm, dd);
 }
 
@@ -1101,7 +1021,7 @@ bool GetJDFromDate(double* newjd, const int y, const int m, const int d, const i
     static const long IGREG2 = 15 + 31L * (10 + 12L * 1582);
     double deltaTime = (h / 24.0) + (min / (24.0 * 60.0)) +
         (static_cast<double>(s) / (24.0 * 60.0 * 60.0)) - 0.5;
-    #ifndef _FORCE_USE_SAFER_JULIAN_ALG
+    /*#ifndef _FORCE_USE_SAFER_JULIAN_ALG
     _TIME CSEDate test((y <= 0 ? y-1 : y), m, d);
     if (test.IsValid() && y > 1582)
     {
@@ -1112,7 +1032,7 @@ bool GetJDFromDate(double* newjd, const int y, const int m, const int d, const i
     }
     else
     {
-    #endif
+    #endif*/
         /*
          * Algorithm taken from "Numerical Recipes in C, 2nd Ed." (1992), pp. 11-12
          */
@@ -1157,9 +1077,9 @@ bool GetJDFromDate(double* newjd, const int y, const int m, const int d, const i
         jd += deltaTime;
         *newjd = jd;
         return true;
-    #ifndef _FORCE_USE_SAFER_JULIAN_ALG
+    /*#ifndef _FORCE_USE_SAFER_JULIAN_ALG
     }
-    #endif
+    #endif*/
     #else
     double extra = (100.0 * y) + m - 190002.5;
     double rjd = 367.0 * y;
@@ -1234,16 +1154,15 @@ int DayInYear(const int year, const int month, const int day)
     return static_cast<int>(275 * month / 9) - k * static_cast<int>((month + 9) / 12) + day - 30;
 }
 
-// // Find date from day number within year and the year.
-// // Meeus, AA 2nd, 1998, ch.7 p.66
-// ivec3 DateFromDayYear(const int day, const int year)
-// {
-//     const int k=(IsLeapYear(year) ? 1:2);
-//     int month = day<32 ? 1 : static_cast<int>(9.f*(k+day)/275.f+0.98f);
-
-//     int monthDay = day - static_cast<int>(275.f*month/9.f) + k*static_cast<int>((month+9)/12.f) + 30;
-//     return {year, month, monthDay};
-// }
+// Find date from day number within year and the year.
+// Meeus, AA 2nd, 1998, ch.7 p.66
+ivec3 DateFromDayYear(const int day, const int year)
+{
+    const int k=(IsLeapYear(year) ? 1:2);
+    int month = day<32 ? 1 : static_cast<int>(9. * (k + day) / 275. + 0.98);
+    int monthDay = day - static_cast<int>(275. * month / 9.) + k * static_cast<int>((month + 9) / 12.) + 30;
+    return {year, month, monthDay};
+}
 
 // Return a fractional year like YYYY.ddddd. For negative years, the year number is of course decrease. E.g. -500.5 occurs in -501.
 double YearFraction(const int year, const int month, const double day)

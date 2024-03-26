@@ -31,6 +31,11 @@ _STL_DISABLE_CLANG_WARNINGS
 #undef new
 #endif
 
+// 宇宙之大，粒子之微。
+// 火箭之速，化工之巧。
+// 星球之变，生命之谜。
+// 日用其繁，无不数学。
+
 _CSE_BEGIN
 
 using __Float64 = IEEE754_Dbl64;
@@ -900,6 +905,8 @@ int SolveQuartic(const InputArray& Coeffs, OutputArray& Roots, int64 p_Error = 1
 // A example method to solve quintic equation is provided below by Shen Tianheng(?).
 // But it can only solve equations has multiple-roots or in special conditions.
 // CAUTION: This function is unverified and untested so maybe unsafe!
+template<typename _IterC, typename _IterR>
+int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR RootsBegin, struct _SOLVEPOLY_CONFIG Conf);
 template<typename _IterC, typename _IterR>
 #ifndef _CRT_SECURE_NO_WARNINGS
 __declspec(deprecated

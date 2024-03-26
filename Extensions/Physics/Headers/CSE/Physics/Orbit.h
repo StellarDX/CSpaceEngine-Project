@@ -197,6 +197,88 @@ struct Exponential_Fitting_Array
 
 static const Exponential_Fitting_Array Rho1Cnc_Exp{.Cx0 = 0.0142, .Cx1 = 0.9975};
 
+
+
+/****************************************************************************************\
+*                                  Two-Line element set                                  *
+\****************************************************************************************/
+
+/**
+ * @brief Two-line element set decoder
+ */
+class TLE
+{
+public:
+    using TLELine = char[69];
+    using TLEData = TLELine[3];
+
+    struct SpacecraftBasicData // Basic data of the spacecraft, in first line.
+    {
+        uint32_t    CatalogNumber;
+        std::string Classification;
+
+        struct COSPAR_ID
+        {
+            int32_t     LaunchYear;
+            uint32_t    LaunchNumber;
+            std::string LaunchPiece;
+        }IntDesignator;
+
+        float64     D1MeanMotion;
+        float64     D2MeanMotion;
+        float64     BSTAR;
+        uint32_t    EphemerisType;
+        uint32_t    ElementSet;
+        uint32_t    RevolutionNum;
+
+        std::string COSPAR()const;
+        std::string ToString()const;
+    };
+
+    TLEData _M_Data;
+
+    bool IsValid()const;
+
+    std::string Title()const;
+    SpacecraftBasicData BasicData()const;
+    KeplerianOrbitElems Orbit()const;
+
+    static TLE FromString(std::string _Input);
+};
+
+
+
+/****************************************************************************************\
+*                                Multiple-object problems                                *
+\****************************************************************************************/
+
+/**
+ * @brief Calculate roche limit of two objects
+ * @param Primary Primary object
+ * @param Companion Companion object
+ * @param Mode Mode of function, 0 = Rigid, 1 = Fluid, default is 0
+ */
+float64 RocheLimit(const Object& Primary, const Object& Companion, int Mode = 0);
+
+/**
+ * @brief Calculate Hill sphere of two objects
+ * @param Primary Primary object
+ * @param Companion Companion object
+ * @return Hill sphere of the companion
+ */
+float64 HillSphere(const Object& Primary, const Object& Companion);
+
+/**
+ * @brief Calculate distances of Lagrange points from the primary body
+ * @param PrimaryMass Mass of the primary body
+ * @param CompanionMass Mass of the secondary body
+ * @param Separation Distance between two bodies
+ * @param TolerNLog (Equation Solver error, Newton Iterator error)
+ * @return 5 Lagrange point distances
+ * @link https://en.wikipedia.org/wiki/Lagrange_point
+ */
+fvec<5> LagrangePointDistances(float64 PrimaryMass, float64 CompanionMass, float64 Separation, vec2 TolerNLog = vec2(15, 5));
+
 _ORBIT_END
 _CSE_END
 

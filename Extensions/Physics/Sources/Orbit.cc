@@ -16,10 +16,14 @@
     with this program; If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "CSE/Physics/Orbit.h"
 #include "CSE/Base/ConstLists.h"
 
+using namespace std;
 using namespace _CSE linalg;
+using namespace _CSE ObjectLiterals;
 
 _CSE_BEGIN
 _ORBIT_BEGIN
@@ -143,5 +147,106 @@ void BinaryOrbitToKeplerianElems(KeplerianOrbitElems *Par)
     Par->Binary = false;
 }
 
+float64 RocheLimit(const Object& Primary, const Object& Companion, int Mode)
+{
+    switch (Mode)
+    {
+    case 0:
+    default:
+        if (!isfinite(MeanRadius(Companion)) || !isfinite(Mass(Primary)) || !isfinite(Mass(Companion)))
+        {
+            throw OrbitCalculateException("too few arguments to function \"RocheLimit\"");
+        }
+
+        if (!isfinite(MeanRadius(Primary)))
+        {
+            return EquatorialRadius(Companion) * cbrt(2. * (Mass(Primary) / Mass(Companion)));
+        }
+        else
+        {
+            float64 DensityP = MeanDensity(Primary);
+            float64 DensityC = MeanDensity(Companion);
+            return EquatorialRadius(Primary) * cbrt(2. * (DensityP / DensityC));
+        }
+
+    case 1:
+        if (!isfinite(MeanRadius(Primary)) || !isfinite(MeanRadius(Companion)) ||
+            !isfinite(Mass(Primary)) || !isfinite(Mass(Companion)))
+        {
+            throw OrbitCalculateException("too few arguments to function \"RocheLimit\"");
+        }
+
+        float64 DensityP = MeanDensity(Primary);
+        float64 DensityC = MeanDensity(Companion);
+        float64 PFlattening = Flattening(Primary).y;
+        return 2.423 * EquatorialRadius(Primary) * cbrt(DensityP / DensityC) *
+            cbrt(((1. + Mass(Companion) / (3. * Mass(Primary))) + (1. / 3.) *
+            PFlattening * (1. + Mass(Companion) / Mass(Primary))) / (1. - PFlattening));
+    }
+}
+
+float64 HillSphere(const Object& Primary, const Object& Companion)
+{
+    float64 _Eccentricity, _PericenterDist;
+    if (isinf(Eccentricity(Companion))) { _Eccentricity = 0; }
+    else { _Eccentricity = Eccentricity(Companion); }
+    if (!isinf(Perihelion(Companion))) { _PericenterDist = Perihelion(Companion); }
+    else if (!isinf(Companion.Orbit.Separation))
+    {
+        _PericenterDist = Companion.Orbit.Separation * (1. - _Eccentricity);
+    }
+    else
+    {
+        throw OrbitCalculateException("number of arguments to function \"HillSphere\" is not match?");
+    }
+    return _PericenterDist * cbrt(Mass(Companion) / (3. * Mass(Primary)));
+}
+
+fvec<5> LagrangePointDistances(float64 PrimaryMass, float64 CompanionMass, float64 Separation, vec2 TolerNLog)
+{
+    fvec<5> Distance;
+    float64 Mu = CompanionMass / (PrimaryMass + CompanionMass);
+
+    auto FindReal = [](complex64* Roots)
+    {
+        return std::find_if(Roots, Roots + 5, [](complex64 C){return abs(C.imag()) < 1e-12;});
+    };
+
+    // L1
+    fvec<6> L1Coeffs{1., Mu - 3., 3. - 2. * Mu, -Mu, 2. * Mu, -Mu};
+    complex64 L1Roots[5];
+    SolvePoly(L1Coeffs, L1Roots, {.P_ERROR = TolerNLog.x});
+    Distance[0] = Separation - Separation * FindReal(L1Roots)->real();
+
+    // L2
+    fvec<6> L2Coeffs{1., 3. - Mu, 3. - 2. * Mu, -Mu, -2. * Mu, -Mu};
+    complex64 L2Roots[5];
+    SolvePoly(L2Coeffs, L2Roots, {.P_ERROR = TolerNLog.x});
+    Distance[1] = Separation + Separation * FindReal(L2Roots)->real();
+
+    // L3
+    auto L3Equation = [M1 = PrimaryMass, M2 = CompanionMass, R = Separation](float64 r)
+    {
+        return M1 / pow(R - r,2) + M2 / pow(2 * R - r, 2) -
+               (M2 / (M1 + M2) * R + R - r) * (M1 + M2) / (R * R * R);
+    };
+    auto DL3Equation = [M1 = PrimaryMass, M2 = CompanionMass, R = Separation](float64 r)
+    {
+        return (2 * M1 / pow(R - r, 3)) + (2 * M2 / pow((2 * R) - r, 3)) -
+               ((-M1) - M2) / (R * R * R);
+    };
+    NewtonIterator It(L3Equation, DL3Equation);
+    It._M_TolerNLog = TolerNLog.y;
+    Distance[2] = Separation - It(0, Separation * (7. / 12.) * Mu);
+
+    // L4 and L5
+    Distance[3] = Separation;
+    Distance[4] = Separation;
+
+    return Distance;
+}
+
 _ORBIT_END
 _CSE_END
+
+#undef _CRT_SECURE_NO_WARNINGS
