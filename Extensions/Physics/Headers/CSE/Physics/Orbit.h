@@ -279,6 +279,20 @@ float64 HillSphere(const Object& Primary, const Object& Companion);
  */
 fvec<5> LagrangePointDistances(float64 PrimaryMass, float64 CompanionMass, float64 Separation, vec2 TolerNLog = vec2(15, 5));
 
+extern const KeplerianOrbitElems __DefOrbitData;
+int __cdecl MakeOrbit(Object* Primary, Object* Companion, Object* ThirdAttractor = nullptr, KeplerianOrbitElems Args = __DefOrbitData);
+std::shared_ptr<Object> __cdecl MakeBinary(Object* Primary, Object* Companion, Object* ThirdAttractor = nullptr, KeplerianOrbitElems Args = __DefOrbitData);
+
+/**
+ * @brief Calculate orbital period using Kepler's 3rd law.
+ */
+float64 GetPeriodFromPericenterDist(float64 CenterObjMass, float64 PericenterDist, float64 Eccentricity);
+
+/**
+ * @brief Calculate Semi-Major Axis using Kepler's 3rd law.
+ */
+float64 GetSemiMajorAxisFromPeriod(float64 CenterObjMass, float64 Period);
+
 _ORBIT_END
 _CSE_END
 

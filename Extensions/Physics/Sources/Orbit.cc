@@ -20,6 +20,7 @@
 
 #include "CSE/Physics/Orbit.h"
 #include "CSE/Base/ConstLists.h"
+#include "CSE/Base/Random.h"
 
 using namespace std;
 using namespace _CSE linalg;
@@ -244,6 +245,164 @@ fvec<5> LagrangePointDistances(float64 PrimaryMass, float64 CompanionMass, float
     Distance[4] = Separation;
 
     return Distance;
+}
+
+const KeplerianOrbitElems __DefOrbitData = {.RefPlane = "Extrasolar", .Epoch = J2000};
+
+void __Addvalue(float64& Dst, float64& Src)
+{
+    if (!IS_NO_DATA_DBL(Dst)) { Dst = Src; }
+}
+
+void __Addvalue(ustring& Dst, ustring& Src)
+{
+    if (!IS_NO_DATA_STR(Dst)) { Dst = Src; }
+}
+
+int __cdecl MakeOrbit(Object* Primary, Object* Companion, Object* ThirdGravSourse, KeplerianOrbitElems Args)
+{
+    float64 Separation;
+    if (IS_NO_DATA_DBL(Args.Separation) && IS_NO_DATA_DBL(Args.PericenterDist))
+    {
+        // if radiuses of the two objects are missing, throw exception.
+        if (!isfinite(MeanRadius(*Primary))) { return 1; }
+        if (!isfinite(MeanRadius(*Companion))) { return 2; }
+
+        float64 PRadius = max({ Primary->Dimensions.x,  Primary->Dimensions.y, Primary->Dimensions.z });
+        float64 CRadius = max({ Companion->Dimensions.x,  Companion->Dimensions.y, Companion->Dimensions.z });
+
+        // Generate separation when diatances in arguments are missing.
+        float64 MinDistance = RocheLimit(*Primary, *Companion, 1) + 2. * CRadius;
+        float64 MaxDistance;
+        if (nullptr == ThirdGravSourse){MaxDistance = LightYear / 100.;}
+        else { MaxDistance = HillSphere(*ThirdGravSourse, *Primary) / 2; }
+        if (MaxDistance < MinDistance) { return 3; }
+        Separation = random.uniform(MinDistance, MaxDistance);
+    }
+    else
+    {
+        if (!IS_NO_DATA_DBL(Args.Separation) && IS_NO_DATA_DBL(Args.PericenterDist))
+        {
+            BinaryOrbitToKeplerianElems(&Args);
+        }
+        float64 MinDistance = RocheLimit(*Primary, *Companion, 1);
+        float64 MaxDistance;
+        if (nullptr == ThirdGravSourse) { MaxDistance = LightYear / 100.; }
+        else { MaxDistance = HillSphere(*ThirdGravSourse, *Primary); }
+        if (Args.PericenterDist < MinDistance || Args.PericenterDist > MaxDistance){return 3;}
+        Separation = Args.PericenterDist;
+    }
+
+    Companion->ParentBody = Primary->Name[0];
+    __Addvalue(Companion->Orbit.AnalyticModel, Args.AnalyticModel);
+    __Addvalue(Companion->Orbit.RefPlane, Args.RefPlane);
+    __Addvalue(Companion->Orbit.Epoch, Args.Epoch);
+    __Addvalue(Companion->Orbit.Period, Args.Period);
+    Companion->Orbit.PericenterDist = Separation;
+    __Addvalue(Companion->Orbit.GravParam, Args.GravParam);
+    __Addvalue(Companion->Orbit.Eccentricity, Args.Eccentricity);
+    __Addvalue(Companion->Orbit.Inclination, Args.Inclination);
+    __Addvalue(Companion->Orbit.AscendingNode, Args.AscendingNode);
+    __Addvalue(Companion->Orbit.AscNodePreces, Args.AscNodePreces);
+    __Addvalue(Companion->Orbit.ArgOfPericenter, Args.ArgOfPericenter);
+    __Addvalue(Companion->Orbit.ArgOfPeriPreces, Args.ArgOfPeriPreces);
+    __Addvalue(Companion->Orbit.MeanAnomaly, Args.MeanAnomaly);
+
+    return 0;
+}
+
+shared_ptr<Object> __cdecl MakeBinary(Object* Primary, Object* Companion, Object* ThirdGravSourse, KeplerianOrbitElems Args)
+{
+    float64 Separation;
+    if (isinf(Args.Separation) && isinf(Args.PericenterDist))
+    {
+        // if radiuses of the two objects are missing, throw exception.
+        if (!isfinite(MeanRadius(*Primary))) { return nullptr; }
+        if (!isfinite(MeanRadius(*Companion))) { return nullptr; }
+
+        float64 PRadius = max({ Primary->Dimensions.x,  Primary->Dimensions.y, Primary->Dimensions.z });
+        float64 CRadius = max({ Companion->Dimensions.x,  Companion->Dimensions.y, Companion->Dimensions.z });
+
+        // Generate separation when diatances in arguments are missing.
+        float64 MinDistance = RocheLimit(*Primary, *Companion, 1) + 2. * CRadius;
+        float64 MaxDistance;
+        if (nullptr == ThirdGravSourse) { MaxDistance = LightYear / 100.; }
+        else { MaxDistance = HillSphere(*ThirdGravSourse, *Primary) / 2; }
+        if (MaxDistance < MinDistance) { return nullptr; }
+        Separation = random.uniform(MinDistance, MaxDistance);
+    }
+    else
+    {
+        if (!isinf(Args.Separation) && isinf(Args.PericenterDist))
+        {
+            BinaryOrbitToKeplerianElems(&Args);
+        }
+        float64 MinDistance = RocheLimit(*Primary, *Companion, 1);
+        float64 MaxDistance;
+        if (nullptr == ThirdGravSourse) { MaxDistance = LightYear / 100.; }
+        else { MaxDistance = HillSphere(*ThirdGravSourse, *Primary); }
+        if (Args.PericenterDist < MinDistance || Args.PericenterDist > MaxDistance) { return nullptr; }
+        Separation = Args.PericenterDist;
+    }
+
+    Object Barycenter =
+    {
+        .Type = "Barycenter",
+        .Name = {Primary->Name[0] + '-' + Companion->Name[0]},
+        .Orbit = Primary->Orbit
+    };
+
+    if (IS_NO_DATA_STR(Primary->ParentBody))
+    {
+        Barycenter.ParentBody = Primary->ParentBody;
+    }
+
+    Primary->ParentBody = Barycenter.Name[0];
+    Companion->ParentBody = Barycenter.Name[0];
+
+    //Addvalue(Companion->Orbit.AnalyticModel, Args.AnalyticModel);
+    __Addvalue(Companion->Orbit.RefPlane, Args.RefPlane);
+    __Addvalue(Companion->Orbit.Epoch, Args.Epoch);
+    __Addvalue(Companion->Orbit.Period, Args.Period);
+    Companion->Orbit.PericenterDist = Separation;
+    __Addvalue(Companion->Orbit.GravParam, Args.GravParam);
+    __Addvalue(Companion->Orbit.Eccentricity, Args.Eccentricity);
+    __Addvalue(Companion->Orbit.Inclination, Args.Inclination);
+    __Addvalue(Companion->Orbit.AscendingNode, Args.AscendingNode);
+    //__Addvalue(Companion->Orbit.AscNodePreces, Args.AscNodePreces);
+    __Addvalue(Companion->Orbit.ArgOfPericenter, Args.ArgOfPericenter);
+    //__Addvalue(Companion->Orbit.ArgOfPeriPreces, Args.ArgOfPeriPreces);
+    __Addvalue(Companion->Orbit.MeanAnomaly, Args.MeanAnomaly);
+
+    if (IS_NO_DATA_DBL(Companion->Orbit.ArgOfPericenter)) { Companion->Orbit.ArgOfPericenter = 0; }
+    if (IS_NO_DATA_DBL(Companion->Orbit.MeanAnomaly)) { Companion->Orbit.MeanAnomaly = 0; }
+    Primary->Orbit = Companion->Orbit;
+    if (Primary->Orbit.ArgOfPericenter >= 180) { Primary->Orbit.ArgOfPericenter -= 180; }
+    else { Primary->Orbit.ArgOfPericenter += 180; }
+
+    float64 Eccentricity = 0;
+    if (!IS_NO_DATA_DBL(Companion->Orbit.Eccentricity)) { Eccentricity = Companion->Orbit.Eccentricity; }
+    float64 SemiMajorAxis = Companion->Orbit.PericenterDist / (1. - Eccentricity);
+    float64 PrimarySMA = SemiMajorAxis * (Companion->Mass / (Primary->Mass + Companion->Mass));
+    float64 CompanionSMA = SemiMajorAxis - PrimarySMA;
+    Primary->Orbit.PericenterDist = PrimarySMA - PrimarySMA * Eccentricity;
+    Companion->Orbit.PericenterDist = CompanionSMA - CompanionSMA * Eccentricity;
+    Primary->Orbit.Period = GetPeriodFromPericenterDist(Primary->Mass, Companion->Orbit.PericenterDist, Eccentricity);
+    Companion->Orbit.Period = Primary->Orbit.Period;
+
+    return make_shared<Object>(Barycenter);
+}
+
+float64 GetPeriodFromPericenterDist(float64 CenterObjMass, float64 PericenterDist, float64 Eccentricity)
+{
+    if (Eccentricity >= 1) { return __Float64::FromBytes(POS_INF_DOUBLE); }
+    float64 SemiMajorAxis = PericenterDist / (1. - Eccentricity);
+    return sqrt((4. * pow(CSE_PI, 2) * pow(SemiMajorAxis, 3)) / (GravConstant * CenterObjMass));
+}
+
+float64 GetSemiMajorAxisFromPeriod(float64 CenterObjMass, float64 OrbitalPeriod)
+{
+    return cbrt((GravConstant * CenterObjMass * pow(OrbitalPeriod, 2)) / (4. * pow(CSE_PI, 2)));
 }
 
 _ORBIT_END
