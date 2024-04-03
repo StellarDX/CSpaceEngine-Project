@@ -182,7 +182,7 @@ static const auto _NoDataInt = 0xFFFFFFFFFFFFFFFF;
 
 using ustringlist = std::vector<ustring>;
 
-__interface SEObject {};
+struct SEObject {};
 
 _CSE_END
 

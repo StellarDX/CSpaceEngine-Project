@@ -588,6 +588,7 @@ int __Solve_Cubic_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin, float64 p_Err
     // Reference:
     // NATURAL SCIENCE JOURNAL OF HAINAN TEACHERES COLLEGE,Hainan Province,China. Vol. 2,No. 2; Dec, 1989,
     // A new extracting formula and a new distinguishing means on the one variable cubic equation., Fan Shengjin. PP.91-98 .
+    // Obituary: The author of this algorithm was passed away at Sep 8th 2018, age of 63.
     float64 a = *(CoeffsBegin + 0);
     float64 b = *(CoeffsBegin + 1);
     float64 c = *(CoeffsBegin + 2);

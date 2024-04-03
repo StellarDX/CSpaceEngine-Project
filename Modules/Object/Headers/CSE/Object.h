@@ -31,43 +31,9 @@ _CSE_BEGIN
 
 #define _ASOBJ_BEGIN namespace ObjectLiterals {
 #define _ASOBJ_END   }
-#define _ASOBJ       ObjectLiterals::
+#define _ASOBJ ObjectLiterals::
 
 using CompositionType = std::map<ustring, float64>;
-
-_ASOBJ_BEGIN
-
-struct SurfaceTextureParams
-{
-    ustring   DiffMap        = _NoDataStr;       // Surface map path
-    ustring   DiffMapAlpha   = _NoDataStr;       //
-    ustring   BumpMap        = _NoDataStr;       // Elevation map path
-    float64   BumpHeight     = _NoDataDbl;       // height scale of the Bump map in metres
-    float64   BumpOffset     = _NoDataDbl;       // negative offset of the landscape in metres.
-    ustring   GlowMap        = _NoDataStr;       // Glow map path
-    ustring   GlowMode       = _NoDataStr;       //
-    vec3      GlowColor      = vec3(_NoDataDbl); //
-    float64   GlowBright     = _NoDataDbl;       //
-    ustring   SpecMap        = _NoDataStr;       // Specular map path
-    bool      FlipMap        = false;            // Flip the map by 180°
-};
-
-struct HapkeParams
-{
-    float64   Gamma          = _NoDataDbl;
-    float64   Hapke          = _NoDataDbl;
-    float64   SpotBright     = _NoDataDbl;
-    float64   SpotWidth      = _NoDataDbl;
-    float64   SpotBrightCB   = _NoDataDbl;
-    float64   SpotWidthCB    = _NoDataDbl;
-    float64   TempMapMaxTemp = _NoDataDbl;
-    float64   DayAmbient     = _NoDataDbl;
-    float64   RingsWinter    = _NoDataDbl;
-    vec3      ModulateColor  = vec3(_NoDataDbl);
-    float64   ModulateBright = _NoDataDbl;
-};
-
-_ASOBJ_END
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          SpaceEngine Object Class                          //
@@ -240,8 +206,38 @@ struct Object : public SEObject
     |                             Surface                            |
     \*--------------------------------------------------------------*/
 
+    struct SurfaceTextureParams
+    {
+        ustring     DiffMap        = _NoDataStr;       // Surface map path
+        ustring     DiffMapAlpha   = _NoDataStr;       //
+        ustring     BumpMap        = _NoDataStr;       // Elevation map path
+        float64     BumpHeight     = _NoDataDbl;       // height scale of the Bump map in metres
+        float64     BumpOffset     = _NoDataDbl;       // negative offset of the landscape in metres.
+        ustring     GlowMap        = _NoDataStr;       // Glow map path
+        ustring     GlowMode       = _NoDataStr;       //
+        vec3        GlowColor      = vec3(_NoDataDbl); //
+        float64     GlowBright     = _NoDataDbl;       //
+        ustring     SpecMap        = _NoDataStr;       // Specular map path
+        bool        FlipMap        = false;            // Flip the map by 180°
+    };
+
+    struct HapkeParams
+    {
+        float64     Gamma          = _NoDataDbl;
+        float64     Hapke          = _NoDataDbl;
+        float64     SpotBright     = _NoDataDbl;
+        float64     SpotWidth      = _NoDataDbl;
+        float64     SpotBrightCB   = _NoDataDbl;
+        float64     SpotWidthCB    = _NoDataDbl;
+        float64     TempMapMaxTemp = _NoDataDbl;
+        float64     DayAmbient     = _NoDataDbl;
+        float64     RingsWinter    = _NoDataDbl;
+        vec3        ModulateColor  = vec3(_NoDataDbl);
+        float64     ModulateBright = _NoDataDbl;
+    };
+
     bool            EnableSurface        = false;
-    struct LandscapeParams : public _ASOBJ SurfaceTextureParams, _ASOBJ HapkeParams
+    struct LandscapeParams : public SurfaceTextureParams, HapkeParams
     {
         ustring     Preset            = _NoDataStr;
         float64     SurfStyle         = _NoDataDbl;
@@ -348,7 +344,7 @@ struct Object : public SEObject
     \*--------------------------------------------------------------*/
 
     bool            NoOcean              = true;
-    struct OceanParams : public _ASOBJ HapkeParams
+    struct OceanParams : public HapkeParams
     {
         float64     Height            = _NoDataDbl;
 
@@ -368,7 +364,7 @@ struct Object : public SEObject
     {
         bool        TidalLocked       = false;
 
-        struct CloudLayerParam : public _ASOBJ SurfaceTextureParams, _ASOBJ HapkeParams
+        struct CloudLayerParam : public SurfaceTextureParams, HapkeParams
         {
             float64 Height            = _NoDataDbl; // meters
             float64 Velocity          = _NoDataDbl; // m/s
@@ -478,7 +474,7 @@ struct Object : public SEObject
     \*--------------------------------------------------------------*/
 
     bool            NoRings              = true;
-    struct RingsParams : public _ASOBJ HapkeParams
+    struct RingsParams : public HapkeParams
     {
         ustring     Texture           = _NoDataStr;
         float64     InnerRadius       = _NoDataDbl;	// meters
@@ -690,7 +686,7 @@ _CSE_END
 #if defined _MSC_VER
 #pragma pop_macro("new")
 #if defined _STL_RESTORE_CLANG_WARNINGS
-    _STL_RESTORE_CLANG_WARNINGS
+_STL_RESTORE_CLANG_WARNINGS
 #endif
 #pragma warning(pop)
 #pragma pack(pop)

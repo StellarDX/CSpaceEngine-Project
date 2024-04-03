@@ -229,12 +229,12 @@ fvec<5> LagrangePointDistances(float64 PrimaryMass, float64 CompanionMass, float
     auto L3Equation = [M1 = PrimaryMass, M2 = CompanionMass, R = Separation](float64 r)
     {
         return M1 / pow(R - r,2) + M2 / pow(2 * R - r, 2) -
-               (M2 / (M1 + M2) * R + R - r) * (M1 + M2) / (R * R * R);
+            (M2 / (M1 + M2) * R + R - r) * (M1 + M2) / (R * R * R);
     };
     auto DL3Equation = [M1 = PrimaryMass, M2 = CompanionMass, R = Separation](float64 r)
     {
         return (2 * M1 / pow(R - r, 3)) + (2 * M2 / pow((2 * R) - r, 3)) -
-               ((-M1) - M2) / (R * R * R);
+            ((-M1) - M2) / (R * R * R);
     };
     NewtonIterator It(L3Equation, DL3Equation);
     It._M_TolerNLog = TolerNLog.y;

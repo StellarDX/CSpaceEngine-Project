@@ -54,6 +54,10 @@ using KeplerianOrbitElems = Object::OrbitParams;
 *                                    Satellite Tracker                                   *
 \****************************************************************************************/
 
+/**
+ * @brief An Real Time Satellite Tracker based on keplerian orbit elements.
+ * Coordinate Results will be returned in XYZ-format.
+ */
 typedef class __Real_Time_Satellite_Tracker_And_Predictor
 {
 public:
