@@ -181,25 +181,25 @@ static const __Blagg_Titius_Bode_Array Saturn_BLF
 static const __Blagg_Titius_Bode_Array Uranus_BLF
     {.Ax0 = 2.9800, .Bx0 = 0.0805, .Alf = 125.7, .Bet = 12.5, .Offset = -2};
 
-struct Dermott_Period_Array
+struct __Dermott_Period_Array
 {
     float64 Tx0;
     float64 Cx0;
     float64 operator[](int64 _Idx);
 };
 
-static const Dermott_Period_Array Jovian_DML    {.Tx0 = 0.444, .Cx0 = 2.03};
-static const Dermott_Period_Array Saturnian_DML {.Tx0 = 0.462, .Cx0 = 1.59};
-static const Dermott_Period_Array Uranian_DML   {.Tx0 = 0.760, .Cx0 = 1.80};
+static const __Dermott_Period_Array Jovian_DML    {.Tx0 = 0.444, .Cx0 = 2.03};
+static const __Dermott_Period_Array Saturnian_DML {.Tx0 = 0.462, .Cx0 = 1.59};
+static const __Dermott_Period_Array Uranian_DML   {.Tx0 = 0.760, .Cx0 = 1.80};
 
-struct Exponential_Fitting_Array
+struct __Exponential_Fitting_Array
 {
     float64 Cx0;
     float64 Cx1;
     float64 operator[](int64 _Idx);
 };
 
-static const Exponential_Fitting_Array Rho1Cnc_Exp{.Cx0 = 0.0142, .Cx1 = 0.9975};
+static const __Exponential_Fitting_Array Rho1Cnc_Exp{.Cx0 = 0.0142, .Cx1 = 0.9975};
 
 
 

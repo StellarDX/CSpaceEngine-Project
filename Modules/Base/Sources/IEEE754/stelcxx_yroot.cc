@@ -13,6 +13,9 @@ float64 __cdecl yroot(float64 _X, float64 _Expo)
     if (_Expo == 1) { return _X; }
     if (_Expo == 2) { return _CSE sqrt(_X); }
     if (_Expo == 3) { return _CSE cbrt(_X); }
+    if (_Expo == -1) { return 1. / _X; }
+    if (_Expo == -2) { return inversesqrt(_X); }
+    if (_Expo == -3) { return 1. / _CSE cbrt(_X); }
 
     __Float64 Exp = _Expo;
 

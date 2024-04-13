@@ -58,6 +58,7 @@ using IAURotation = Object::IAURotationModel;
 /**
  * @brief IAU Rotation Tracker, results will be returned as Polar(RA, Dec, Dist) format.
  * Simple model convertion set Solar System's north ecliptic pole by default.
+ * 「是非成败转头空，青山依旧在，几度夕阳红。」
  */
 typedef class __IAU_WGCCRE_Complex_Rotation_Model
 {
@@ -89,13 +90,23 @@ public:
     void Reset();
 
     vec3 State()const;
-    SimpleRotation ToSimple()const;
+    SimpleRotation ToSimple()const; // TODO
 
     vec3 CurrentState()const;
-    SimpleRotation CurrentStateToSimple()const;
+    SimpleRotation CurrentStateToSimple()const; // TODO
+
+    static __IAU_WGCCRE_Complex_Rotation_Model FromSimpleModel(SimpleRotation Simple); // TODO
 
     vec3 operator()(float64 AddTime)const;
 }IAUComplexRotationTracker, WGCCREComplexRotationTracker;
+
+
+
+/****************************************************************************************\
+*                                    Static Functions                                    *
+\****************************************************************************************/
+
+
 
 _ROT_END
 _CSE_END

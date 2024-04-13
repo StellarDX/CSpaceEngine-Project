@@ -80,7 +80,7 @@ float64 __Blagg_Titius_Bode_Array::operator[](int64 _Idx)
  * @link Wikipedia. Dermott's law
  * https://en.wikipedia.org/wiki/Dermott%27s_law
  */
-float64 Dermott_Period_Array::operator[](int64 _Idx)
+float64 __Dermott_Period_Array::operator[](int64 _Idx)
 {
     return Tx0 * pow(Cx0, (float64)_Idx);
 }
@@ -93,7 +93,7 @@ float64 Dermott_Period_Array::operator[](int64 _Idx)
  * Titus–Bode law". Revista Mexicana de
  * Astronomía y Astrofísica (44): 243–246.
  */
-float64 Exponential_Fitting_Array::operator[](int64 _Idx)
+float64 __Exponential_Fitting_Array::operator[](int64 _Idx)
 {
     return Cx0 * exp(Cx1 * _Idx);
 }
