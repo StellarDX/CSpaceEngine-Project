@@ -45,15 +45,23 @@ _EOS_BEGIN
 *                                      EOS Templates                                     *
 \****************************************************************************************/
 
-__interface __EOS_Base {virtual float64 operator()(float64 Pressure) = 0;};
+__interface __EOS_Base
+{
+    virtual ustring MaterialName()const = 0;
+    virtual float64 BaseDensity()const = 0;
+    virtual float64 Density(float64 Pressure) = 0;
+    //virtual float64 operator()(float64 Pressure) = 0;
+};
 
 /**
  * @brief Rose-Vinet equation of state template.
  * @link https://en.wikipedia.org/wiki/Rose%E2%80%93Vinet_equation_of_state
  */
-typedef class __RoseVinetEOS_Template: public __EOS_Base
+typedef class __Rose_Vinet_EOS_Template: public __EOS_Base
 {
 public:
+    ustring _MaterialName;
+
     float64 _K0;
     float64 _K1;
     float64 _Rho0;
@@ -62,8 +70,10 @@ public:
     float64 _NewtonMaxIterLog = 3;
     float64 _NewtonTolarNLog  = 8;
 
-    __RoseVinetEOS_Template(float64 _Kx0, float64 _Kx1, float64 _Rx0)
-        : _K0(_Kx0), _K1(_Kx1), _Rho0(_Rx0) {}
+    __Rose_Vinet_EOS_Template(ustring MatName, float64 _Kx0, float64 _Kx1, float64 _Rx0)
+        : _MaterialName(MatName), _K0(_Kx0), _K1(_Kx1), _Rho0(_Rx0) {}
+
+    ustring MaterialName()const override{return _MaterialName;}
 
     float64 K0()const { return _K0; }
     float64 K1()const { return _K1; }
@@ -74,11 +84,14 @@ protected:
     float64 dPressure(float64 Density); // derivate function
 
 public:
+    float64 BaseDensity()const override{return Rho0();}
+    float64 Density(float64 Pressure)override {return operator()(Pressure);}
+
     /**
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure)override;
+    float64 operator()(float64 Pressure);
 }RoseVinetEOS;
 
 /**
@@ -88,6 +101,8 @@ public:
 typedef class __Birch_Murnaghan_Isothermal_EOS_Template : public __EOS_Base
 {
 public:
+    ustring _MaterialName;
+
     bool    _4TH = 0;
     float64 _K0;
     float64 _K1;
@@ -98,10 +113,12 @@ public:
     float64 _NewtonMaxIterLog = 3;
     float64 _NewtonTolarNLog  = 8;
 
-    __Birch_Murnaghan_Isothermal_EOS_Template(float64 _Kx0, float64 _Kx1, float64 _Rx0)
-        : _4TH(0), _K0(_Kx0), _K1(_Kx1), _K2(0), _Rho0(_Rx0) {}
-    // __Birch_Murnaghan_Isothermal_EOS_Template(float64 _Kx0, float64 _Kx1, float64 _Kx2, float64 _Rx0)
-    //     : _4TH(1), _K0(_Kx0), _K1(_Kx1), _K2(_Kx2), _Rho0(_Rx0) {}
+    __Birch_Murnaghan_Isothermal_EOS_Template(ustring MatName, float64 _Kx0, float64 _Kx1, float64 _Rx0)
+        : _MaterialName(MatName), _4TH(0), _K0(_Kx0), _K1(_Kx1), _K2(0), _Rho0(_Rx0) {}
+    // __Birch_Murnaghan_Isothermal_EOS_Template(ustring MatName, float64 _Kx0, float64 _Kx1, float64 _Kx2, float64 _Rx0)
+    //     : _MaterialName(MatName), _4TH(1), _K0(_Kx0), _K1(_Kx1), _K2(_Kx2), _Rho0(_Rx0) {}
+
+    ustring MaterialName()const override{return _MaterialName;}
 
     float64 K0()const { return _K0; }
     float64 K1()const { return _K1; }
@@ -113,11 +130,14 @@ public:
     float64 dPressure(float64 Density); // derivate function
 
 public:
+    float64 BaseDensity()const override{return Rho0();}
+    float64 Density(float64 Pressure)override {return operator()(Pressure);}
+
     /**
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure)override;
+    float64 operator()(float64 Pressure);
 }BirchMurnaghanEOS;
 
 extern const float64 __TFD_GAMMA_TABLE[20];
@@ -135,11 +155,15 @@ extern const float64 __TFD_GAMMA_TABLE[20];
 typedef class __Thomas_Fermi_Dirac_Huge_Pressure_Model : public __EOS_Base
 {
 public:
+    ustring _MaterialName;
+
     float64 AtomicWeight;
     float64 NProton;
 
-    __Thomas_Fermi_Dirac_Huge_Pressure_Model(float64 _Ax0, float64 _Zx0)
-        : AtomicWeight(_Ax0), NProton(_Zx0) {}
+    __Thomas_Fermi_Dirac_Huge_Pressure_Model(ustring MatName, float64 _Ax0, float64 _Zx0)
+        : _MaterialName(MatName), AtomicWeight(_Ax0), NProton(_Zx0) {}
+
+    ustring MaterialName()const override{return _MaterialName;}
 
     float64 A()const { return AtomicWeight; }
     float64 Z()const { return NProton; }
@@ -149,14 +173,19 @@ protected:
      * @brief Unit of the input value is dyne/cm^2, which equals 0.1 pa.
      * and return value is g/cm^3, which equals 1000 Kg/m^3
      */
-    float64 Density(float64 Pressure);
+    float64 __Density(float64 Pressure);
+
+private:
+    float64 BaseDensity()const override{return 0;}
 
 public:
+    float64 Density(float64 Pressure)override {return operator()(Pressure);}
+
     /**
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure)override;
+    float64 operator()(float64 Pressure);
 }TFDHugePressureEOS;
 
 /**
@@ -167,22 +196,29 @@ public:
 typedef class __Exponential_Fit_EOS_Template : public __EOS_Base
 {
 public:
+    ustring _MaterialName;
+
     float64 _Rho0;
     float64 _Cx0;
     float64 _Power;
 
-    __Exponential_Fit_EOS_Template(float64 Rx0, float64 Cx0, float64 Px0)
-        : _Rho0(Rx0), _Cx0(Cx0), _Power(Px0) {}
+    __Exponential_Fit_EOS_Template(ustring MatName, float64 Rx0, float64 Cx0, float64 Px0)
+        : _MaterialName(MatName), _Rho0(Rx0), _Cx0(Cx0), _Power(Px0) {}
+
+    ustring MaterialName()const override{return _MaterialName;}
 
     float64 Rho0()const { return _Rho0; }
     float64 C()const { return _Cx0; }
     float64 n()const { return _Power; }
 
+    float64 BaseDensity()const override{return Rho0();}
+    float64 Density(float64 Pressure)override {return operator()(Pressure);}
+
     /**
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure)override;
+    float64 operator()(float64 Pressure);
 }ExponentialEOS;
 
 
