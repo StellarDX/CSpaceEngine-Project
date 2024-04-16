@@ -756,6 +756,8 @@ public:
 
     constexpr float64 size()const {return abs(CurrentPoint() - PrevPoint());}
 
+    virtual void Clear() = 0;
+
     void __cdecl InvokeRun() throw()
     {
         if (_M_State != Processing) {throw std::logic_error("Engine is finished.");}
@@ -800,6 +802,8 @@ public:
     __ODE_Dense_Output_Base(float64 _Fi, float64 _La)
         : _M_First(_Fi), _M_Last(_La) {}
 
+    float64 first()const {return _M_First;}
+    float64 last()const {return _M_Last;}
     float64 size()const {return _M_Last - _M_First;}
 
     virtual ValueArray operator()(float64 _Xx)const = 0;
@@ -951,6 +955,18 @@ public:
 
         AbsStep = min(100 * h0, h1);
     };
+
+    void Clear()override
+    {
+        _Mybase::_M_State = _Mybase::Processing;
+        _Mybase::_M_EndPoint = 0;
+        _Mybase::_M_Direction = 0;
+        _Mybase::_M_StateBuffer.clear();
+        Interpolants.clear();
+        CurrentFx = ValueArray(0.);
+        KTable = StateType(0.);
+        AbsStep = 0;
+    }
 
     int Run()override
     {
