@@ -146,7 +146,7 @@ public:
     /**
      * @brief Enable additional terms from Tolman-Oppenheimer-Volkoff equation
      */
-    bool EnableTOVAdditionalTerms = false;
+    bool EnableRelativity = false;
 
     void SetError(float64 NewError) {_M_NLogError = NewError;};
     void SetMaxRadius(float64 NewMaxRadius) {_M_MaxRadius = NewMaxRadius;};

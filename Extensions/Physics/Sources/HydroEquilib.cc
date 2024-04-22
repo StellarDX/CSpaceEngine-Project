@@ -107,21 +107,21 @@ fvec<_NHEOC_EQCOUNT> __Hydrostatic_Equilibrium_Object_Constructor::
     // Pick density from Equation of state.
     float64 CurrentDensity = __Get_Density(Variables[_Eq_Pressure]);
 
-    // if enabled TOV add terms, calculate it.
-    float64 TOVAddTerms = 1.;
-    if (EnableTOVAdditionalTerms)
+    // if enabled Relativity, calculate it.
+    float64 RelativisticScale = 1.;
+    if (EnableRelativity)
     {
-        TOVAddTerms =
+        RelativisticScale =
             (1. + Variables[_Eq_Pressure] / (CurrentDensity * SpeedOfLight2)) *
             (1. + (4. * CSE_PI * Radius2 * Radius * Variables[_Eq_Pressure]) / (Variables[_Eq_Mass] * SpeedOfLight2)) /
             (1. - (2. * GravConstant * Variables[_Eq_Mass]) / (Radius * SpeedOfLight2));
-        if (isnan(TOVAddTerms)) {TOVAddTerms = 1.;}
+        if (isinf(RelativisticScale) || isnan(RelativisticScale)) {RelativisticScale = 1.;}
     }
 
     return fvec<_NHEOC_EQCOUNT>
     {
         // The Hydrostatic equilibrium
-        -Gravity * CurrentDensity * TOVAddTerms,
+        -Gravity * CurrentDensity * RelativisticScale,
         // Mass of a spherical shell
         4. * CSE_PI * Radius2 * CurrentDensity,
         // Moment of inertia

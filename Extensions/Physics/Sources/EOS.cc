@@ -120,7 +120,7 @@ float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::__Density(float64 Pressure)
 
 float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::operator()(float64 Pressure)
 {
-    return 1000. * Density(Pressure * 10.);
+    return 1000. * __Density(Pressure * 10.);
 }
 
 ///////////////////////////////////EXP///////////////////////////////////
@@ -135,7 +135,7 @@ float64 __Exponential_Fit_EOS_Template::operator()(float64 Pressure)
 \****************************************************************************************/
 
 // ---------- Parameters for the Vinet ( V ) or Birch-Murnagham (BME) EOS Fits ---------- //
-// Fit                   Atom or Compound      Name           K0       K1   Rho0
+// Fit                   Atom or Compound      Name           K0       K1    Rho0
 const BirchMurnaghanEOS  Carbon_BME_Graphite  ("Graphite",     33.8E9, 8.90, 2.25E3);
 const BirchMurnaghanEOS  Ferrum_BME_Alpha     ("Ferrum",      162.5E9, 5.50, 7.86E3);
 const RoseVinetEOS       Ferrum_Vinet_Epsilon ("Hexaferrum",  156.2E9, 6.08, 8.30E3);
@@ -143,6 +143,7 @@ const BirchMurnaghanEOS  FeS_BME              ("FeS",          35.0E9, 5.00, 4.7
 const BirchMurnaghanEOS  H2O_BME_IceVII       ("IceVII",       23.7E9, 4.15, 1.46E3);
 const BirchMurnaghanEOS  MgO_BME              ("MgO",         177.0E9, 4.00, 3.56E3);
 const BirchMurnaghanEOS  MgSiO3_BME_en        ("MgSiO3",      125.0E9, 5.00, 3.22E3);
+const BirchMurnaghanEOS  MgSiO3_BME_pv        ("MgSiO3",      247.0E9, 3.97, 4.10E3);
 const BirchMurnaghanEOS  MgFeSiO3_BME_pv      ("MgFeSiO3",    266.0E9, 3.90, 4.26E3); // 22MgO.3FeO.25SiO2
 const BirchMurnaghanEOS  SiC_BME              ("Carborundum", 227.0E9, 4.10, 3.22E3);
 

@@ -235,6 +235,7 @@ extern const BirchMurnaghanEOS FeS_BME;
 extern const BirchMurnaghanEOS H2O_BME_IceVII;
 extern const BirchMurnaghanEOS MgO_BME;
 extern const BirchMurnaghanEOS MgSiO3_BME_en;
+extern const BirchMurnaghanEOS MgSiO3_BME_pv;
 extern const BirchMurnaghanEOS MgFeSiO3_BME_pv;
 extern const BirchMurnaghanEOS SiC_BME;
 
