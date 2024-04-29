@@ -26,8 +26,8 @@ __StelCXX_UniString __StelCXX_UString_Codec_65001::Decode(std::string str)const
 {
     auto istr = str.c_str();
     auto size = str.size();
-    ucs2_t* wc = (ucs2_t*)malloc(size * 6);
-    memset(wc, 0, size * 6);
+    ucs2_t* wc = (ucs2_t*)malloc(size * 6 + 4);
+    memset(wc, 0, size * 6 + 4);
     __Decoder_65001_16(istr, wc, size);
     __StelCXX_UniString wstr(wc);
     free(wc);
@@ -38,8 +38,8 @@ std::string __StelCXX_UString_Codec_65001::Encode(__StelCXX_UniString str)const
 {
     auto istr = str.c_str();
     auto size = str.size();
-    char* cstr = (char*)malloc(size * 6);
-    memset(cstr, 0, size * 6);
+    char* cstr = (char*)malloc(size * 6 + 4);
+    memset(cstr, 0, size * 6 + 4);
     __Encoder_65001_16(istr, cstr, size);
     std::string sstr(cstr);
     free(cstr);
