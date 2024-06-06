@@ -22,6 +22,10 @@ _STL_DISABLE_CLANG_WARNINGS
 
 _CSE_BEGIN namespace linalg {
 
+/****************************************************************************************\
+*                                        PRODUCTS                                        *
+\****************************************************************************************/
+
 /**
  * @brief Dot product of two arrays.
  */
@@ -43,12 +47,58 @@ template<std::size_t N>
 float64 InnerProduct(fvec<N> _Left, fvec<N> _Right) {return dot(_Left, _Right);}
 
 /**
+ * @brief Inner product of two matrices.
+ */
+template<std::size_t N, std::size_t M>
+float64 InnerProduct(matrix<N, M> _Left, matrix<N, M> _Right)
+{
+    float64 _Sum = 0;
+    for (size_t row = 0; row < M; ++row)
+    {
+        for (size_t col = 0; col < N; ++col)
+        {
+            _Sum += _Left[col][row] * _Right[col][row];
+        }
+    }
+    return _Sum;
+}
+
+/**
  * @brief Compute the outer product of two vectors.
  */
 template<std::size_t N, std::size_t M>
 matrix<N, M> OuterProduct(fvec<M> u, fvec<N> v)
 {
     return matrix<1, M>(u) * matrix<1, N>(v).Transpose();
+}
+
+/**
+ * @brief Compute the outer product of two matrices.
+ */
+template<std::size_t N1, std::size_t M1, std::size_t N2, std::size_t M2>
+matrix<N1 * N2, M1 * M2> OuterProduct(matrix<N1, M1> A, matrix<N2, M2> B)
+{
+    matrix<N1 * N2, M1 * M2> C;
+    // i loops till rowa
+    for (int i = 0; i < M1; i++)
+    {
+        // k loops till rowb
+        for (int k = 0; k < M2; k++)
+        {
+            // j loops till cola
+            for (int j = 0; j < N1; j++)
+            {
+                // l loops till colb
+                for (int l = 0; l < N2; l++)
+                {
+                    // Each element of matrix A is
+                    // multiplied by whole Matrix B
+                    // resp and stored as Matrix C
+                    C[j + k + 1][i + l + 1] = A[j][i] * B[l][k];
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -89,11 +139,38 @@ inline vec4 cross(vec4 u, vec4 v, vec4 t)
     );
 }
 
+/****************************************************************************************\
+*                                         NORMS                                          *
+\****************************************************************************************/
+
 /**
- * @brief Matrix or vector norm.
+ * @brief Matrix or vector L1 norm.
  */
 template<std::size_t N, std::size_t M>
-float64 FrobeniusNorm(matrix<N, M> a)
+float64 AbsoluteNorm(matrix<N, M> a)
+{
+    float64 _Sum = 0;
+    for (size_t row = 0; row < M; ++row)
+    {
+        for (size_t col = 0; col < N; ++col)
+        {
+            _Sum += abs(a[col][row]);
+        }
+    }
+    return _Sum;
+}
+
+template<std::size_t N>
+float64 AbsoluteNorm(fvec<N> a)
+{
+    return AbsoluteNorm(matrix<1, N>{a});
+}
+
+/**
+ * @brief Matrix or vector L2 norm.
+ */
+template<std::size_t N, std::size_t M>
+float64 EuclideanNorm(matrix<N, M> a)
 {
     float64 _Sum = 0;
     for (size_t row = 0; row < M; ++row)
@@ -107,10 +184,111 @@ float64 FrobeniusNorm(matrix<N, M> a)
 }
 
 template<std::size_t N>
-float64 FrobeniusNorm(fvec<N> a)
+float64 EuclideanNorm(fvec<N> a)
 {
-    return FrobeniusNorm(matrix<1, N>{a});
+    return EuclideanNorm(matrix<1, N>{a});
 }
+
+/**
+ * @brief Matrix or vector Ln norm.
+ */
+template<std::size_t N, std::size_t M>
+float64 PNorm(matrix<N, M> a, uint64 p)
+{
+    float64 _Sum = 0;
+    for (size_t row = 0; row < M; ++row)
+    {
+        for (size_t col = 0; col < N; ++col)
+        {
+            _Sum += pow(abs(a[col][row]), p);
+        }
+    }
+    return yroot(_Sum, p);
+}
+
+template<std::size_t N>
+float64 PNorm(fvec<N> a, uint64 p)
+{
+    return PNorm(matrix<1, N>{a}, p);
+}
+
+/**
+ * @brief Matrix or vector Ln norm.
+ */
+template<std::size_t N, std::size_t M>
+float64 UniformNorm(matrix<N, M> a)
+{
+    float64 _Sum = abs(a[0][0]);
+    for (size_t row = 0; row < M; ++row)
+    {
+        for (size_t col = 0; col < N; ++col)
+        {
+            _Sum = max(abs(a[col][row]), _Sum);
+        }
+    }
+    return _Sum;
+}
+
+template<std::size_t N>
+float64 UniformNorm(fvec<N> a)
+{
+    return UniformNorm(matrix<1, N>{a});
+}
+
+/****************************************************************************************\
+*                                        DISTANCES                                       *
+\****************************************************************************************/
+
+template<std::size_t N>
+float64 ManhattanDistance(fvec<N> _Left, fvec<N> _Right)
+{
+    float64 _Res = 0;
+    for (int i = 0; i < N; ++i)
+    {
+        _Res += abs(_Left[i] - _Right[i]);
+    }
+    return _Res;
+}
+
+template<std::size_t N>
+float64 EuclideanDistance(fvec<N> _Left, fvec<N> _Right)
+{
+    float64 _Res = 0;
+    for (int i = 0; i < N; ++i)
+    {
+        _Res += (_Left[i] - _Right[i]) * (_Left[i] - _Right[i]);
+    }
+    return sqrt(_Res);
+}
+
+template<std::size_t N>
+float64 MinkowskiDistance(fvec<N> _Left, fvec<N> _Right, uint64 p)
+{
+    float64 _Res = 0;
+    for (int i = 0; i < N; ++i)
+    {
+        _Res += pow(abs(_Left[i] - _Right[i]), p);
+    }
+    return yroot(_Res, p);
+}
+
+template<std::size_t N>
+float64 ChebyshevDistance(fvec<N> _Left, fvec<N> _Right)
+{
+    float64 _Res = abs(_Left[0] - _Right[0]);
+    for (int i = 1; i < N; ++i)
+    {
+        _Res = max(abs(_Left[i] - _Right[i]), _Res);
+    }
+    return _Res;
+}
+
+template<std::size_t N>
+float64 distance(fvec<N> _Left, fvec<N> _Right) {return EuclideanDistance(_Left, _Right);}
+
+/****************************************************************************************\
+*                                    MATRIX OPERATIONS                                   *
+\****************************************************************************************/
 
 namespace __linalg_literals {
 
