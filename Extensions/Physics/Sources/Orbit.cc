@@ -58,8 +58,8 @@ KeplerianOrbitElems StateVectorsToKeplerianElements(OrbitStateType State, PSatel
     KeplerianOrbitElems Orbit;
     Orbit.RefPlane = State.RefPlane;
     Orbit.Epoch = State.Time;
-    float64 Distance = FrobeniusNorm(State.Position);
-    float64 Velocity = FrobeniusNorm(State.Velocity);
+    float64 Distance = EuclideanNorm(State.Position);
+    float64 Velocity = EuclideanNorm(State.Velocity);
     float64 SemiMajorAxis = 1. / ((2. / Distance) - (Velocity * Velocity / State.GravParam));
 
     // Semi-Major Axis >= 0 -> Elliptical orbit
@@ -77,26 +77,26 @@ KeplerianOrbitElems StateVectorsToKeplerianElements(OrbitStateType State, PSatel
 
     if (isinf(SemiMajorAxis))
     {
-        Orbit.PericenterDist = pow(FrobeniusNorm(AngularMomentum), 2) / State.GravParam;
+        Orbit.PericenterDist = pow(EuclideanNorm(AngularMomentum), 2) / State.GravParam;
         Orbit.Eccentricity = 1;
     }
     else
     {
-        float64 Eccentricity = FrobeniusNorm(EccentricityVec);
+        float64 Eccentricity = EuclideanNorm(EccentricityVec);
         if (abs(Eccentricity) < 1e-13) {Eccentricity = 0;} // if zero, orbit is circle orbit.
         Orbit.PericenterDist = SemiMajorAxis - SemiMajorAxis * Eccentricity;
         Orbit.Eccentricity = Eccentricity;
     }
 
     vec3 ZAxis = vec3(0, 0, 1);
-    Orbit.Inclination = arccos(dot(ZAxis, AngularMomentum) / FrobeniusNorm(AngularMomentum));
+    Orbit.Inclination = arccos(dot(ZAxis, AngularMomentum) / EuclideanNorm(AngularMomentum));
     if (Orbit.Inclination < 0) {Orbit.Inclination += 180;}
 
     // Calculate ascending line
     vec3 AscendingLine = cross(ZAxis, AngularMomentum);
 
     vec3 XAxis = vec3(1, 0, 0), YAxis = vec3(0, 1, 0);
-    Orbit.AscendingNode = arccos(dot(AscendingLine, XAxis) / FrobeniusNorm(AscendingLine));
+    Orbit.AscendingNode = arccos(dot(AscendingLine, XAxis) / EuclideanNorm(AscendingLine));
     // if dot(YAxis, AscendingLine) > 0, AscendingNode < 180
     __Fix_Angle(&Orbit.AscendingNode, YAxis, AscendingLine);
 
@@ -106,7 +106,7 @@ KeplerianOrbitElems StateVectorsToKeplerianElements(OrbitStateType State, PSatel
         // is undefined, calculate Argument of latitude instrad and
         // store it into Argument of perihelion, and set Mean anomaly 0.
         Orbit.ArgOfPericenter = arccos(dot(AscendingLine, State.Position)
-            / (FrobeniusNorm(AscendingLine) * Distance));
+            / (EuclideanNorm(AscendingLine) * Distance));
         // if dot(Position, ZAxis) > 0, ArgOfPericenter < 180
         __Fix_Angle(&Orbit.ArgOfPericenter, State.Position, ZAxis);
         Orbit.MeanAnomaly = 0;
@@ -114,7 +114,7 @@ KeplerianOrbitElems StateVectorsToKeplerianElements(OrbitStateType State, PSatel
     else
     {
         Orbit.ArgOfPericenter = arccos(dot(AscendingLine, EccentricityVec)
-            / (FrobeniusNorm(AscendingLine) * Orbit.Eccentricity));
+            / (EuclideanNorm(AscendingLine) * Orbit.Eccentricity));
         // if dot(ZAxis, EccentricityVec) > 0, ArgOfPericenter < 180
         __Fix_Angle(&Orbit.ArgOfPericenter, ZAxis, EccentricityVec);
 
