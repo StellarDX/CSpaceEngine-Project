@@ -135,67 +135,67 @@ float64 __Exponential_Fit_EOS_Template::operator()(float64 Pressure)
 \****************************************************************************************/
 
 // ---------- Parameters for the Vinet ( V ) or Birch-Murnagham (BME) EOS Fits ---------- //
-// Fit                   Atom or Compound      Name           K0       K1    Rho0
-const BirchMurnaghanEOS  Carbon_BME_Graphite  ("Graphite",     33.8E9, 8.90, 2.25E3);
-const BirchMurnaghanEOS  Ferrum_BME_Alpha     ("Ferrum",      162.5E9, 5.50, 7.86E3);
-const RoseVinetEOS       Ferrum_Vinet_Epsilon ("Hexaferrum",  156.2E9, 6.08, 8.30E3);
-const BirchMurnaghanEOS  FeS_BME              ("FeS",          35.0E9, 5.00, 4.77E3);
-const BirchMurnaghanEOS  H2O_BME_IceVII       ("IceVII",       23.7E9, 4.15, 1.46E3);
-const BirchMurnaghanEOS  MgO_BME              ("MgO",         177.0E9, 4.00, 3.56E3);
-const BirchMurnaghanEOS  MgSiO3_BME_en        ("MgSiO3",      125.0E9, 5.00, 3.22E3);
-const BirchMurnaghanEOS  MgSiO3_BME_pv        ("MgSiO3",      247.0E9, 3.97, 4.10E3);
-const BirchMurnaghanEOS  MgFeSiO3_BME_pv      ("MgFeSiO3",    266.0E9, 3.90, 4.26E3); // 22MgO.3FeO.25SiO2
-const BirchMurnaghanEOS  SiC_BME              ("Carborundum", 227.0E9, 4.10, 3.22E3);
+// Fit                   Atom or Compound      K0       K1    Rho0
+const BirchMurnaghanEOS  Carbon_BME_Graphite  ( 33.8E9, 8.90, 2.25E3);
+const BirchMurnaghanEOS  Ferrum_BME_Alpha     (162.5E9, 5.50, 7.86E3);
+const RoseVinetEOS       Ferrum_Vinet_Epsilon (156.2E9, 6.08, 8.30E3);
+const BirchMurnaghanEOS  FeS_BME              ( 35.0E9, 5.00, 4.77E3);
+const BirchMurnaghanEOS  H2O_BME_IceVII       ( 23.7E9, 4.15, 1.46E3);
+const BirchMurnaghanEOS  MgO_BME              (177.0E9, 4.00, 3.56E3);
+const BirchMurnaghanEOS  MgSiO3_BME_en        (125.0E9, 5.00, 3.22E3);
+const BirchMurnaghanEOS  MgSiO3_BME_pv        (247.0E9, 3.97, 4.10E3);
+const BirchMurnaghanEOS  MgFeSiO3_BME_pv      (266.0E9, 3.90, 4.26E3); // 22MgO.3FeO.25SiO2
+const BirchMurnaghanEOS  SiC_BME              (227.0E9, 4.10, 3.22E3);
 
 // ---------- Fits to the Merged Vinet/BME and TFD EOS of the Form Rho(P) = Rho0 + c * P^n ---------- //
 // These fits are valid for the pressure range P < 1E+16 Pa
 // Some typos are found in original paper, the following codes corrected them.
-//                   Material                       Name           Rho0  c        n
-const ExponentialEOS Ferrum_Exponential_Epsilon    ("Hexaferrum",  8300, 0.00349, 0.528);
-const ExponentialEOS MgSiO3_Exponential_Perovskite ("MgSiO3",      4100, 0.00161, 0.541);
-const ExponentialEOS MgFeSiO3_Exponential          ("MgFeSiO3",    4260, 0.00127, 0.549);
-const ExponentialEOS H2O_Exponential_IceVII        ("IceVII",      1460, 0.00311, 0.513);
-const ExponentialEOS Carbon_Exponential_Graphite   ("Graphite",    2250, 0.00350, 0.514);
-const ExponentialEOS SiC_Exponential               ("Carborundum", 3220, 0.00172, 0.537);
+//                   Material                       Rho0  c        n
+const ExponentialEOS Ferrum_Exponential_Epsilon    (8300, 0.00349, 0.528);
+const ExponentialEOS MgSiO3_Exponential_Perovskite (4100, 0.00161, 0.541);
+const ExponentialEOS MgFeSiO3_Exponential          (4260, 0.00127, 0.549);
+const ExponentialEOS H2O_Exponential_IceVII        (1460, 0.00311, 0.513);
+const ExponentialEOS Carbon_Exponential_Graphite   (2250, 0.00350, 0.514);
+const ExponentialEOS SiC_Exponential               (3220, 0.00172, 0.537);
 
 // ---------- Parameters for the TFD Model ---------- //
-//                     Mineral or element  Name,          A       Z          Note
-const TFDHugePressureEOS Bismuth_TFD      ("Bismuth",     209.00, 83.00); // Bi
-const TFDHugePressureEOS Plumbum_TFD      ("Plumbum",     207.00, 82.00); // Pb
-const TFDHugePressureEOS Aurum_TFD        ("Aurum",       197.00, 79.00); // Au
-const TFDHugePressureEOS Galena_TFD       ("Galena",      119.50, 49.00); // PbS
-const TFDHugePressureEOS Stannum_TFD      ("Stannum",     119.00, 50.00); // Sn
-const TFDHugePressureEOS Cadmium_TFD      ("Cadmium",     112.00, 48.00); // Cd
-const TFDHugePressureEOS Argentum_TFD     ("Argentum",    108.00, 47.00); // Ag
-const TFDHugePressureEOS Zinc_TFD         ("Zinc",         65.00, 30.00); // Zn
-const TFDHugePressureEOS Cuprum_TFD       ("Cuprum",       64.00, 29.00); // Cu
-const TFDHugePressureEOS Nickel_TFD       ("Nickel",       59.00, 28.00); // Ni
-const TFDHugePressureEOS Ferrum_TFD       ("Ferrum",       56.00, 26.00); // Fe
-const TFDHugePressureEOS Sphalerite_TFD   ("Sphalerite",   48.50, 23.00); // ZnS
-const TFDHugePressureEOS Troilite_TFD     ("Troilite",     44.00, 21.00); // FeS
-const TFDHugePressureEOS Pyrite_TFD       ("Pyrite",       38.00, 16.50); // FeS2
-const TFDHugePressureEOS Wustite_TFD      ("Wustite",      36.00, 17.00); // FeO
-const TFDHugePressureEOS Oldhamite_TFD    ("Oldhamite",    36.00, 18.00); // CaS
-const TFDHugePressureEOS Magnetite_TFD    ("Magnetite",    33.12, 15.70); // Fe3O4
-const TFDHugePressureEOS Hematite_TFD     ("Hematite",     32.00, 15.20); // Fe2O3
-const TFDHugePressureEOS Fayalite_TFD     ("Fayalite",     29.16, 14.01); // 2FeO.SiO2
-const TFDHugePressureEOS Rutile_TFD       ("Rutile",       26.66, 12.66); // TiO2
-const TFDHugePressureEOS Andratite_TFD    ("Andratite",    25.40, 12.50); // 3CaO.Fe2O3.3SiO2
-const TFDHugePressureEOS Pyrope_TFD       ("Pyrope",       25.01, 12.15); // 3MgO.Al2O3.3SiO2
-const TFDHugePressureEOS Grossularite_TFD ("Grossularite", 22.50, 11.20); // 3CaO.Al2O3.3SiO2
-const TFDHugePressureEOS Diopside_TFD     ("Diopside",     21.60, 10.80); // MgO.CaO.2SiO2
-const TFDHugePressureEOS Anorthite_TFD    ("Anorthite",    21.39, 10.62); // CaO.Al2O3.2SiO2
-const TFDHugePressureEOS Orthoclase_TFD   ("Orthoclase",   21.39, 10.62); // K2O.Al2O3.6SiO2
-const TFDHugePressureEOS Corundum_TFD     ("Corundum",     20.40, 10.00); // Al2O3
-const TFDHugePressureEOS Spinel_TFD       ("Spinel",       20.29, 10.00); // MgO.Al2O3
-const TFDHugePressureEOS Jadeite_TFD      ("Jadeite",      20.20, 10.00); // Na2O.Al2O3.4SiO2
-const TFDHugePressureEOS Albite_TFD       ("Albite",       20.16, 10.00); // Na2O.Al2O3.6SiO2
-const TFDHugePressureEOS Quartz_TFD       ("Quartz",       20.00, 10.00); // SiO2
-const TFDHugePressureEOS Forsterite_TFD   ("Forsterite",   20.00, 10.00); // 2MgO.SiO2
-const TFDHugePressureEOS Enstatite_TFD    ("Enstatite",    20.00, 10.00); // MgO.SiO2
-const TFDHugePressureEOS Periclase_TFD    ("Periclase",    20.00, 10.00); // MgO
-const TFDHugePressureEOS Spodumene_TFD    ("Spodumene",    18.60,  9.20); // Li2O.Al2O3.4SiO2
-const TFDHugePressureEOS Beryl_TFD        ("Beryl",        18.52,  9.17); // 3BeO.Al2O3.6SiO2
+//                     Mineral or element  A       Z          Note
+const TFDHugePressureEOS Bismuth_TFD      (209.00, 83.00); // Bi
+const TFDHugePressureEOS Plumbum_TFD      (207.00, 82.00); // Pb
+const TFDHugePressureEOS Aurum_TFD        (197.00, 79.00); // Au
+const TFDHugePressureEOS Galena_TFD       (119.50, 49.00); // PbS
+const TFDHugePressureEOS Stannum_TFD      (119.00, 50.00); // Sn
+const TFDHugePressureEOS Cadmium_TFD      (112.00, 48.00); // Cd
+const TFDHugePressureEOS Argentum_TFD     (108.00, 47.00); // Ag
+const TFDHugePressureEOS Zinc_TFD         ( 65.00, 30.00); // Zn
+const TFDHugePressureEOS Cuprum_TFD       ( 64.00, 29.00); // Cu
+const TFDHugePressureEOS Nickel_TFD       ( 59.00, 28.00); // Ni
+const TFDHugePressureEOS Ferrum_TFD       ( 56.00, 26.00); // Fe
+const TFDHugePressureEOS Sphalerite_TFD   ( 48.50, 23.00); // ZnS
+const TFDHugePressureEOS Troilite_TFD     ( 44.00, 21.00); // FeS
+const TFDHugePressureEOS Pyrite_TFD       ( 38.00, 16.50); // FeS2
+const TFDHugePressureEOS Wustite_TFD      ( 36.00, 17.00); // FeO
+const TFDHugePressureEOS Oldhamite_TFD    ( 36.00, 18.00); // CaS
+const TFDHugePressureEOS Magnetite_TFD    ( 33.12, 15.70); // Fe3O4
+const TFDHugePressureEOS Hematite_TFD     ( 32.00, 15.20); // Fe2O3
+const TFDHugePressureEOS Fayalite_TFD     ( 29.16, 14.01); // 2FeO.SiO2
+const TFDHugePressureEOS Rutile_TFD       ( 26.66, 12.66); // TiO2
+const TFDHugePressureEOS Andratite_TFD    ( 25.40, 12.50); // 3CaO.Fe2O3.3SiO2
+const TFDHugePressureEOS Pyrope_TFD       ( 25.01, 12.15); // 3MgO.Al2O3.3SiO2
+const TFDHugePressureEOS Grossularite_TFD ( 22.50, 11.20); // 3CaO.Al2O3.3SiO2
+const TFDHugePressureEOS Diopside_TFD     ( 21.60, 10.80); // MgO.CaO.2SiO2
+const TFDHugePressureEOS Anorthite_TFD    ( 21.39, 10.62); // CaO.Al2O3.2SiO2
+const TFDHugePressureEOS Orthoclase_TFD   ( 21.39, 10.62); // K2O.Al2O3.6SiO2
+const TFDHugePressureEOS Corundum_TFD     ( 20.40, 10.00); // Al2O3
+const TFDHugePressureEOS Spinel_TFD       ( 20.29, 10.00); // MgO.Al2O3
+const TFDHugePressureEOS Jadeite_TFD      ( 20.20, 10.00); // Na2O.Al2O3.4SiO2
+const TFDHugePressureEOS Albite_TFD       ( 20.16, 10.00); // Na2O.Al2O3.6SiO2
+const TFDHugePressureEOS Quartz_TFD       ( 20.00, 10.00); // SiO2
+const TFDHugePressureEOS Forsterite_TFD   ( 20.00, 10.00); // 2MgO.SiO2
+const TFDHugePressureEOS Enstatite_TFD    ( 20.00, 10.00); // MgO.SiO2
+const TFDHugePressureEOS Periclase_TFD    ( 20.00, 10.00); // MgO
+const TFDHugePressureEOS Spodumene_TFD    ( 18.60,  9.20); // Li2O.Al2O3.4SiO2
+const TFDHugePressureEOS Beryl_TFD        ( 18.52,  9.17); // 3BeO.Al2O3.6SiO2
 
 _EOS_END
 _CSE_END

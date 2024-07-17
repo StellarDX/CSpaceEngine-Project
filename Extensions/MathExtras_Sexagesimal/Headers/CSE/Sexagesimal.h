@@ -56,7 +56,7 @@ struct _Sexagesimal80
 /**
  * @brief Construct a Sexagesimal number
  */
-_Sexagesimal80 ConstructSexagesimal(int32_t h, uint16_t m, float64 s);
+_Sexagesimal80 ConstructSexagesimal(bool Negative, uint32_t h, uint16_t m, float64 s);
 
 /**
  * @brief Normalize a sexagesimal number

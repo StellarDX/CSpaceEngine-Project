@@ -1,5 +1,5 @@
 /*
-    Hydrostatic equilibrium Object constructor
+    Hydrostatic equilibrium Planet constructor
     Copyleft (L) StellarDX Astronomy.
 
     This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,9 @@ _STL_DISABLE_CLANG_WARNINGS
 #undef new
 #endif
 
-#define _HYD_BEGIN namespace HydroDynamic {
+#define _HYD_BEGIN namespace Constructors {
 #define _HYD_END }
-#define _HYD HydroDynamic::
+#define _HYD Constructors::
 
 _CSE_BEGIN
 _HYD_BEGIN
@@ -94,26 +94,26 @@ public:
 
     using ArrayType    = std::vector<float64>;
 
-    using EOSType      = _EOS __EOS_Base;
-    using EOSPointer   = EOSType*;
-    using EOSArray     = std::vector<EOSPointer>;
+    using MaterialType = _EOS Material;
+    using MaterialPtr  = MaterialType*;
+    using MaterialArr  = std::vector<MaterialPtr>;
 
     using ODEType      = __Manipulatable_ODE_Engine<EquationCount>; // P'(R), M'(R) and I'(R)
     using OdeArray     = std::vector<ODEType>;
     using InteriorType = decltype(Object::Interior);
 
 protected:
-    float64   _M_NLogError   = 3; // Negative logarithm of error
-    ArrayType _M_Layers;          // Total mass of layers, values in Kg
-    EOSArray  _M_Interior;        // EOS of layers
-    float64   _M_Index       = 0; // Current layer
-    float64   _M_TargetRadius;    // Target Radius
+    float64     _M_NLogError   = 1.8; // Negative logarithm of error
+    ArrayType   _M_Layers;            // Total mass of layers, values in Kg
+    MaterialArr _M_Interior;          // EOS of layers
+    float64     _M_Index       = 0;   // Current layer
+    float64     _M_TargetRadius;      // Target Radius
 
-    float64   _M_MaxRadius;       // Max radius, value in Meters
-    float64   _M_InitPressure;    // Initial pressure, value in Pascal
-    float64   _M_SurfPressure;    // Surface pressure, value in Pascal
+    float64     _M_MaxRadius;         // Max radius, value in Meters
+    float64     _M_InitPressure;      // Initial pressure, value in Pascal
+    float64     _M_SurfPressure;      // Surface pressure, value in Pascal
 
-    ArrayType _M_RadBoundary;     // Boundaries of layers, values in Meters.
+    ArrayType   _M_RadBoundary;       // Boundaries of layers, values in Meters.
 
     enum Variables
     {
@@ -132,14 +132,14 @@ protected:
 
     OdeArray _M_Equations;
 
-    void __Sort_Compositions(ArrayType Masses, EOSArray EOSs);
+    void __Sort_Compositions(ArrayType Masses, MaterialArr EOSs);
     float64 __Get_Density(float64 Pressure);
     float64 __Total_Mass() const;
     int __Get_Segment_From_Radius(float64 Rad);
 
 public:
     __Hydrostatic_Equilibrium_Object_Constructor
-        (ArrayType MassFractions, EOSArray CompositionEOSs)noexcept(0);
+        (ArrayType MassFractions, MaterialArr CompositionEOSs)noexcept(0);
 
     fvec<EquationCount> __Derivate_Equations(float64 Radius, fvec<EquationCount> Variables);
 

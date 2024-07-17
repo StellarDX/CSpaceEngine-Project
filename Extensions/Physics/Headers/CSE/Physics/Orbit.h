@@ -287,6 +287,11 @@ extern const KeplerianOrbitElems __DefOrbitData;
 int __cdecl MakeOrbit(Object* Primary, Object* Companion, Object* ThirdAttractor = nullptr, KeplerianOrbitElems Args = __DefOrbitData);
 std::shared_ptr<Object> __cdecl MakeBinary(Object* Primary, Object* Companion, Object* ThirdAttractor = nullptr, KeplerianOrbitElems Args = __DefOrbitData);
 
+
+/****************************************************************************************\
+*                                       Functions                                        *
+\****************************************************************************************/
+
 /**
  * @brief Calculate orbital period using Kepler's 3rd law.
  */

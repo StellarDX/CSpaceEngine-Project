@@ -14,10 +14,10 @@ using namespace std;
 _CSE_BEGIN
 _EXTERN_C
 
-_Sexagesimal80 ConstructSexagesimal(int32_t h, uint16_t m, float64 s)
+_Sexagesimal80 ConstructSexagesimal(bool Negative, uint32_t h, uint16_t m, float64 s)
 {
     return _Sexagesimal80{.Seconds = abs(s), .Minutes = uint16_t(m),
-        .Degrees = uint16_t(std::abs(h)), .Negative = std::signbit(h)};
+        .Degrees = uint16_t(h), .Negative = Negative};
 }
 
 void SexagesimalNormalize(_Sexagesimal80& _Sexagesimal)

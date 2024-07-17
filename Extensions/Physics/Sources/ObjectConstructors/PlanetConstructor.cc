@@ -16,14 +16,14 @@
     with this program; If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "CSE/Physics/HydroDynamic.h"
+#include "CSE/Physics/ObjectConstructors/PlanetConstructor.h"
 #include "CSE/Base/ConstLists.h"
 
 _CSE_BEGIN
 _HYD_BEGIN
 
 void __Hydrostatic_Equilibrium_Object_Constructor::
-    __Sort_Compositions(ArrayType Masses, EOSArray EOSs)
+    __Sort_Compositions(ArrayType Masses, MaterialArr EOSs)
 {
     if (Masses.size() != EOSs.size())
     {
@@ -31,14 +31,14 @@ void __Hydrostatic_Equilibrium_Object_Constructor::
     }
 
     // Bond mass with composition
-    std::vector<std::pair<float64, EOSPointer>> MassFractions;
+    std::vector<std::pair<float64, MaterialPtr>> MassFractions;
     for (int i = 0; i < Masses.size(); ++i)
     {
         MassFractions.push_back({Masses[i], EOSs[i]});
     }
 
     std::sort(MassFractions.begin(), MassFractions.end(),
-    [](std::pair<float64, EOSPointer> Left, std::pair<float64, EOSPointer> Right)
+    [](std::pair<float64, MaterialPtr> Left, std::pair<float64, MaterialPtr> Right)
     {
         return Left.second->BaseDensity() > Right.second->BaseDensity();
     });
@@ -84,7 +84,7 @@ int __Hydrostatic_Equilibrium_Object_Constructor::
 
 __Hydrostatic_Equilibrium_Object_Constructor::
     __Hydrostatic_Equilibrium_Object_Constructor
-    (ArrayType MassFractions, EOSArray CompositionEOSs) noexcept(0)
+    (ArrayType MassFractions, MaterialArr CompositionEOSs) noexcept(0)
 {
     __Sort_Compositions(MassFractions, CompositionEOSs);
     _M_MaxRadius = 8. * JupiterRadius; // Size limit for brown dwarfs
