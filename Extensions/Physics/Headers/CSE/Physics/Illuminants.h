@@ -1,6 +1,6 @@
 /*
     Star magnitude and luminosity module
-    Copyleft (L) StellarDX Astronomy.
+    Copyright (C) StellarDX Astronomy.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 #define __SPECTROSCOPY__
 
 #include "CSE/Base.h"
-#include <regex>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -41,12 +40,37 @@ _CSE_BEGIN
 *                                       Magnitudes                                       *
 \****************************************************************************************/
 
+/**
+ * @brief Calculate absolute magnitude from visual magnitude and distance
+ * @note where it is assumed that extinction from gas and dust is negligible.
+ * Typical extinction rates within the Milky Way galaxy are 1 to 2 magnitudes
+ * per kiloparsec, when dark clouds are taken into account.
+ * @param AppMagn - visual magnitude
+ * @param Dist - distance in parsec
+ * @return absolute magnitude
+ */
 float64 GetAbsMagnFromAppMagnDist(float64 AppMagn, float64 Dist);
 
+/**
+ * @brief Calculate absolute magnitude from visual magnitude and parallax
+ * @param AppMagn - visual magnitude
+ * @param Dist - parallax in mas
+ * @return absolute magnitude
+ */
 float64 GetAbsMagnFromAppMagnParallax(float64 AppMagn, float64 Parallax);
 
+/**
+ * @brief Calculate absolute bolometric magnitude from bolometric luminosity
+ * @param LumBol - Bolometric luminosity in watts
+ * @return absolute bolometric magnitude
+ */
 float64 GetAbsMagnBolFromLumBol(float64 LumBol);
 
+/**
+ * @brief Calculate bolometric luminosity from absolute bolometric magnitude
+ * @param absolute bolometric magnitude
+ * @return bolometric luminosity
+ */
 float64 GetLumBolFromAbsMagnBol(float64 AbsMagnBol);
 
 
@@ -54,12 +78,17 @@ float64 GetLumBolFromAbsMagnBol(float64 AbsMagnBol);
 *                                 Stellar Classification                                 *
 \****************************************************************************************/
 
-struct __Regex_Spactal_Type_Parser
+struct SpectralType
 {
 
 };
 
-struct SpectralType
+
+/****************************************************************************************\
+*                                       Illuminants                                      *
+\****************************************************************************************/
+
+class __Illuminant_Commission_Internationale_De_LEclairage
 {
 
 };
