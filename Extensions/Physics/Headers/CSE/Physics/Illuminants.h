@@ -161,14 +161,15 @@ struct StellarClassification
 protected:
     struct __Stellar_Class_Type
     {
-        enum __Sub_Cls_State
+        enum __Cls_State
         {
-            Null, Single, Range
-        }SubClsState = Null;
-        bool IsDoubleLCls = 0;
+            Null, Single, Range, Less, Greater, Uncertain
+        };
 
         StelClassFlags SpecClass[2]; // Main-class, include spectal and luminosity class
+        __Cls_State    SubClsState = Null;
         float64        SubClass[2];  // Sub-class
+        __Cls_State    SpClsState = Null;
         ustringlist    Pecularities; // Pecularities
         ustringlist    ChemSymbols;  // For Chemically pecular star
     }Elems[3] = {{.SpecClass = {StelClassFlags(M | ms)}, .SubClass = {2}}};

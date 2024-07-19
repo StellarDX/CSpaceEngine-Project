@@ -40,7 +40,7 @@ const ustringlist StellarClassification::__Spectral_Pecularities
     ":", "...", "!", "comp", "e", "[e]", "er", "eq", "f", "f*",
     "f+", "f?", "(f)", "(f+)", "((f))", "((f*))", "h", "ha", "E", "L",
     "Hewk", "k", "m", "n", "nn", "neb", "p", "pq", "q", "s",
-    "ss", "sh", "var", "wl", "z", "_lB"
+    "ss", "sh", "var", "wl", "z", "_lB", "?", "XR"
 };
 
 
@@ -56,9 +56,9 @@ const std::wstring StellarClassification::__Spectral_Pecularities_RegexStr
 
 const std::wstring StellarClassification::GeneratePecularitiesRegexString()
 {
-    static const ucs2_t POSIXMetaCharacters[14] =
+    static const ucs2_t POSIXMetaCharacters[16] =
     {
-        '^', '.', '[', ']', '$', '(', ')', '*', ',', '{', '}', '?', '+', '|'
+        '^', '.', '[', ']', '$', '(', ')', '*', ',', '{', '}', '?', '+', '|', '-', '\\'
     };
 
     ustringlist __Spectral_Pecularities_Regex_Raw;
@@ -104,7 +104,7 @@ const _REGEX_NS wregex StellarClassification::__Element_Symbols_Regex(__Element_
 const _REGEX_NS wregex StellarClassification::__Morgan_Keenan_Classification_Regex = _REGEX_NS wregex(
 []()->const std::wstring
 {
-    std::wstring Str = LR"(((O|B|A|F|G|K|M|L|T|Y)([0-9]|[0-9].[0-9])?(VI|(V|IV|III|II|I)(a|ab|b)?|Ia\+|0)?))";
+    std::wstring Str = LR"(((O|B|A|F|G|K|M|L|T|Y)(([0-9]|[0-9].[0-9])([\+\-:]|[/\-]([0-9]|[0-9].[0-9]))?)?((VI|(V|IV|III|II|I)(a|ab|b)?|Ia\+|0)([\+\-:]|[/\-](VI|(V|IV|III|II|I)(a|ab|b)?|Ia\+|0))?)?))";
     RegexAppend(&Str, __Spectral_Pecularities_RegexStr);
     RegexAppend(&Str, __Element_Symbols_RegexStr);
     return Str;
@@ -176,6 +176,7 @@ void StellarClassification::BindSpecType(StelClassFlags *Dst, ucs2_t Src)
 
 void StellarClassification::BindLumType(StelClassFlags *Dst, ustring Src, ustring SubLC)
 {
+    if (Src.empty()) {return;}
     bool UseSubLumClasses = 1;
     if (Src == "V") {*Dst = StelClassFlags(*Dst | ms);}
     else if (Src == "VI")
