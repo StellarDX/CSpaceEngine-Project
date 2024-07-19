@@ -23,9 +23,9 @@
 
 #include "CSE/Base.h"
 
-#define _EOS_BEGIN namespace EOS {
+#define _EOS_BEGIN namespace Materials {
 #define _EOS_END }
-#define _EOS EOS::
+#define _EOS Materials::
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)

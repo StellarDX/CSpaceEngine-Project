@@ -19,7 +19,7 @@
 #include "CSE/Physics/Illuminants.h"
 #include "CSE/Base/ConstLists.h"
 
-_CSE_BEGIN
+_CSE_BEGIN _OPTICS_BEGIN
 
 float64 GetAbsMagnFromAppMagnDist(float64 AppMagn, float64 Dist)
 {
@@ -41,4 +41,4 @@ float64 GetLumBolFromAbsMagnBol(float64 AbsMagnBol)
     return SolarLumBol * pow(10, -0.4 * AbsMagnBol);
 }
 
-_CSE_END
+_OPTICS_END _CSE_END

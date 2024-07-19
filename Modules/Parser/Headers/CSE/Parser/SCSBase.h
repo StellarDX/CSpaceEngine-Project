@@ -25,9 +25,14 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <regex>
 #include <iomanip>
 #include <map>
+
+#if __has_include(<boost/regex.hpp>)
+#include <boost/regex.hpp>
+#else
+#include <regex>
+#endif
 
 #include <CSE/Base/CSEBase.h>
 #include <CSE/Base/DateTime.h>
@@ -189,9 +194,9 @@ struct ValueType
         if (GetTypeID() != String) {throw ParseException("Invalid value");}
         ustring Str;
         GetQualified(&Str);
-        std::smatch Toks;
+        _REGEX_NS smatch Toks;
         std::string Data = Str.ToStdString();
-        if (std::regex_match(Data, Toks, _TIME SEDateTimeStringRegex))
+        if (_REGEX_NS regex_match(Data, Toks, _TIME SEDateTimeStringRegex))
         {
             *Dst = CSEDateTime
             (
@@ -199,7 +204,7 @@ struct ValueType
                 {std::stoi(Toks[4]), std::stoi(Toks[5]), std::stod(Toks[6])}
             );
         }
-        else if (std::regex_match(Data, Toks, _TIME SEDateStringRegex))
+        else if (_REGEX_NS regex_match(Data, Toks, _TIME SEDateStringRegex))
         {
             *Dst = CSEDateTime({std::stoi(Toks[1]), std::stoi(Toks[2]), std::stoi(Toks[3])});
         }

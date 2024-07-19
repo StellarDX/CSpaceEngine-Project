@@ -243,10 +243,10 @@ ustring CSEDateTime::ToString(cstring _Fmt)const
 
 _TIME_BEGIN
 
-const std::regex ISO8601TimeStringRegex("^([+\\-]?\\d+)[:\\-](\\d\\d)[:\\-](\\d\\d)T(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)(([+\\-]\\d?\\d):(\\d\\d))?$");
-const std::regex SEDateTimeStringRegex("^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d) (\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
-const std::regex SEDateStringRegex("^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d)$");
-const std::regex SETimeStringRegex("^(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
+const _REGEX_NS regex ISO8601TimeStringRegex("^([+\\-]?\\d+)[:\\-](\\d\\d)[:\\-](\\d\\d)T(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)(([+\\-]\\d?\\d):(\\d\\d))?$");
+const _REGEX_NS regex SEDateTimeStringRegex("^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d) (\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
+const _REGEX_NS regex SEDateStringRegex("^([+\\-]?\\d+)[\\./-](\\d\\d)[\\./-](\\d\\d)$");
+const _REGEX_NS regex SETimeStringRegex("^(\\d?\\d):(\\d\\d):(\\d\\d(?:\\.\\d*)?)$");
 
 /*****************************************************************************
   CSEDate member functions
@@ -1189,8 +1189,8 @@ int GetDateTimeFromISO8601String(const std::string& iso8601Date, int* y, int* m,
 {
     // Represents an ISO8601 complete date string.
     // re-implemented with std regex by StellarDX
-    std::smatch match;
-    if (std::regex_search(iso8601Date, match, _TIME ISO8601TimeStringRegex))
+    _REGEX_NS smatch match;
+    if (_REGEX_NS regex_search(iso8601Date, match, _TIME ISO8601TimeStringRegex))
     {
         bool error = false;
         bool ok = 1;

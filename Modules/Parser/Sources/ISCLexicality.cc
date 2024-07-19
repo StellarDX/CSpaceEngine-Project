@@ -19,7 +19,6 @@
 #include "CSE/Parser/SCSBase.h"
 #include "CSE/Parser/ISCStream.h"
 #include <cwchar>
-#include <regex>
 #include <cctype>
 
 // Text-formating header
@@ -31,6 +30,10 @@ using namespace fmt;
 #endif
 
 using namespace std;
+
+#ifdef _USE_BOOST_REGEX
+using namespace boost;
+#endif
 
 _CSE_BEGIN
 _SC_BEGIN

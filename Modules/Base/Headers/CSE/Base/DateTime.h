@@ -36,7 +36,12 @@
 
 #include <CSE/Base/CSEBase.h>
 #include <ctime>
+
+#if __has_include(<boost/regex.hpp>)
+#include <boost/regex.hpp>
+#else
 #include <regex>
+#endif
 
 // Namespace definations
 #define _TIME_BEGIN namespace Epoch{
@@ -47,10 +52,10 @@ _CSE_BEGIN
 
 _TIME_BEGIN
 
-extern const std::regex ISO8601TimeStringRegex;
-extern const std::regex SEDateTimeStringRegex;
-extern const std::regex SEDateStringRegex;
-extern const std::regex SETimeStringRegex;
+extern const _REGEX_NS regex ISO8601TimeStringRegex;
+extern const _REGEX_NS regex SEDateTimeStringRegex;
+extern const _REGEX_NS regex SEDateStringRegex;
+extern const _REGEX_NS regex SETimeStringRegex;
 
 class CSEDate
 {

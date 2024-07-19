@@ -76,6 +76,13 @@ _STL_DISABLE_CLANG_WARNINGS
 #define _NODISCARD [[nodiscard]]
 #endif
 
+#if __has_include(<boost/regex.hpp>)
+#define _USE_BOOST_REGEX
+#define _REGEX_NS boost::
+#else
+#define _REGEX_NS std::
+#endif
+
 // Interfaces
 #if !defined(_MSC_VER) && !defined(__interface)
 #define __interface struct

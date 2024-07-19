@@ -67,6 +67,30 @@ if(FMT_BACKUP_SOLUTION)
     add_definitions(-DUSE_FMTLIB)
 endif()
 
+# std::regex will cause a rediculously high deley
+# so a backup solution is needed for regexes
+# option (REGEX_BACKUP_SOLUTION "std::regex will cause a rediculously high deley,
+#     so a backup solution is needed for regexes" OFF)
+# if(REGEX_BACKUP_SOLUTION)
+    # option (BOOST_AUTOFIND "Use 'find_package' function to find boost library automatically" OFF)
+    # if (BOOST_AUTOFIND)
+    #     set(BOOST_FIND_DIRECTORY "" CACHE PATH "boost library directory")
+    #     set(boost_DIR ${FMT_FIND_DIRECTORY})
+    #     # Find boost library
+    #     message (STATUS "Searching boost library in directory: ${boost_DIR}")
+    #     find_package(fmt REQUIRED PATHS ${boost_DIR} NO_DEFAULT_PATH)
+    #     message (STATUS "boost library configs are found at: ${boost_DIR}")
+    #     message (STATUS "boost library version: ${fmt_VERSION}")
+    #     message (STATUS "boost library headers at: ${FMT_FIND_DIRECTORY}/include")
+    #     message (STATUS "boost library library at: ${FMT_FIND_DIRECTORY}/lib")
+    #     set(FMT_HEADERS_DIR "${FMT_FIND_DIRECTORY}/include" CACHE STRING "boost library headers directory" FORCE)
+    #     set(FMT_LIBRARY_DIR "${FMT_FIND_DIRECTORY}/lib" CACHE STRING "boost library library directory" FORCE)
+    # else()
+        set(BOOST_ROOT_DIR "" CACHE PATH "boost library root directory, used for reduce regex delay")
+        # set(BOOST_LIBRARY_DIR "" CACHE PATH "boost library library directory")
+    # endif()
+# endif()
+
 # CSE modules
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/Binaries")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/Libraries")
