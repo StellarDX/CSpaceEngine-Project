@@ -29,18 +29,11 @@ StellarClassification StellarClassification::__Morgan_Keenan_Classification_Pars
     enum RegPosition
     {
         FullString = 0,
-        MainClass  = 1,
-        SpecClass  = 2,
-        SubClass1  = 4,
-        SClsUncrt  = 5,
-        SubClass2  = 6,
-        MainLumCl1 = 9,
-        SubLumCls1 = 10,
-        LClsUncrt  = 11,
-        MainLumCl2 = 13,
-        SubLumCls2 = 14,
-        PecSymbols = 15,
-        ElmSymbols = 17
+        SpecClass  = 1,
+        SubClass   = 2,
+        LumClassF  = 3,
+        LumClassM  = 4,
+        LumClassS  = 5,
     };
 
     _REGEX_NS wsmatch Match;
@@ -49,77 +42,22 @@ StellarClassification StellarClassification::__Morgan_Keenan_Classification_Pars
         throw std::logic_error("Not the correct pattern.");
     }
 
-    StellarClassification::__Stellar_Class_Type Cls
+    StellarClassification::StellarClassificationDataType Data
     {
         .SpecClass = {StelClassFlags(0), StelClassFlags(0)},
-        .SubClass = {0, 0},
+        .SubClass = {0, 0}
     };
 
-    BindSpecType(&Cls.SpecClass[0], Match[SpecClass].str().front());
-    if (!Match[SubClass1].str().empty())
+    BindSpecType(&Data.SpecClass[0], Match[SpecClass].str().front());
+    if (!Match[SubClass].str().empty())
     {
-        Cls.SubClass[0] = std::stod(Match[SubClass1]);
-        Cls.SubClsState = __Stellar_Class_Type::Single;
+        Data.SubClass[0] = stod(Match[SubClass]);
+        Data.SubClsState = StellarClassificationDataType::Single;
     }
-    BindLumType(&Cls.SpecClass[0], ustring(Match[MainLumCl1].str()), ustring(Match[SubLumCls1].str()));
-
-    if (!Match[SClsUncrt].str().empty())
-    {
-        if (!Match[SubClass2].str().empty())
-        {
-            Cls.SubClass[1] = std::stod(Match[SubClass2]);
-            Cls.SubClsState = __Stellar_Class_Type::Range;
-        }
-        else
-        {
-            switch (Match[SClsUncrt].str().front())
-            {
-            case '+':
-                Cls.SubClsState = __Stellar_Class_Type::Greater;
-                break;
-            case '-':
-                Cls.SubClsState = __Stellar_Class_Type::Less;
-                break;
-            case ':':
-                Cls.SubClsState = __Stellar_Class_Type::Uncertain;
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    if (!Match[LClsUncrt].str().empty())
-    {
-        if (!Match[MainLumCl2].str().empty())
-        {
-            BindSpecType(&Cls.SpecClass[1], Match[SpecClass].str().front());
-            BindLumType(&Cls.SpecClass[1], ustring(Match[MainLumCl2].str()), ustring(Match[SubLumCls2].str()));
-            Cls.SpClsState = __Stellar_Class_Type::Range;
-        }
-        else
-        {
-            switch (Match[LClsUncrt].str().front())
-            {
-            case '+':
-                Cls.SpClsState = __Stellar_Class_Type::Greater;
-                break;
-            case '-':
-                Cls.SpClsState = __Stellar_Class_Type::Less;
-                break;
-            case ':':
-                Cls.SpClsState = __Stellar_Class_Type::Uncertain;
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    Cls.Pecularities = ParseSymbols(__Spectral_Pecularities_Regex, Match[PecSymbols]);
-    Cls.ChemSymbols = ParseSymbols(__Element_Symbols_Regex, Match[ElmSymbols]);
-
-    Classification.Elems[0] = Cls;
+    BindLumType(&Data.SpecClass[0], ustring(Match[LumClassF].str()),
+        ustring(Match[LumClassM].str()), ustring((Match[LumClassS].str())));
+    Data.SpClsState = StellarClassificationDataType::Single;
+    Classification.Data[0] = Data;
     return Classification;
 }
 
