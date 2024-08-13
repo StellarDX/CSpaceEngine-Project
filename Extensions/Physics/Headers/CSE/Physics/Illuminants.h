@@ -150,22 +150,54 @@ struct StellarClassification
         WDMask  = 0b00000000000000000001111111100000,
     }StelClassFlags;
 
-    static const std::map<__Spectral_Classification_Types, ustring> __Spectral_Classification_Table;
+    static const std::map<StelClassFlags, ustring> __Spectral_Classification_Table;
     static const ustringlist __Spectral_Pecularities;
-    //static const ustringlist __Absorption_Pecularities;
+    static const ustringlist __Absorption_Pecularities;
 
-    static const std::wstring __Spectal_Class_RegexStr;
-    static const std::wstring __Sub_Class_RegexStr;
-    static const std::wstring __Luminosity_Class_RegexStr;
+    static const std::string __Spectal_Class_RegexStr;
+    static const std::string __Sub_Class_RegexStr;
+    static const std::string __Sub_Class_Dbl_RegexStr;
+    static const std::string __Main_Lum_Class_RegexStr;
+    static const std::string __Sub_Lum_Class_RegexStr;
+    static const std::string __Luminosity_Class_RegexStr;
+    static const std::string __Lum_Class_SubUncertain_RegexStr;
+    static const std::string __Uncertainty_Template_RegexStr;
+    static const std::string __Sub_Class_Full_RegexStr;
+    static const std::string __LCls_Uncertainty;
+    static const std::string __Luminosity_Class_Full_RegexStr;
+    static const std::string __WR_Class_RegexStr;
+    static const std::string __Carbon_Star_Class_RegexStr;
+    static const std::string __White_Dwarf_Class_RegexStr;
 
-    static const std::wstring __Morgan_Keenan_Classification_RegexStr;
-    static const std::wstring __Spectral_Pecularities_RegexStr;
-    static const std::wstring __Element_Symbols_RegexStr;
+    static const std::string __Spectral_Pecularities_RegexStr;
+    static const std::string __Element_Symbols_RegexStr;
+    static const std::string __Absorption_Pecularities_RegexStr;
 
-    static const _REGEX_NS wregex __Morgan_Keenan_Classification_Regex;
+    static const std::wstring __MK_Class_General_RegexStr;
+    static const std::wstring __MK_Class_Ranged_RegexStr;
+    static const std::wstring __MK_Class_Cyanogen_RegexStr;
+    static const std::wstring __MK_Class_Cyanogen_Ranged_RegexStr;
+    static const std::wstring __MK_Class_Full_RegexStr;
+    static const std::wstring __Subdwarfs_RegexStr;
+    static const std::wstring __Wolf_Rayet_Star_RegexStr;
+    static const std::wstring __WR_Class_Uncertain_RegexStr;
+    static const std::wstring __Carbon_Star_1D_RegexStr;
+    static const std::wstring __Supplementary_Class_RegexStr;
+    static const std::wstring __White_Dwarf_RegexStr;
+
+    static const _REGEX_NS wregex __MK_Class_General_Regex;
+    static const _REGEX_NS wregex __MK_Class_Ranged_Regex;
+    static const _REGEX_NS wregex __MK_Class_Full_Regex;
+    static const _REGEX_NS wregex __Subdwarfs_Regex;
+    static const _REGEX_NS wregex __Wolf_Rayet_Star_Regex;
+    static const _REGEX_NS wregex __WR_Class_Uncertain_Regex;
+    static const _REGEX_NS wregex __Carbon_Star_1D_Regex;
+    static const _REGEX_NS wregex __Supplementary_Class_Regex;
+    static const _REGEX_NS wregex __White_Dwarf_Regex;
+
     static const _REGEX_NS wregex __Spectral_Pecularities_Regex;
+    static const _REGEX_NS wregex __Absorption_Pecularities_Regex;
     static const _REGEX_NS wregex __Element_Symbols_Regex;
-
 
 protected:
     struct StellarClassificationDataType
@@ -175,39 +207,60 @@ protected:
             Null, Single, Range, Less, Greater, Uncertain
         };
 
+        __Cls_State    SpClsState = Null;
         StelClassFlags SpecClass[2]; // Main-class, include spectal and luminosity class
         __Cls_State    SubClsState = Null;
         float64        SubClass[2];  // Sub-class
-        __Cls_State    SpClsState = Null;
-        ustringlist    Pecularities; // Pecularities
-        ustringlist    ChemSymbols;  // For Chemically pecular star
     }Data[3] = {{.SpecClass = {StelClassFlags(M | ms)}, .SubClass = {2}}};
+
+    ustringlist SpectralPecularities;
+
+    struct AbsorptionPecularityDataType
+    {
+        ustring Compound;
+        float64 Strength;
+        enum {None, Less, Greater, Uncertain} Uncertainty;
+    };
+
+    std::vector<AbsorptionPecularityDataType> AbsorptionPecularities;
+
+    struct ChemicalPecularityDataType
+    {
+        ustring Symbol;
+        bool    Uncertainty = 0;
+    };
+
+    std::vector<ChemicalPecularityDataType> ChemicalPecularities;
 
     int Size = 1;
 
     enum __Load_Type
     {
-        MorganKeenan, // Normal method
-    }LoadType = MorganKeenan;
+        MKGeneral, // Normal method
+        MKRanged,  // Ranged type
+    }LoadType = MKGeneral;
 
     ustring SrcString;
 
     using __Parse_Function_Type = std::function<StellarClassification(ustring)>;
     static const std::map<__Load_Type, __Parse_Function_Type> __Load_Methods;
 
-    static const void RegexAppend(std::wstring* Dst, std::wstring Src, ucs2_t Suffix);
-    static const std::wstring GenerateListMatchRegexString(ustringlist Li);
+    static const std::string GenerateListMatchRegexString(ustringlist Li, ustring Suffix);
 
     static ustringlist ParseSymbols(const _REGEX_NS wregex& Reg, std::wstring str);
 
-    static void BindSpecType(StelClassFlags* Dst, ucs2_t Src);
+    static void BindSpecType(StelClassFlags* Dst, ustring Src);
     static void BindLumType(StelClassFlags* Dst, ustring FullStr, ustring Src, ustring SubLC);
+    static void BindUncertainty(StellarClassificationDataType::__Cls_State* Dst, ustring FullStr);
+    static std::vector<AbsorptionPecularityDataType> ParseAbsorptionPecularities(const ustring& Src);
+    static std::vector<ChemicalPecularityDataType> ParseChemicallyPecularities(const ustring& Src);
 
 public:
     StellarClassification() {}
     StellarClassification(ustring);
 
     static StellarClassification __Morgan_Keenan_Classification_Parse(ustring str);
+    static StellarClassification __MK_Ranged_Classification_Parse(ustring str);
 };
 
 _OPTICS_END
