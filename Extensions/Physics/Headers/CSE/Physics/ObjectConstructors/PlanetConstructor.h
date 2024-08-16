@@ -18,8 +18,10 @@
 
 /**
  * @link References:
- * Anderson O. L., Baumgardner J. R. "Equations of State in Planet Interiors"
- * https://ui.adsabs.harvard.edu/abs/1980LPSC...11.1999A/abstract
+ * [1] Anderson O L , Baumgardner J R .Equations of state in planet interiors[J].
+ * Lunar and Planetary Science Conference Proceedings, 1980.
+ * [2] 龚盛夏,黄乘利.太阳系内类地行星内部结构模型研究进展[J].天文学进展, 2013,
+ * 31(4):20.DOI:10.3969/j.issn.1000-8349.2013.04.01.
  */
 
 #pragma once

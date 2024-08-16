@@ -176,8 +176,8 @@ struct StellarClassification
     static const std::wstring __MK_Class_General_RegexStr;
     static const std::wstring __MK_Class_Ranged_RegexStr;
     static const std::wstring __MK_Class_Cyanogen_RegexStr;
-    static const std::wstring __MK_Class_Cyanogen_Ranged_RegexStr;
     static const std::wstring __MK_Class_Full_RegexStr;
+    static const std::wstring __Metallic_Line_Stars_RegexStr;
     static const std::wstring __Subdwarfs_RegexStr;
     static const std::wstring __Wolf_Rayet_Star_RegexStr;
     static const std::wstring __WR_Class_Uncertain_RegexStr;
@@ -187,6 +187,7 @@ struct StellarClassification
 
     static const _REGEX_NS wregex __MK_Class_General_Regex;
     static const _REGEX_NS wregex __MK_Class_Ranged_Regex;
+    static const _REGEX_NS wregex __MK_Class_Cyanogen_Regex;
     static const _REGEX_NS wregex __MK_Class_Full_Regex;
     static const _REGEX_NS wregex __Subdwarfs_Regex;
     static const _REGEX_NS wregex __Wolf_Rayet_Star_Regex;
@@ -207,11 +208,19 @@ protected:
             Null, Single, Range, Less, Greater, Uncertain
         };
 
+        ustring        MetallicLine = "None"; // For Am Stars
         __Cls_State    SpClsState = Null;
         StelClassFlags SpecClass[2]; // Main-class, include spectal and luminosity class
         __Cls_State    SubClsState = Null;
         float64        SubClass[2];  // Sub-class
     }Data[3] = {{.SpecClass = {StelClassFlags(M | ms)}, .SubClass = {2}}};
+
+    struct
+    {
+        bool Enable = 0;
+        ustring Strength[2][2];
+        enum {None, Range, Less, Greater, Uncertain} Uncertainty;
+    }CyanogenType;
 
     ustringlist SpectralPecularities;
 
@@ -236,14 +245,16 @@ protected:
 
     enum __Load_Type
     {
-        MKGeneral, // Normal method
-        MKRanged,  // Ranged type
+        MKGeneral,  // Normal method
+        MKRanged,   // Ranged type
+        MKCyanogen, // CN star
+        MKFull      // Advanced method
     }LoadType = MKGeneral;
 
     ustring SrcString;
 
-    using __Parse_Function_Type = std::function<StellarClassification(ustring)>;
-    static const std::map<__Load_Type, __Parse_Function_Type> __Load_Methods;
+    using __Export_Function_Type = std::function<ustring(StellarClassification)>;
+    static const std::map<__Load_Type, __Export_Function_Type> __Export_Methods;
 
     static const std::string GenerateListMatchRegexString(ustringlist Li, ustring Suffix);
 
@@ -255,12 +266,16 @@ protected:
     static std::vector<AbsorptionPecularityDataType> ParseAbsorptionPecularities(const ustring& Src);
     static std::vector<ChemicalPecularityDataType> ParseChemicallyPecularities(const ustring& Src);
 
+    static StellarClassification __Morgan_Keenan_Classification_Parse(ustring str);
+    static StellarClassification __MK_Ranged_Classification_Parse(ustring str);
+    static StellarClassification __MK_Cyanogen_Classification_Parse(ustring str);
+    static StellarClassification __MK_Classification_Bruteforce_Parse(ustring str); // Maybe cause huge delay
+
 public:
     StellarClassification() {}
     StellarClassification(ustring);
 
-    static StellarClassification __Morgan_Keenan_Classification_Parse(ustring str);
-    static StellarClassification __MK_Ranged_Classification_Parse(ustring str);
+
 };
 
 _OPTICS_END

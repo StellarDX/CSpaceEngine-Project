@@ -48,13 +48,13 @@ StellarClassification::__Spectral_Classification_Table
 const ustringlist StellarClassification::__Spectral_Pecularities
 {
     ":", "...", "!", "comp", "e", "[e]", "er", "eq", "f", "f*",
-    "f+", "f?", "(f)", "(f+)", "((f))", "((f*))", "h", "ha", "E", "L",
+    "f+", "f?", "(f)", "(f+)", "((f))", "((f*))", //"h", "ha", "E", "L",
     "Hewk", "k", "m", "n", "nn", "neb", "p", "pq", "q", "s",
     "ss", "sh", "var", "wl", "z",
 
-    "w", "?", "lB", "v", "lambdaBoo", "HIwk", "h", "(n)", "shell", "[n]",
+    "w", "?", "lB", "v", "lambdaBoo", "HIwk", "(n)", "shell", "[n]",
     "pec", "He-n", "Si4200", "e*", "mdD", "kmet", "Ssh", "(m)", "Hd", "CaIIem",
-    "CaIwk", "c", "[Swk]", "[S]", "d", "CaII"
+    "CaIwk", "c", "[Swk]", "[S]", "d", "CaII", "metalweak"
 };
 
 const ustringlist StellarClassification::__Absorption_Pecularities // For pecular reg/yellow giants such as barium star
@@ -62,11 +62,10 @@ const ustringlist StellarClassification::__Absorption_Pecularities // For pecula
     "Fe", "m", "CH", "Hdel", "Ba", "Ca", "CN", "HK", "Sr", "C2"
 };
 
-const map<StellarClassification::__Load_Type, StellarClassification::__Parse_Function_Type>
-StellarClassification::__Load_Methods
+const map<StellarClassification::__Load_Type, StellarClassification::__Export_Function_Type>
+StellarClassification::__Export_Methods
 {
-    {MKGeneral, StellarClassification::__Morgan_Keenan_Classification_Parse},
-    {MKRanged, StellarClassification::__MK_Ranged_Classification_Parse},
+
 };
 
 
@@ -118,27 +117,21 @@ const wstring StellarClassification::__MK_Class_Ranged_RegexStr = []()->wstring
 
 const wstring StellarClassification::__MK_Class_Cyanogen_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^{0}{1}?{2}(CN{2})$)",
-        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr)));
-    return FinalRegex.ToStdWString();
-}();
-
-const wstring StellarClassification::__MK_Class_Cyanogen_Ranged_RegexStr = []()->wstring
-{
-    ustring FinalRegex = ustring(vformat(R"(^{0}{1}?[\-/]{0}{1}?{2}(CN{2})$)",
-        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Dbl_RegexStr, __Luminosity_Class_Full_RegexStr)));
+    ustring FinalRegex = ustring(vformat(R"(^(({0}{1}?)|({0}{4}?[\-/]{0}{4}?)){2}(CN{2}){3}?$)",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr,
+        __Luminosity_Class_Full_RegexStr, __Spectral_Pecularities_RegexStr, __Sub_Class_Dbl_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
 
 const wstring StellarClassification::__MK_Class_Full_RegexStr = []()->wstring
 {
     string SpTyStr = vformat(R"(({0}|\({0}\)|({0}[\+\-\:\?])))", make_format_args(__Spectal_Class_RegexStr));
-    string SubClsStr = vformat(R"(({0}|\({0}\)|({0}[\+\-\:\?])))", make_format_args(__Sub_Class_Full_RegexStr));
+    string SubClsStr = vformat(R"(({0}|\({0}\)))", make_format_args(__Sub_Class_Full_RegexStr));
     string LClsStr = vformat(R"(({0}|\({0}{1}?\)|({0}CN{0})|(\({0}CN{0}\))|({0}\(CN{0}\))))", make_format_args(__Luminosity_Class_Full_RegexStr,
         __Spectral_Pecularities_RegexStr));
     string PecStr = vformat(R"(({0}?{2}?{1}?(\(({0}|{1}|{0}{1})\))?))", make_format_args(__Spectral_Pecularities_RegexStr,
         __Element_Symbols_RegexStr, __Absorption_Pecularities_RegexStr));
-    ustring FinalRegex = ustring(vformat(R"(^(({0}(C|N)?{1}?(S)?)|({4}{5}?(S)?[\-/]{4}{5}?(S)?)){2}?{3}?$)",
+    ustring FinalRegex = ustring(vformat(R"(^(({0}(C|N)?{1}?(S)?)|({4}{5}?(S)?[\-/]{4}{5}?(S)?)){2}?{3}?(Ksn|pec)?$)",
         make_format_args(SpTyStr, SubClsStr, LClsStr, PecStr,
         __Spectal_Class_RegexStr, __Sub_Class_Dbl_RegexStr)));
     return FinalRegex.ToStdWString();
@@ -198,6 +191,7 @@ const _REGEX_NS wregex StellarClassification::__Element_Symbols_Regex(ustring(__
 
 const _REGEX_NS wregex StellarClassification::__MK_Class_General_Regex(__MK_Class_General_RegexStr);
 const _REGEX_NS wregex StellarClassification::__MK_Class_Ranged_Regex(__MK_Class_Ranged_RegexStr);
+const _REGEX_NS wregex StellarClassification::__MK_Class_Cyanogen_Regex(__MK_Class_Cyanogen_RegexStr);
 const _REGEX_NS wregex StellarClassification::__MK_Class_Full_Regex(__MK_Class_Full_RegexStr);
 const _REGEX_NS wregex StellarClassification::__Subdwarfs_Regex(__Subdwarfs_RegexStr);
 const _REGEX_NS wregex StellarClassification::__Wolf_Rayet_Star_Regex(__Wolf_Rayet_Star_RegexStr);
@@ -311,7 +305,7 @@ void StellarClassification::BindLumType(StelClassFlags *Dst, ustring FullStr, us
     if (Src == "V") {*Dst = StelClassFlags(*Dst | ms);}
     else if (FullStr == "VI")
     {
-        *Dst = StelClassFlags(*Dst | ms);
+        *Dst = StelClassFlags(*Dst | sd);
         UseSubLumClasses = 0;
     }
     else if (Src == "IV") {*Dst = StelClassFlags(*Dst | subg);}
