@@ -261,14 +261,16 @@ extern const TFDHugePressureEOS Beryl_TFD;
 __interface Material
 {
     // Basic properties
-    virtual ustring MaterialName()const = 0;                 // Material Name
-    virtual float64 BaseDensity()const = 0;                  // Base density
-    virtual float64 Density(float64 Pressure)const = 0;      // EOS
-    virtual float64 MeltingCurve(float64 Pressure)const = 0; // Melting cruve
+    virtual ustring MaterialName()const = 0;                            // Material Name
+    virtual float64 BaseDensity()const = 0;                             // Base density
+    virtual float64 Density(float64 P, float64 T)const = 0;             // EOS
+    virtual float64 MeltingCurve(float64 P)const = 0;                   // Melting cruve
     // Thermal properties
-    virtual float64 SpecificHeatCapacity()const = 0;         // Specific heat at constant pressure
-    virtual float64 ThermalExpansion()const = 0;             // CTE
-    virtual float64 ThermalConductivity()const = 0;          // Thermal Conductivity
+    virtual float64 SpecificHeatCapacity()const = 0;                    // Specific heat at constant pressure
+    virtual float64 ThermalExpansion(float64 P, float64 T)const = 0;    // CTE
+    virtual float64 ThermalConductivity(float64 P, float64 T)const = 0; // Thermal Conductivity
+    // Phase properties
+    virtual float64 NextPhase(float64 P) = 0;                           // Next phase of EOS
 };
 
 class Ferrum : public Material
@@ -282,6 +284,11 @@ class Silicate : public Material
 };
 
 class Graphite : public Material
+{
+
+};
+
+class Moissanite : public Material
 {
 
 };

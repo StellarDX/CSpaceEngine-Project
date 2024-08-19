@@ -168,6 +168,8 @@ struct StellarClassification
     static const std::string __WR_Class_RegexStr;
     static const std::string __Carbon_Star_Class_RegexStr;
     static const std::string __White_Dwarf_Class_RegexStr;
+    static const std::string __Metallic_Line_RegexStr;
+    static const std::string __Metallic_Line_Single_RegexStr;
 
     static const std::string __Spectral_Pecularities_RegexStr;
     static const std::string __Element_Symbols_RegexStr;
@@ -189,6 +191,7 @@ struct StellarClassification
     static const _REGEX_NS wregex __MK_Class_Ranged_Regex;
     static const _REGEX_NS wregex __MK_Class_Cyanogen_Regex;
     static const _REGEX_NS wregex __MK_Class_Full_Regex;
+    static const _REGEX_NS wregex __Metallic_Line_Stars_Regex;
     static const _REGEX_NS wregex __Subdwarfs_Regex;
     static const _REGEX_NS wregex __Wolf_Rayet_Star_Regex;
     static const _REGEX_NS wregex __WR_Class_Uncertain_Regex;
@@ -248,7 +251,8 @@ protected:
         MKGeneral,  // Normal method
         MKRanged,   // Ranged type
         MKCyanogen, // CN star
-        MKFull      // Advanced method
+        MKFull,     // Advanced method
+        Metallic    // Am Star
     }LoadType = MKGeneral;
 
     ustring SrcString;
@@ -270,12 +274,15 @@ protected:
     static StellarClassification __MK_Ranged_Classification_Parse(ustring str);
     static StellarClassification __MK_Cyanogen_Classification_Parse(ustring str);
     static StellarClassification __MK_Classification_Bruteforce_Parse(ustring str); // Maybe cause huge delay
+    static StellarClassification __Metallic_Line_Parser(ustring str);
 
 public:
     StellarClassification() {}
-    StellarClassification(ustring);
+    StellarClassification(ustring s) {*this = FromString(s);}
+    operator ustring() {return ToString();}
 
-
+    static StellarClassification FromString(ustring Str, bool DisableMetalLineCheck = 0);
+    ustring ToString();
 };
 
 _OPTICS_END

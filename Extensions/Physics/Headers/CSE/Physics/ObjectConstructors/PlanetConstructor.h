@@ -92,7 +92,7 @@ public:
 class __Hydrostatic_Equilibrium_Object_Constructor
 {
 public:
-    static const uint64 EquationCount = 3;
+    static const uint64 EquationCount = 5;
 
     using ArrayType    = std::vector<float64>;
 
@@ -117,13 +117,18 @@ protected:
 
     ArrayType   _M_RadBoundary;       // Boundaries of layers, values in Meters.
 
+    float64     _M_IsConvection;      // Use Convection temperature function instead of Conduction
+    float64     _M_EndogenousHeating; // Central heat flux in W/m^2
+    float64     _M_HeatGenRate = 0;   // Rate of Heat Generation
+    float64     _M_InitTemprtature;   // Center Temperature
+
     enum Variables
     {
         _Eq_Pressure,
         _Eq_Mass,
         _Eq_InertiaMoment,
-        //_Eq_HeatFlow,
-        //_Eq_Temperature
+        _Eq_HeatFlow,
+        _Eq_Temperature
     };
 
     ODEType _M_DerivativeEquation = // Final Equations
@@ -135,7 +140,12 @@ protected:
     OdeArray _M_Equations;
 
     void __Sort_Compositions(ArrayType Masses, MaterialArr EOSs);
-    float64 __Get_Density(float64 Pressure);
+    float64 __Get_Density(float64 Pressure, float64 Tempertaure);
+    float64 __Get_MeltingCurve(float64 Pressure);
+    float64 __Get_SpecificHeatCapacity();
+    float64 __Get_ThermalExpansion(float64 Pressure, float64 Tempertaure);
+    float64 __Get_ThermalConductivity(float64 Pressure, float64 Tempertaure);
+    float64 __Get_NextPhase(float64 Pressure);
     float64 __Total_Mass() const;
     int __Get_Segment_From_Radius(float64 Rad);
 
@@ -166,13 +176,13 @@ public:
 
     float64 CoreDensity()const;     // Core density
     float64 CorePressure()const;    // Core pressure
-    //float64 CoreTemperature()const; // Core Temperature (TODO)
+    float64 CoreTemperature()const; // Core Temperature (TODO)
 
     float64 Mass(float64 Radius);          // Mass function
     float64 Density(float64 Radius);       // Density function
     float64 Pressure(float64 Radius);      // Pressure function
     float64 InertiaMoment(float64 Radius); // Moment of inertia function
-    //float64 Temperature(float64 Radius);   // Temperature function (TODO)
+    float64 Temperature(float64 Radius);   // Temperature function (TODO)
 
     Object ToObject()const; // Export data as an object.
 

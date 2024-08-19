@@ -1056,6 +1056,27 @@ StellarClassification StellarClassification::__MK_Classification_Bruteforce_Pars
     return Classification;
 }
 
+StellarClassification StellarClassification::__Metallic_Line_Parser(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = Metallic;
+    Classification.SrcString = str;
 
+    enum RegPosition
+    {
+        FullString = 0,
+        MainType   = 1,
+        LineTypes  = 48,
+        FinalLine  = 90
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Metallic_Line_Stars_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    return Classification;
+}
 
 _OPTICS_END _CSE_END

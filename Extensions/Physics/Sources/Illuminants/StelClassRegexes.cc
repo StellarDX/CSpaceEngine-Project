@@ -90,6 +90,13 @@ const string StellarClassification::__Luminosity_Class_Full_RegexStr = vformat(R
 const string StellarClassification::__WR_Class_RegexStr = R"((R|N|C|NC|N/C|O))";
 const string StellarClassification::__Carbon_Star_Class_RegexStr = R"((R|N|H|Hd|J))";
 const string StellarClassification::__White_Dwarf_Class_RegexStr = R"((A|B|O|Q|Z|C|X))";
+const string StellarClassification::__Metallic_Line_RegexStr = R"((k|h|m|g|He))";
+const string StellarClassification::__Metallic_Line_Single_RegexStr = []()->string
+{
+    std::string SingleStr = vformat(R"(({0}{1}?({2}|\({2}\))?))",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr));
+    return vformat(R"((({0}{1})+)?)", make_format_args(__Metallic_Line_RegexStr, SingleStr));
+}();
 
 const string StellarClassification::__Spectral_Pecularities_RegexStr
     = GenerateListMatchRegexString(__Spectral_Pecularities, "");
@@ -137,9 +144,27 @@ const wstring StellarClassification::__MK_Class_Full_RegexStr = []()->wstring
     return FinalRegex.ToStdWString();
 }();
 
+const wstring StellarClassification::__Metallic_Line_Stars_RegexStr = []()->wstring
+{
+    std::string FirstTerm = vformat(R"(({0}({1}|\({1}\))?{2}?{3}?{4}?{5}?))",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr,
+        __Spectral_Pecularities_RegexStr, __Absorption_Pecularities_RegexStr, __Element_Symbols_RegexStr));
+    std::string SingleStr = vformat(R"(({0}{1}?({2}|\({2}\))?))",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr));
+    std::string RangedStr = vformat(R"(({0}({1}|\({1}\))?[\-/]{0}({1}|\({1}\))?{2}?))",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr));
+    std::string TripleStr = vformat(R"(({0}{1}?\-{0}{1}?\/{0}{1}?))",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr));
+    ustring FinalRegex = ustring(vformat(R"(^({0})?{8}({1}({2}|{3}|{4}))({5}|\({5}\))?{6}?({7}|\({7}\))?$)",
+        make_format_args(FirstTerm, __Metallic_Line_RegexStr, SingleStr, RangedStr, TripleStr,
+        __Spectral_Pecularities_RegexStr, __Absorption_Pecularities_RegexStr,
+        __Element_Symbols_RegexStr, __Metallic_Line_Single_RegexStr)));
+    return FinalRegex.ToStdWString();
+}();
+
 const wstring StellarClassification::__Subdwarfs_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^([eu]?sd:?){0}{1}?{2}?$)",
+    ustring FinalRegex = ustring(vformat(R"(^([eu]?sd)(:)?{0}{1}?{2}?$)",
         make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
@@ -193,6 +218,7 @@ const _REGEX_NS wregex StellarClassification::__MK_Class_General_Regex(__MK_Clas
 const _REGEX_NS wregex StellarClassification::__MK_Class_Ranged_Regex(__MK_Class_Ranged_RegexStr);
 const _REGEX_NS wregex StellarClassification::__MK_Class_Cyanogen_Regex(__MK_Class_Cyanogen_RegexStr);
 const _REGEX_NS wregex StellarClassification::__MK_Class_Full_Regex(__MK_Class_Full_RegexStr);
+const _REGEX_NS wregex StellarClassification::__Metallic_Line_Stars_Regex(__Metallic_Line_Stars_RegexStr);
 const _REGEX_NS wregex StellarClassification::__Subdwarfs_Regex(__Subdwarfs_RegexStr);
 const _REGEX_NS wregex StellarClassification::__Wolf_Rayet_Star_Regex(__Wolf_Rayet_Star_RegexStr);
 const _REGEX_NS wregex StellarClassification::__WR_Class_Uncertain_Regex(__WR_Class_Uncertain_RegexStr);

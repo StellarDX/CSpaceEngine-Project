@@ -52,9 +52,34 @@ void __Hydrostatic_Equilibrium_Object_Constructor::
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::
-    __Get_Density(float64 Pressure)
+    __Get_Density(float64 Pressure, float64 Tempertaure)
 {
-    return _M_Interior[_M_Index]->Density(Pressure);
+    return _M_Interior[_M_Index]->Density(Pressure, Tempertaure);
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_MeltingCurve(float64 Pressure)
+{
+    return _M_Interior[_M_Index]->MeltingCurve(Pressure);
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_SpecificHeatCapacity()
+{
+    return _M_Interior[_M_Index]->SpecificHeatCapacity();
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_ThermalExpansion(float64 Pressure, float64 Tempertaure)
+{
+    return _M_Interior[_M_Index]->ThermalExpansion(Pressure, Tempertaure);
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_ThermalConductivity(float64 Pressure, float64 Tempertaure)
+{
+    return _M_Interior[_M_Index]->ThermalConductivity(Pressure, Tempertaure);
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_NextPhase(float64 Pressure)
+{
+    return _M_Interior[_M_Index]->NextPhase(Pressure);
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::__Total_Mass()const
@@ -105,7 +130,7 @@ fvec<_NHEOC_EQCOUNT> __Hydrostatic_Equilibrium_Object_Constructor::
     if (isnan(Gravity)) {Gravity = 0;}
 
     // Pick density from Equation of state.
-    float64 CurrentDensity = __Get_Density(Variables[_Eq_Pressure]);
+    float64 CurrentDensity = __Get_Density(Variables[_Eq_Pressure], Variables[_Eq_Temperature]);
 
     // if enabled Relativity, calculate it.
     float64 RelativisticScale = 1.;
@@ -118,14 +143,31 @@ fvec<_NHEOC_EQCOUNT> __Hydrostatic_Equilibrium_Object_Constructor::
         if (isinf(RelativisticScale) || isnan(RelativisticScale)) {RelativisticScale = 1.;}
     }
 
+    // Calculate temperature
+    float64 DTemperature;
+    if (_M_IsConvection)
+    {
+        DTemperature = -__Get_ThermalExpansion(Variables[_Eq_Pressure], Variables[_Eq_Temperature]) *
+            Gravity * Variables[_Eq_Temperature] / __Get_SpecificHeatCapacity();
+    }
+    else
+    {
+        DTemperature = -Variables[_Eq_HeatFlow] /
+            __Get_ThermalConductivity(Variables[_Eq_Pressure], Variables[_Eq_Temperature]);
+    }
+
     return fvec<_NHEOC_EQCOUNT>
     {
         // The Hydrostatic equilibrium
         -Gravity * CurrentDensity * RelativisticScale,
         // Mass of a spherical shell
-        4. * CSE_PI * Radius2 * CurrentDensity,
+        float64(4. * CSE_PI * Radius2 * CurrentDensity),
         // Moment of inertia
-        (8. / 3.) * CSE_PI * (Radius2 * Radius2) * CurrentDensity,
+        float64((8. / 3.) * CSE_PI * (Radius2 * Radius2) * CurrentDensity),
+        // Heat flux
+        CurrentDensity * _M_HeatGenRate - 2. * (Variables[_Eq_HeatFlow] / Radius),
+        // Temperature
+        DTemperature
     };
 }
 
@@ -162,12 +204,17 @@ __Hydrostatic_Equilibrium_Object_Constructor::InteriorType
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::CoreDensity() const
 {
-    return _M_Interior[0]->Density(CorePressure());
+    return _M_Interior[0]->Density(CorePressure(), CoreTemperature());
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::CorePressure() const
 {
     return _M_InitPressure;
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::CoreTemperature() const
+{
+    return _M_InitTemprtature;
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::Mass(float64 Radius)
@@ -181,7 +228,7 @@ float64 __Hydrostatic_Equilibrium_Object_Constructor::Density(float64 Radius)
 {
     int Segment = __Get_Segment_From_Radius(Radius);
     if (Segment < 0) {throw std::logic_error("Radius out of range");}
-    return _M_Interior[Segment]->Density(Pressure(Radius));
+    return _M_Interior[Segment]->Density(Pressure(Radius), Temperature(Radius));
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::Pressure(float64 Radius)
@@ -196,6 +243,13 @@ float64 __Hydrostatic_Equilibrium_Object_Constructor::InertiaMoment(float64 Radi
     int Segment = __Get_Segment_From_Radius(Radius);
     if (Segment < 0) {throw std::logic_error("Radius out of range");}
     return _M_Equations[Segment](Radius)[_Eq_InertiaMoment];
+}
+
+float64 __Hydrostatic_Equilibrium_Object_Constructor::Temperature(float64 Radius)
+{
+    int Segment = __Get_Segment_From_Radius(Radius);
+    if (Segment < 0) {throw std::logic_error("Radius out of range");}
+    return _M_Equations[Segment](Radius)[_Eq_Temperature];
 }
 
 Object __Hydrostatic_Equilibrium_Object_Constructor::ToObject() const
@@ -213,7 +267,9 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
 {
     float64 RealError = pow(10, -_M_NLogError);
     float64 InitRadius = 0;
-    fvec<_NHEOC_EQCOUNT> InitState = {_M_InitPressure, 0, 0};
+    float64 PreviousPhase = __Get_NextPhase(_M_InitPressure);
+    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemprtature ? 1 : 0;
+    fvec<_NHEOC_EQCOUNT> InitState({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemprtature});
     _M_RadBoundary.push_back(0);
 
     for (int i = 0; i < _M_Layers.size(); ++i)
@@ -230,6 +286,8 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
             _M_Equations[i].SaveDenseOutput();
             auto CurrentState = _M_Equations[i].GetCurrentState();
             float64 TotalMass = __Total_Mass();
+            float64 MeltingCruveValue = __Get_MeltingCurve(CurrentState.second[_Eq_Pressure]);
+            float64 CurrentPhase = __Get_NextPhase(CurrentState.second[_Eq_Pressure]);
             if (CurrentState.second[_Eq_Mass] > TotalMass)
             {
                 auto CurrentBlk = _M_Equations[i].GetCurrentBlock();
@@ -246,6 +304,7 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
                     InitRadius = _M_TargetRadius;
                     InitState = _M_Equations[i](_M_TargetRadius);
                     _M_RadBoundary.push_back(_M_TargetRadius);
+                    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemprtature ? 1 : 0;
                     break;
                 }
                 else
@@ -263,7 +322,7 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
                             _M_Equations[j].Clear();
                         }
                         InitRadius = 0;
-                        InitState = {_M_InitPressure, 0, 0};
+                        InitState = fvec<_NHEOC_EQCOUNT>({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemprtature});
                         i = -1;
                         break;
                     }
@@ -276,6 +335,54 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
                     _M_RadBoundary.push_back(_M_TargetRadius);
                     break;
                 }
+            }
+            else if (!_M_IsConvection && MeltingCruveValue < CurrentState.second[_Eq_Temperature])
+            {
+                auto CurrentBlk = _M_Equations[i].GetCurrentBlock();
+                BisectionSearcher TemperatureSearcher = [this, i](float64 Radius)
+                {
+                    return _M_Equations[i](Radius)[_Eq_Temperature];
+                };
+                _M_TargetRadius = TemperatureSearcher(MeltingCruveValue,
+                    CurrentBlk.second.first(), CurrentBlk.second.last());
+
+                _M_IsConvection = true;
+                InitRadius = _M_TargetRadius;
+                InitState = _M_Equations[i](_M_TargetRadius);
+                _M_RadBoundary.push_back(_M_TargetRadius);
+                break;
+            }
+            else if (_M_IsConvection && MeltingCruveValue > CurrentState.second[_Eq_Temperature])
+            {
+                auto CurrentBlk = _M_Equations[i].GetCurrentBlock();
+                BisectionSearcher TemperatureSearcher = [this, i](float64 Radius)
+                {
+                    return _M_Equations[i](Radius)[_Eq_Temperature];
+                };
+                _M_TargetRadius = TemperatureSearcher(MeltingCruveValue,
+                    CurrentBlk.second.first(), CurrentBlk.second.last());
+
+                _M_IsConvection = false;
+                InitRadius = _M_TargetRadius;
+                InitState = _M_Equations[i](_M_TargetRadius);
+                _M_RadBoundary.push_back(_M_TargetRadius);
+                break;
+            }
+            else if (PreviousPhase != CurrentPhase)
+            {
+                auto CurrentBlk = _M_Equations[i].GetCurrentBlock();
+                BisectionSearcher PhaseSearcher = [this, i](float64 Radius)
+                {
+                    return _M_Equations[i](Radius)[_Eq_Pressure];
+                };
+                _M_TargetRadius = PhaseSearcher(MeltingCruveValue,
+                    CurrentBlk.second.first(), CurrentBlk.second.last());
+
+                // EOS will transfer to next phase automatically.
+                InitRadius = _M_TargetRadius;
+                InitState = _M_Equations[i](_M_TargetRadius);
+                _M_RadBoundary.push_back(_M_TargetRadius);
+                break;
             }
         }
     }
