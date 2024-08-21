@@ -293,6 +293,8 @@ protected:
     static StellarClassification __Carbon_Star_2D_Parse(ustring str);
     static StellarClassification __White_Dwarf_Parse(ustring str);
 
+    friend bool operator|(StellarClassification Spec, StelClassFlags Flag);
+
 public:
     StellarClassification() {}
     StellarClassification(ustring s) {*this = FromString(s);}
@@ -300,6 +302,36 @@ public:
 
     static StellarClassification FromString(ustring Str, bool DisableMetalLineCheck = 0);
     ustring ToString();
+
+    StelClassFlags MaxType();
+
+    // Literals
+    friend bool IsGiant(StellarClassification _Spec); // III, II, I, 0
+    friend bool IsNormalGiant(StellarClassification _Spec); // III
+    friend bool IsBrightGiant(StellarClassification _Spec); // II
+    friend bool IsSuperGiant(StellarClassification _Spec); // I
+    friend bool IsHyperGiant(StellarClassification _Spec); // 0
+    friend bool IsSubGiant(StellarClassification _Spec); // IV
+    friend bool IsMainSequence(StellarClassification _Spec); // V
+    friend bool IsSubDwarf(StellarClassification _Spec); // VI
+    friend bool IsOType(StellarClassification _Spec); // O
+    friend bool IsBType(StellarClassification _Spec); // B
+    friend bool IsAType(StellarClassification _Spec); // A
+    friend bool IsFType(StellarClassification _Spec); // F
+    friend bool IsGType(StellarClassification _Spec); // G
+    friend bool IsKType(StellarClassification _Spec); // K
+    friend bool IsMType(StellarClassification _Spec); // M
+    friend bool IsWolfRayet(StellarClassification _Spec); // WR
+    friend bool IsBrownDwarf(StellarClassification _Spec); // L, T, Y
+    friend bool IsLType(StellarClassification _Spec); // L
+    friend bool IsTType(StellarClassification _Spec); // T
+    friend bool IsYType(StellarClassification _Spec); // Y
+    friend bool IsCarbonStar(StellarClassification _Spec); // C
+    friend bool IsSTypeStar(StellarClassification _Spec); // S
+    friend bool IsWhiteDwarf(StellarClassification _Spec);
+    friend bool IsNeutronStar(StellarClassification _Spec);
+    friend bool IsBlackHole(StellarClassification _Spec);
+    friend bool IsStarRemnant(StellarClassification _Spec);
 };
 
 _OPTICS_END

@@ -156,4 +156,173 @@ StellarClassification StellarClassification::FromString(ustring Str, bool Disabl
     throw logic_error("Parse spectral type failed, is it invalid?");
 }
 
+ustring StellarClassification::ToString()
+{
+    if (!SrcString.empty()) {return SrcString;}
+    // TODO
+}
+
+StellarClassification::StelClassFlags StellarClassification::MaxType()
+{
+    StelClassFlags MaxTy = StelClassFlags(0b1111);
+    for (int i = 0; i < 3 && Data[i].SpClsState != StellarClassificationDataType::Null; ++i)
+    {
+        MaxTy = StelClassFlags(min(uint64(MaxTy), Data[i].SpecClass[0] & TyMask));
+        if (Data[i].SpClsState == StellarClassification::StellarClassificationDataType::Range)
+        {
+             MaxTy = StelClassFlags(min(uint64(MaxTy), Data[i].SpecClass[1] & TyMask));
+        }
+    }
+    if (!MaxTy) {return StelClassFlags(0b1111);}
+    return MaxTy;
+}
+
+// ------------------------------Literals------------------------------ //
+
+bool operator|(StellarClassification Spec, StellarClassification::StelClassFlags Flag)
+{
+    bool OK = 0;
+    for (int i = 0; i < 3 && Spec.Data[i].SpClsState != StellarClassification::StellarClassificationDataType::Null; ++i)
+    {
+        if (Spec.Data[i].SpecClass[0] | Flag) {OK = 1;}
+        if (Spec.Data[i].SpClsState == StellarClassification::StellarClassificationDataType::Range
+            && (Spec.Data[i].SpecClass[1] | Flag))
+        {
+            OK = 1;
+        }
+    }
+    return OK;
+}
+
+bool IsGiant(StellarClassification _Spec)
+{
+    return IsNormalGiant(_Spec) || IsBrightGiant(_Spec) || IsSuperGiant(_Spec) || IsHyperGiant(_Spec);
+}
+
+bool IsNormalGiant(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::g;
+}
+
+bool IsBrightGiant(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::bg;
+}
+
+bool IsSuperGiant(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::sg;
+}
+
+bool IsHyperGiant(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::hg;
+}
+
+bool IsSubGiant(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::subg;
+}
+
+bool IsMainSequence(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::ms;
+}
+
+bool IsSubDwarf(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::sd;
+}
+
+bool IsOType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::O;
+}
+
+bool IsBType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::B;
+}
+
+bool IsAType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::A;
+}
+
+bool IsFType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::F;
+}
+
+bool IsGType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::G;
+}
+
+bool IsKType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::K;
+}
+
+bool IsMType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::M;
+}
+
+bool IsWolfRayet(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::WR;
+}
+
+bool IsBrownDwarf(StellarClassification _Spec)
+{
+    return (_Spec.MaxType() != 0b1111) && (_Spec.MaxType() | 0b1000);
+}
+
+bool IsLType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::L;
+}
+
+bool IsTType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::T;
+}
+
+bool IsYType(StellarClassification _Spec)
+{
+    return _Spec.MaxType() == StellarClassification::Y;
+}
+
+bool IsCarbonStar(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::C;
+}
+
+bool IsSTypeStar(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::S;
+}
+
+bool IsWhiteDwarf(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::WD;
+}
+
+bool IsNeutronStar(StellarClassification _Spec)
+{
+    return _Spec | StellarClassification::NS;
+}
+
+bool IsBlackHole(StellarClassification _Spec)
+{
+    return _Spec.Data[0].SpClsState == StellarClassification::StellarClassificationDataType::Single
+           && !_Spec.Data[0].SpecClass[0];
+}
+
+bool IsStarRemnant(StellarClassification _Spec)
+{
+    return IsWhiteDwarf(_Spec) || IsNeutronStar(_Spec) || IsBlackHole(_Spec);
+}
+
 _OPTICS_END _CSE_END

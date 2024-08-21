@@ -1659,7 +1659,7 @@ StellarClassification StellarClassification::__White_Dwarf_Parse(ustring str)
     }
     else
     {
-        for (auto i : Match[WDTypes])
+        for (auto i : Match[WDTypes].str())
         {
             switch (i)
             {
