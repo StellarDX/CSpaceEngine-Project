@@ -24,14 +24,14 @@ _EOS_BEGIN
 
 ///////////////////////////////////VINET///////////////////////////////////
 
-float64 __Rose_Vinet_EOS_Template::Pressure(float64 Density)
+float64 __Rose_Vinet_EOS_Template::Pressure(float64 Density)const
 {
     float64 Eta = Density / _Rho0;
     return 3. * _K0 * cbrt(Eta * Eta) * (1. - (1. / cbrt(Eta))) *
            exp(1.5 * (_K1 - 1.) * (1. - (1. / cbrt(Eta))));
 }
 
-float64 __Rose_Vinet_EOS_Template::dPressure(float64 Density) // derivate function
+float64 __Rose_Vinet_EOS_Template::dPressure(float64 Density)const // derivate function
 {
     float64 Eta = Density / _Rho0;
     return ((((_K0 * _Rho0) * cbrt(Eta * Eta)) * yroot(Eta, -3)) *
@@ -44,7 +44,7 @@ float64 __Rose_Vinet_EOS_Template::dPressure(float64 Density) // derivate functi
         ((_Rho0 * Density))); // Expression is too long to display...
 }
 
-float64 __Rose_Vinet_EOS_Template::operator()(float64 _Pressure)
+float64 __Rose_Vinet_EOS_Template::operator()(float64 _Pressure) const
 {
     NewtonIterator It([this](float64 Rho){return Pressure(Rho);},
         [this](float64 Rho){return dPressure(Rho);});
@@ -55,7 +55,7 @@ float64 __Rose_Vinet_EOS_Template::operator()(float64 _Pressure)
 
 ///////////////////////////////////BME///////////////////////////////////
 
-float64 __Birch_Murnaghan_Isothermal_EOS_Template::Pressure(float64 Density)
+float64 __Birch_Murnaghan_Isothermal_EOS_Template::Pressure(float64 Density)const
 {
     float64 Eta = Density / _Rho0;
     float64 Eta2 = Eta * Eta;
@@ -64,7 +64,7 @@ float64 __Birch_Murnaghan_Isothermal_EOS_Template::Pressure(float64 Density)
     return 1.5 * _K0 * (cbrt(Eta7) - cbrt(Eta5)) * (1. + 0.75 * (_K1 - 4.) * (cbrt(Eta2) - 1.));
 }
 
-float64 __Birch_Murnaghan_Isothermal_EOS_Template::dPressure(float64 Density)
+float64 __Birch_Murnaghan_Isothermal_EOS_Template::dPressure(float64 Density)const
 {
     float64 Eta = Density / _Rho0;
     float64 Eta2 = Eta * Eta;
@@ -76,7 +76,7 @@ float64 __Birch_Murnaghan_Isothermal_EOS_Template::dPressure(float64 Density)
         ((-cbrt(Eta5)) + cbrt(Eta7)) / Density);
 }
 
-float64 __Birch_Murnaghan_Isothermal_EOS_Template::operator()(float64 _Pressure)
+float64 __Birch_Murnaghan_Isothermal_EOS_Template::operator()(float64 _Pressure)const
 {
     NewtonIterator It([this](float64 Rho){return Pressure(Rho);},
         [this](float64 Rho){return dPressure(Rho);});
@@ -95,7 +95,7 @@ const float64 __TFD_GAMMA_TABLE[] =
     -1.384E-2, -6.520E-1, +3.529E+0, -2.095E+1, +2.264E+1
 };
 
-float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::__Density(float64 Pressure)
+float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::__Density(float64 Pressure)const
 {
     float64 eps = cbrt(3. / (32. * pow(CSE_PI, 2) * pow(NProton, 2)));
     float64 phi = cbrt(3.) / 20. + eps / 4.;
@@ -118,14 +118,14 @@ float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::__Density(float64 Pressure)
     return 3.886 * (AtomicWeight * NProton) / pow(x0ksi, 3);
 }
 
-float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::operator()(float64 Pressure)
+float64 __Thomas_Fermi_Dirac_Huge_Pressure_Model::operator()(float64 Pressure)const
 {
     return 1000. * __Density(Pressure * 10.);
 }
 
 ///////////////////////////////////EXP///////////////////////////////////
 
-float64 __Exponential_Fit_EOS_Template::operator()(float64 Pressure)
+float64 __Exponential_Fit_EOS_Template::operator()(float64 Pressure)const
 {
     return _Rho0 + _Cx0 * pow(Pressure, _Power);
 }

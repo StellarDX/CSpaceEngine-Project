@@ -72,6 +72,87 @@ StellarClassification StellarClassification::FromString(ustring Str, bool Disabl
         }
     }
 
+    if (Str.substr(0, 2) == L"sd" || Str.substr(1, 2) == L"sd")
+    {
+        return __Parse_Spec_String(Str,
+        {
+            __Subdwarf_Parse
+        });
+    }
+
+    if (Str[0] == 'W')
+    {
+        if (Str[1] == 'D')
+        {
+            return __Parse_Spec_String(Str,
+            {
+                __White_Dwarf_Parse
+            });
+        }
+        return __Parse_Spec_String(Str,
+        {
+            __Wolf_Rayet_Parse
+        });
+    }
+
+    if (Str[0] == '[')
+    {
+        if (Str[0] == 'W')
+        {
+            return __Parse_Spec_String(Str,
+            {
+                __Wolf_Rayet_Parse
+            });
+        }
+    }
+
+    if (Str[0] == 'C')
+    {
+        return __Parse_Spec_String(Str,
+        {
+            __Carbon_Star_1D_Parse,
+            __Carbon_Star_2D_Parse
+        });
+    }
+
+    if (Str[0] == 'R' || Str[0] == 'S' || Str[0] == 'N')
+    {
+        return __Parse_Spec_String(Str,
+        {
+            __Carbon_Star_2D_Parse
+        });
+    }
+
+    if (Str[0] == 'D')
+    {
+        return __Parse_Spec_String(Str,
+        {
+            __White_Dwarf_Parse
+        });
+    }
+
+    if (Str == "Q" || Str == "Neutron" || Str == "Pulsar")
+    {
+        StellarClassification Classification;
+        Classification.Data[0].SpecClass[0] = NS;
+        Classification.Data[0].SpClsState = StellarClassificationDataType::Single;
+        Classification.Data[0].SubClass[0] = 0;
+        Classification.Data[0].SubClass[1] = 0;
+        Classification.Data[0].SubClsState = StellarClassificationDataType::Null;
+        return Classification;
+    }
+
+    if (Str == "X" || Str == "Blackhole")
+    {
+        StellarClassification Classification;
+        Classification.Data[0].SpecClass[0] = BH;
+        Classification.Data[0].SpClsState = StellarClassificationDataType::Single;
+        Classification.Data[0].SubClass[0] = 0;
+        Classification.Data[0].SubClass[1] = 0;
+        Classification.Data[0].SubClsState = StellarClassificationDataType::Null;
+        return Classification;
+    }
+
     throw logic_error("Parse spectral type failed, is it invalid?");
 }
 

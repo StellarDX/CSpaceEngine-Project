@@ -1079,4 +1079,625 @@ StellarClassification StellarClassification::__Metallic_Line_Parser(ustring str)
     return Classification;
 }
 
+StellarClassification StellarClassification::__Subdwarf_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = Subdwarf;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        SubdwarfPrefix,
+        SubdwarfUncertain,
+        SpecClass,
+        CarbonType,
+        FullSubClass,
+        SubClass1,
+        SubCls1IsInt,
+        SubCls1IsFract,
+        SubClsIsUncertain,
+        SubClass2,
+        SubCls2IsInt,
+        SubCls2IsFract,
+        FullLumClass,
+        LumClsType1,
+        LumClass1,
+        LumCls1Main,
+        LumCls1Sub,
+        LumClsMainIsUncertain,
+        LumClass2,
+        LumCls2Main,
+        LumCls2Sub,
+        LumClsType2,
+        LumClass3,
+        LumCls3Sub1,
+        LumCls3Sub2,
+        SpectralPecularities,
+        SpecPecLastElem,
+        AbsorptionPecularities,
+        AbsorpPecLastElem,
+        AbsorpPecCompound,
+        AbsorpPecSign,
+        AbsorpPecSub,
+        AbsorpPecLastInt,
+        AbsorpPecLastFract,
+        AbsorpPecUncertainty,
+        ChemicalPecularities,
+        ChemPecLastElem,
+        ChemPecLastSymbol,
+        ChemPecHasUncertainties
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Subdwarfs_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data);
+
+    if (L"sd" == Match[SubdwarfPrefix].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], sd);
+    }
+    else if (L"esd" == Match[SubdwarfPrefix].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], esd);
+    }
+    else if (L"usd" == Match[SubdwarfPrefix].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], usd);
+    }
+
+    // Bind Spectral type
+    BindSpecType(&Data.SpecClass[0], ustring(Match[SpecClass].str()));
+    Data.SpClsState = StellarClassificationDataType::Single;
+
+    // Bind Carbon type
+    if (__SPEC_REGEX_MATCHED(Match[CarbonType]))
+    {
+        switch (__SPEC_TO_SINGLE_CHAR(Match[CarbonType]))
+        {
+        case 'C':
+            __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], C);
+            break;
+        case 'N':
+            __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], N);
+            break;
+        default:
+            break;
+        }
+    }
+
+    // Bind Sub-type
+    if (__SPEC_REGEX_MATCHED(Match[FullSubClass]))
+    {
+        Data.SubClass[0] = stod(Match[SubClass1]);
+        Data.SubClsState = StellarClassificationDataType::Single;
+
+        if (__SPEC_REGEX_MATCHED(Match[SubClsIsUncertain]))
+        {
+            if (__SPEC_REGEX_MATCHED(Match[SubClass2]))
+            {
+                Data.SubClass[1] = stod(Match[SubClass2]);
+                Data.SubClsState = StellarClassificationDataType::Range;
+            }
+            else
+            {
+                BindUncertainty(&Data.SubClsState, ustring(Match[SubClsIsUncertain]));
+            }
+        }
+    }
+
+    // Bind Luminosity type
+    if (__SPEC_REGEX_MATCHED(Match[FullLumClass]))
+    {
+        auto CurrentSpType = Data.SpecClass[0];
+        if (__SPEC_REGEX_MATCHED(Match[LumClsType1]))
+        {
+            BindLumType(&Data.SpecClass[0], ustring(Match[LumClass1]),
+                ustring(Match[LumCls1Main]), ustring(Match[LumCls1Sub]));
+            if (__SPEC_REGEX_MATCHED(Match[LumClsMainIsUncertain]))
+            {
+                if (__SPEC_REGEX_MATCHED(Match[LumClass2]))
+                {
+                    Data.SpecClass[1] = CurrentSpType;
+                    BindLumType(&Data.SpecClass[1], ustring(Match[LumClass2]),
+                        ustring(Match[LumCls2Main]), ustring(Match[LumCls2Sub]));
+                    Data.SpClsState = StellarClassificationDataType::Range;
+                }
+                else
+                {
+                    BindUncertainty(&Data.SpClsState, ustring(Match[LumClsMainIsUncertain]));
+                }
+            }
+        }
+        else if (__SPEC_REGEX_MATCHED(Match[LumClsType2]))
+        {
+            Data.SpecClass[1] = CurrentSpType;
+            BindLumType(&Data.SpecClass[0], ustring(Match[LumClsType2]),
+                ustring(Match[LumClass3]), ustring(Match[LumCls3Sub1]));
+            BindLumType(&Data.SpecClass[1], ustring(Match[LumClsType2]),
+                ustring(Match[LumClass3]), ustring(Match[LumCls3Sub2]));
+            Data.SpClsState = StellarClassificationDataType::Range;
+        }
+    }
+
+    Classification.Data[0] = Data;
+
+    Classification.SpectralPecularities = ParseSymbols(__Spectral_Pecularities_Regex, Match[SpectralPecularities]);
+    Classification.AbsorptionPecularities = ParseAbsorptionPecularities(ustring(Match[AbsorptionPecularities]));
+    Classification.ChemicalPecularities = ParseChemicallyPecularities(ustring(Match[ChemicalPecularities]));
+
+    return Classification;
+}
+
+StellarClassification StellarClassification::__Wolf_Rayet_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = WolfRayet;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        WRClass,
+        FullSubClass,
+        SubClass1,
+        SubCls1IsInt,
+        SubCls1IsFract,
+        SubClsIsUncertain,
+        SubClass2,
+        SubCls2IsInt,
+        SubCls2IsFract,
+        SpectralPecularities,
+        SpecPecLastElem,
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Wolf_Rayet_Star_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data);
+
+    if (L"R" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WR);
+    }
+    else if (L"N" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WN);
+    }
+    else if (L"C" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WC);
+    }
+    else if (L"NC" == Match[WRClass].str() || L"N/C" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WNC);
+    }
+    else if (L"O" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WO);
+    }
+    Data.SpClsState = StellarClassificationDataType::Range;
+
+    if (__SPEC_REGEX_MATCHED(Match[FullSubClass]))
+    {
+        Data.SubClass[0] = stod(Match[SubClass1]);
+        Data.SubClsState = StellarClassificationDataType::Single;
+
+        if (__SPEC_REGEX_MATCHED(Match[SubClsIsUncertain]))
+        {
+            if (__SPEC_REGEX_MATCHED(Match[SubClass2]))
+            {
+                Data.SubClass[1] = stod(Match[SubClass2]);
+                Data.SubClsState = StellarClassificationDataType::Range;
+            }
+            else
+            {
+                BindUncertainty(&Data.SubClsState, ustring(Match[SubClsIsUncertain]));
+            }
+        }
+    }
+
+    Classification.Data[0] = Data;
+
+    Classification.SpectralPecularities = ParseSymbols(__WR_Spectral_Pecularities_Regex, Match[SpectralPecularities]);
+
+    return Classification;
+}
+
+StellarClassification StellarClassification::__WR_Class_Uncertain_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = WolfRayet;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        WRClass,
+        FullSubClass,
+        SubClass1,
+        SubCls1IsInt,
+        SubCls1IsFract,
+        SubClsIsUncertain,
+        SubClass2,
+        SubCls2IsInt,
+        SubCls2IsFract
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Wolf_Rayet_Star_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data);
+
+    if (L"R" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WR);
+    }
+    else if (L"N" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WN);
+    }
+    else if (L"C" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WC);
+    }
+    else if (L"NC" == Match[WRClass].str() || L"N/C" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WNC);
+    }
+    else if (L"O" == Match[WRClass].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WO);
+    }
+    Data.SpClsState = StellarClassificationDataType::Range;
+
+    if (__SPEC_REGEX_MATCHED(Match[FullSubClass]))
+    {
+        Data.SubClass[0] = stod(Match[SubClass1]);
+        Data.SubClsState = StellarClassificationDataType::Single;
+
+        if (__SPEC_REGEX_MATCHED(Match[SubClsIsUncertain]))
+        {
+            if (__SPEC_REGEX_MATCHED(Match[SubClass2]))
+            {
+                Data.SubClass[1] = stod(Match[SubClass2]);
+                Data.SubClsState = StellarClassificationDataType::Range;
+            }
+            else
+            {
+                BindUncertainty(&Data.SubClsState, ustring(Match[SubClsIsUncertain]));
+            }
+        }
+    }
+
+    Classification.Data[0] = Data;
+
+    return Classification;
+}
+
+StellarClassification StellarClassification::__Carbon_Star_1D_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = Carbon1D;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        CTypeFullString,
+        CarbonType,
+        CTypeUncertain,
+        FullSubClass,
+        SubClass1,
+        SubCls1IsInt,
+        SubCls1IsFract,
+        FullLumClass,
+        LumClsType1,
+        LumClass1,
+        LumCls1Main,
+        LumCls1Sub,
+        LumClsMainIsUncertain,
+        LumClass2,
+        LumCls2Main,
+        LumCls2Sub,
+        LumClsType2,
+        LumClass3,
+        LumCls3Sub1,
+        LumCls3Sub2,
+        SpectralPecularities,
+        SpecPecLastElem
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Carbon_Star_1D_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data);
+
+    if (L"R" == Match[CarbonType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], C);
+    }
+    else if (L"N" == Match[CarbonType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], N);
+    }
+    else if (L"J" == Match[CarbonType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], CJ);
+    }
+    else if (L"H" == Match[CarbonType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], CH);
+    }
+    else if (L"Hd" == Match[CarbonType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], CHd);
+    }
+    Data.SpClsState = StellarClassificationDataType::Range;
+
+    if (__SPEC_REGEX_MATCHED(Match[FullSubClass]))
+    {
+        Data.SubClass[0] = stod(Match[SubClass1]);
+        Data.SubClsState = StellarClassificationDataType::Single;
+    }
+
+    if (__SPEC_REGEX_MATCHED(Match[FullLumClass]))
+    {
+        auto CurrentSpType = Data.SpecClass[0];
+        if (__SPEC_REGEX_MATCHED(Match[LumClsType1]))
+        {
+            BindLumType(&Data.SpecClass[0], ustring(Match[LumClass1]),
+                ustring(Match[LumCls1Main]), ustring(Match[LumCls1Sub]));
+            if (__SPEC_REGEX_MATCHED(Match[LumClsMainIsUncertain]))
+            {
+                if (__SPEC_REGEX_MATCHED(Match[LumClass2]))
+                {
+                    Data.SpecClass[1] = CurrentSpType;
+                    BindLumType(&Data.SpecClass[1], ustring(Match[LumClass2]),
+                        ustring(Match[LumCls2Main]), ustring(Match[LumCls2Sub]));
+                    Data.SpClsState = StellarClassificationDataType::Range;
+                }
+                else
+                {
+                    BindUncertainty(&Data.SpClsState, ustring(Match[LumClsMainIsUncertain]));
+                }
+            }
+        }
+        else if (__SPEC_REGEX_MATCHED(Match[LumClsType2]))
+        {
+            Data.SpecClass[1] = CurrentSpType;
+            BindLumType(&Data.SpecClass[0], ustring(Match[LumClsType2]),
+                ustring(Match[LumClass3]), ustring(Match[LumCls3Sub1]));
+            BindLumType(&Data.SpecClass[1], ustring(Match[LumClsType2]),
+                ustring(Match[LumClass3]), ustring(Match[LumCls3Sub2]));
+            Data.SpClsState = StellarClassificationDataType::Range;
+        }
+    }
+
+    Classification.Data[0] = Data;
+
+    Classification.SpectralPecularities = ParseSymbols(__WR_Spectral_Pecularities_Regex, Match[SpectralPecularities]);
+
+    return Classification;
+}
+
+StellarClassification StellarClassification::__Carbon_Star_2D_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = Carbon2D;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        MainType,
+        FullSubType,
+        SingleSubClass1,
+        SingleSubCls1IsInt,
+        SingleSubCls1IsFract,
+        BinarySubClass,
+        BinarySubCls1FullStr,
+        BinarySubClass1,
+        BinarySubCls1IsInt,
+        BinarySubCls1IsFract,
+        BinarySubCls1Uncertain,
+        BinarySubCls2FullStr,
+        BinarySubClass2,
+        BinarySubCls2IsInt,
+        BinarySubCls2IsFract,
+        BinarySubCls2Uncertain,
+        QuadrupleSubClass,
+        QuadrupleSubClassP1,
+        QuadrupleSubClass1,
+        QuadrupleSubCls1IsInt,
+        QuadrupleSubCls1IsFract,
+        QuadrupleSubCls1Uncertain,
+        QuadrupleSubClass2,
+        QuadrupleSubCls2IsInt,
+        QuadrupleSubCls2IsFract,
+        QuadrupleSubClassP2Full,
+        QuadrupleSubClassP2,
+        QuadrupleSubClass3,
+        QuadrupleSubCls3IsInt,
+        QuadrupleSubCls3IsFract,
+        QuadrupleSubCls3Uncertain,
+        QuadrupleSubClass4,
+        QuadrupleSubCls4IsInt,
+        QuadrupleSubCls4IsFract,
+        SpectralPecularities,
+        SpecPecLastElem,
+        AbsorptionPecularities,
+        AbsorpPecLastElem,
+        AbsorpPecCompound,
+        AbsorpPecSign,
+        AbsorpPecSub,
+        AbsorpPecLastInt,
+        AbsorpPecLastFract,
+        AbsorpPecUncertainty,
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __Supplementary_Class_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data1);
+    __CREATE_EMPTY_SPEC_DATA(Data2);
+
+    if (L"C" == Match[MainType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data1.SpecClass[0], C);
+    }
+    else if (L"SC" == Match[MainType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data1.SpecClass[0], SC);
+    }
+    else if (L"S" == Match[MainType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data1.SpecClass[0], S);
+    }
+    else if (L"R" == Match[MainType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data1.SpecClass[0], C);
+    }
+    else if (L"N" == Match[MainType].str())
+    {
+        __SPEC_BIND_ENUM_DATA(Data1.SpecClass[0], N);
+    }
+    Data1.SpClsState = StellarClassificationDataType::Range;
+
+    if (__SPEC_REGEX_MATCHED(Match[SingleSubClass1]))
+    {
+        Data1.SubClass[0] = stod(Match[SingleSubClass1]);
+        Data1.SubClsState = StellarClassificationDataType::Single;
+    }
+    else if (__SPEC_REGEX_MATCHED(Match[BinarySubClass]))
+    {
+        Data1.SubClass[0] = stod(Match[BinarySubClass1]);
+        Data1.SubClsState = StellarClassificationDataType::Single;
+
+        Data1.SubClass[1] = stod(Match[BinarySubClass2]);
+        Data1.SubClsState = StellarClassificationDataType::Range;
+    }
+    else if (__SPEC_REGEX_MATCHED(Match[QuadrupleSubClass]))
+    {
+        Data2 = Data1;
+        Data1.SubClass[0] = stod(Match[QuadrupleSubClass1]);
+        Data1.SubClsState = StellarClassificationDataType::Single;
+
+        if (__SPEC_REGEX_MATCHED(Match[QuadrupleSubCls1Uncertain]))
+        {
+            Data1.SubClass[1] = stod(Match[QuadrupleSubClass2]);
+            Data1.SubClsState = StellarClassificationDataType::Range;
+        }
+
+        Data2.SubClass[0] = stod(Match[QuadrupleSubClass3]);
+        Data2.SubClsState = StellarClassificationDataType::Single;
+
+        if (__SPEC_REGEX_MATCHED(Match[QuadrupleSubCls3Uncertain]))
+        {
+            Data2.SubClass[1] = stod(Match[QuadrupleSubClass4]);
+            Data2.SubClsState = StellarClassificationDataType::Range;
+        }
+    }
+
+    Classification.Data[0] = Data1;
+    if (__SPEC_REGEX_MATCHED(Match[QuadrupleSubClass]))
+    {
+        Classification.Data[1] = Data2;
+    }
+
+    Classification.SpectralPecularities = ParseSymbols(__Spectral_Pecularities_Regex, Match[SpectralPecularities]);
+    Classification.AbsorptionPecularities = ParseAbsorptionPecularities(ustring(Match[AbsorptionPecularities]));
+
+    return Classification;
+}
+
+StellarClassification StellarClassification::__White_Dwarf_Parse(ustring str)
+{
+    StellarClassification Classification;
+    Classification.LoadType = WhiteDwarf;
+    Classification.SrcString = str;
+
+    enum RegPosition
+    {
+        FullString,
+        WDOnly,
+        WDDetails,
+        WDTypes,
+        WDTypeLastItem,
+        WDSubClass,
+        WDSubClsIsInt,
+        WDSubClsIsFract
+    };
+
+    _REGEX_NS wsmatch Match;
+    if (!_REGEX_NS regex_match(str, Match, __White_Dwarf_Regex))
+    {
+        throw std::logic_error("Not the correct pattern.");
+    }
+
+    __CREATE_EMPTY_SPEC_DATA(Data);
+
+    if (__SPEC_REGEX_MATCHED(Match[WDOnly]))
+    {
+        __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WD);
+    }
+    else
+    {
+        for (auto i : Match[WDTypes])
+        {
+            switch (i)
+            {
+            case 'A':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDA);
+                break;
+            case 'B':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDB);
+                break;
+            case 'O':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDO);
+                break;
+            case 'Q':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDQ);
+                break;
+            case 'Z':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDZ);
+                break;
+            case 'C':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDC);
+                break;
+            case 'X':
+                __SPEC_BIND_ENUM_DATA(Data.SpecClass[0], WDX);
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (__SPEC_REGEX_MATCHED(Match[WDSubClass]))
+        {
+            Data.SubClass[0] = stod(Match[WDSubClass]);
+            Data.SubClsState = StellarClassificationDataType::Single;
+        }
+    }
+
+    Classification.Data[0] = Data;
+    return Classification;
+}
+
 _OPTICS_END _CSE_END

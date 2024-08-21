@@ -62,9 +62,9 @@ float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_MeltingCurve(float64
     return _M_Interior[_M_Index]->MeltingCurve(Pressure);
 }
 
-float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_SpecificHeatCapacity()
+float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_SpecificHeatCapacity(float64 Pressure, float64 Tempertaure)
 {
-    return _M_Interior[_M_Index]->SpecificHeatCapacity();
+    return _M_Interior[_M_Index]->SpecificHeatCapacity(Pressure, Tempertaure);
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::__Get_ThermalExpansion(float64 Pressure, float64 Tempertaure)
@@ -148,7 +148,7 @@ fvec<_NHEOC_EQCOUNT> __Hydrostatic_Equilibrium_Object_Constructor::
     if (_M_IsConvection)
     {
         DTemperature = -__Get_ThermalExpansion(Variables[_Eq_Pressure], Variables[_Eq_Temperature]) *
-            Gravity * Variables[_Eq_Temperature] / __Get_SpecificHeatCapacity();
+            Gravity * Variables[_Eq_Temperature] / __Get_SpecificHeatCapacity(Variables[_Eq_Pressure], Variables[_Eq_Temperature]);
     }
     else
     {
@@ -214,7 +214,7 @@ float64 __Hydrostatic_Equilibrium_Object_Constructor::CorePressure() const
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::CoreTemperature() const
 {
-    return _M_InitTemprtature;
+    return _M_InitTemperature;
 }
 
 float64 __Hydrostatic_Equilibrium_Object_Constructor::Mass(float64 Radius)
@@ -268,8 +268,8 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
     float64 RealError = pow(10, -_M_NLogError);
     float64 InitRadius = 0;
     float64 PreviousPhase = __Get_NextPhase(_M_InitPressure);
-    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemprtature ? 1 : 0;
-    fvec<_NHEOC_EQCOUNT> InitState({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemprtature});
+    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemperature ? 1 : 0;
+    fvec<_NHEOC_EQCOUNT> InitState({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemperature});
     _M_RadBoundary.push_back(0);
 
     for (int i = 0; i < _M_Layers.size(); ++i)
@@ -304,7 +304,7 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
                     InitRadius = _M_TargetRadius;
                     InitState = _M_Equations[i](_M_TargetRadius);
                     _M_RadBoundary.push_back(_M_TargetRadius);
-                    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemprtature ? 1 : 0;
+                    _M_IsConvection = __Get_MeltingCurve(_M_InitPressure) < _M_InitTemperature ? 1 : 0;
                     break;
                 }
                 else
@@ -322,7 +322,7 @@ int __Hydrostatic_Equilibrium_Object_Constructor::Run()
                             _M_Equations[j].Clear();
                         }
                         InitRadius = 0;
-                        InitState = fvec<_NHEOC_EQCOUNT>({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemprtature});
+                        InitState = fvec<_NHEOC_EQCOUNT>({_M_InitPressure, 0., 0., _M_EndogenousHeating, _M_InitTemperature});
                         i = -1;
                         break;
                     }

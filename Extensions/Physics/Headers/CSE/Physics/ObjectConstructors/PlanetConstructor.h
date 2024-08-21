@@ -22,6 +22,9 @@
  * Lunar and Planetary Science Conference Proceedings, 1980.
  * [2] 龚盛夏,黄乘利.太阳系内类地行星内部结构模型研究进展[J].天文学进展, 2013,
  * 31(4):20.DOI:10.3969/j.issn.1000-8349.2013.04.01.
+ * [3] Zeng L, Sasselov D. A Detailed Model Grid for Solid Planets from 0.1
+ * through 100 Earth Masses[J/OL]. Publications of the Astronomical Society
+ * of the Pacific, 2013, 125(925): 227. DOI:10.1086/669163.
  */
 
 #pragma once
@@ -120,7 +123,7 @@ protected:
     float64     _M_IsConvection;      // Use Convection temperature function instead of Conduction
     float64     _M_EndogenousHeating; // Central heat flux in W/m^2
     float64     _M_HeatGenRate = 0;   // Rate of Heat Generation
-    float64     _M_InitTemprtature;   // Center Temperature
+    float64     _M_InitTemperature;   // Center Temperature
 
     enum Variables
     {
@@ -142,7 +145,7 @@ protected:
     void __Sort_Compositions(ArrayType Masses, MaterialArr EOSs);
     float64 __Get_Density(float64 Pressure, float64 Tempertaure);
     float64 __Get_MeltingCurve(float64 Pressure);
-    float64 __Get_SpecificHeatCapacity();
+    float64 __Get_SpecificHeatCapacity(float64 Pressure, float64 Tempertaure);
     float64 __Get_ThermalExpansion(float64 Pressure, float64 Tempertaure);
     float64 __Get_ThermalConductivity(float64 Pressure, float64 Tempertaure);
     float64 __Get_NextPhase(float64 Pressure);
@@ -160,10 +163,15 @@ public:
      */
     bool EnableRelativity = false;
 
-    void SetError(float64 NewError) {_M_NLogError = NewError;};
-    void SetMaxRadius(float64 NewMaxRadius) {_M_MaxRadius = NewMaxRadius;};
-    void SetInitPressure(float64 NewInitPressure) {_M_InitPressure = NewInitPressure;};
-    void SetSurfPressure(float64 NewSurfPressure) {_M_SurfPressure = NewSurfPressure;};
+    constexpr static const float64 GasGiant1BarSurfPressure = 100000;
+
+    void SetError(float64 NewError) {_M_NLogError = NewError;}
+    void SetMaxRadius(float64 NewMaxRadius) {_M_MaxRadius = NewMaxRadius;}
+    void SetInitPressure(float64 NewInitPressure) {_M_InitPressure = NewInitPressure;}
+    void SetSurfPressure(float64 NewSurfPressure) {_M_SurfPressure = NewSurfPressure;}
+    void SetHeatFlux(float64 NewHeatFlux){_M_EndogenousHeating = NewHeatFlux;}
+    void SetHeatGenerationRate(float64 NewHeatGenerationRate){_M_HeatGenRate = NewHeatGenerationRate;}
+    void SetInitTemperature(float64 NewInitTemperature) {_M_InitTemperature = NewInitTemperature;}
 
     float64 TargetRadius()const {return _M_TargetRadius;}
 
@@ -171,6 +179,7 @@ public:
     float64 Radius()const;          // Total radius
     float64 InertiaMoment()const;   // Moment of inertia
     float64 MeanDensity()const;     // Mean density
+    float64 SurfTemperature()const; // Surface Temperature
 
     InteriorType Interior()const;   // Interior compossitions in mass fraction
 

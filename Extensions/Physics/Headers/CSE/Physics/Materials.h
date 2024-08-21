@@ -68,8 +68,8 @@ public:
     float64 Rho0()const { return _Rho0; }
 
 protected:
-    float64 Pressure(float64 Density);
-    float64 dPressure(float64 Density); // derivate function
+    float64 Pressure(float64 Density)const;
+    float64 dPressure(float64 Density)const; // derivate function
 
 public:
 
@@ -77,7 +77,7 @@ public:
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure);
+    float64 operator()(float64 Pressure)const;
 }RoseVinetEOS;
 
 /**
@@ -108,8 +108,8 @@ public:
     float64 Rho0()const { return _Rho0; }
 
 //protected:
-    float64 Pressure(float64 Density);
-    float64 dPressure(float64 Density); // derivate function
+    float64 Pressure(float64 Density)const;
+    float64 dPressure(float64 Density)const; // derivate function
 
 public:
 
@@ -117,7 +117,7 @@ public:
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure);
+    float64 operator()(float64 Pressure)const;
 }BirchMurnaghanEOS;
 
 extern const float64 __TFD_GAMMA_TABLE[20];
@@ -149,7 +149,7 @@ protected:
      * @brief Unit of the input value is dyne/cm^2, which equals 0.1 pa.
      * and return value is g/cm^3, which equals 1000 Kg/m^3
      */
-    float64 __Density(float64 Pressure);
+    float64 __Density(float64 Pressure)const;
 
 public:
 
@@ -157,7 +157,7 @@ public:
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure);
+    float64 operator()(float64 Pressure)const;
 }TFDHugePressureEOS;
 
 /**
@@ -183,7 +183,7 @@ public:
      * @param Pressure in Pascal
      * @return Density in Kg/m^3
      */
-    float64 operator()(float64 Pressure);
+    float64 operator()(float64 Pressure)const;
 }ExponentialEOS;
 
 
@@ -261,46 +261,62 @@ extern const TFDHugePressureEOS Beryl_TFD;
 __interface Material
 {
     // Basic properties
-    virtual ustring MaterialName()const = 0;                            // Material Name
-    virtual float64 BaseDensity()const = 0;                             // Base density
-    virtual float64 Density(float64 P, float64 T)const = 0;             // EOS
-    virtual float64 MeltingCurve(float64 P)const = 0;                   // Melting cruve
+    virtual ustring MaterialName()const = 0;                             // Material Name
+    virtual float64 BaseDensity()const = 0;                              // Base density
+    virtual float64 Density(float64 P, float64 T)const = 0;              // EOS
+    virtual float64 MeltingCurve(float64 P)const = 0;                    // Melting cruve
     // Thermal properties
-    virtual float64 SpecificHeatCapacity()const = 0;                    // Specific heat at constant pressure
-    virtual float64 ThermalExpansion(float64 P, float64 T)const = 0;    // CTE
-    virtual float64 ThermalConductivity(float64 P, float64 T)const = 0; // Thermal Conductivity
+    virtual float64 SpecificHeatCapacity(float64 P, float64 T)const = 0; // Specific heat at constant pressure
+    virtual float64 ThermalExpansion(float64 P, float64 T)const = 0;     // CTE
+    virtual float64 ThermalConductivity(float64 P, float64 T)const = 0;  // Thermal Conductivity
     // Phase properties
-    virtual float64 NextPhase(float64 P) = 0;                           // Next phase of EOS
+    virtual float64 NextPhase(float64 P) = 0;                            // Next phase of EOS
 };
+
+#define CSE_MATERIAL public:\
+ustring MaterialName() const override;\
+float64 BaseDensity() const override;\
+float64 Density(float64 P, float64 T) const override;\
+float64 MeltingCurve(float64 P) const override;\
+float64 SpecificHeatCapacity(float64 P, float64 T) const override;\
+float64 ThermalExpansion(float64 P, float64 T) const override;\
+float64 ThermalConductivity(float64 P, float64 T) const override;\
+float64 NextPhase(float64 P) override;
 
 class Ferrum : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 class Silicate : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 class Graphite : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 class Moissanite : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 class Water : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 class Hydrogen : public Material
 {
-
+    // Material interface
+CSE_MATERIAL
 };
 
 _EOS_END

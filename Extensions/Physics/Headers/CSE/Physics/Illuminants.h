@@ -123,7 +123,7 @@ struct StellarClassification
         C       = 0b00000000000000100000000000000000, // Carbon-Stars
         N       = 0b00000000000000101000000000000000, // N-Stars
         CH      = 0b00000000000000100100000000000000, // CH-Stars
-        CHd     = 0b00000000000000101100000000000000, // CH-Stars
+        CHd     = 0b00000000000000101100000000000000, // CHd-Stars
         CJ      = 0b00000000000000100010000000000000, // CJ-Stars
         S       = 0b00000000000000010000000000000000, // S-type-Stars
         MS      = 0b00000000000000011110000000000000, // MS-Stars
@@ -152,6 +152,8 @@ struct StellarClassification
 
     static const std::map<StelClassFlags, ustring> __Spectral_Classification_Table;
     static const ustringlist __Spectral_Pecularities;
+    static const ustringlist __WR_Spectral_Pecularities;
+    static const ustringlist __C_Spectral_Pecularities;
     static const ustringlist __Absorption_Pecularities;
 
     static const std::string __Spectal_Class_RegexStr;
@@ -172,6 +174,8 @@ struct StellarClassification
     static const std::string __Metallic_Line_Single_RegexStr;
 
     static const std::string __Spectral_Pecularities_RegexStr;
+    static const std::string __WR_Spectral_Pecularities_RegexStr;
+    static const std::string __C_Spectral_Pecularities_RegexStr;
     static const std::string __Element_Symbols_RegexStr;
     static const std::string __Absorption_Pecularities_RegexStr;
 
@@ -200,6 +204,8 @@ struct StellarClassification
     static const _REGEX_NS wregex __White_Dwarf_Regex;
 
     static const _REGEX_NS wregex __Spectral_Pecularities_Regex;
+    static const _REGEX_NS wregex __WR_Spectral_Pecularities_Regex;
+    static const _REGEX_NS wregex __C_Spectral_Pecularities_Regex;
     static const _REGEX_NS wregex __Absorption_Pecularities_Regex;
     static const _REGEX_NS wregex __Element_Symbols_Regex;
 
@@ -252,7 +258,12 @@ protected:
         MKRanged,   // Ranged type
         MKCyanogen, // CN star
         MKFull,     // Advanced method
-        Metallic    // Am Star
+        Metallic,   // Am Star
+        Subdwarf,   // Subdwarf
+        WolfRayet,  // Wolf-Rayet stars
+        Carbon1D,   // Carbon type
+        Carbon2D,   // Carbon type
+        WhiteDwarf  // White Dwarfs
     }LoadType = MKGeneral;
 
     ustring SrcString;
@@ -274,7 +285,13 @@ protected:
     static StellarClassification __MK_Ranged_Classification_Parse(ustring str);
     static StellarClassification __MK_Cyanogen_Classification_Parse(ustring str);
     static StellarClassification __MK_Classification_Bruteforce_Parse(ustring str); // Maybe cause huge delay
-    static StellarClassification __Metallic_Line_Parser(ustring str);
+    static StellarClassification __Metallic_Line_Parser(ustring str); // Maybe cause huge delay
+    static StellarClassification __Subdwarf_Parse(ustring str);
+    static StellarClassification __Wolf_Rayet_Parse(ustring str);
+    static StellarClassification __WR_Class_Uncertain_Parse(ustring str);
+    static StellarClassification __Carbon_Star_1D_Parse(ustring str);
+    static StellarClassification __Carbon_Star_2D_Parse(ustring str);
+    static StellarClassification __White_Dwarf_Parse(ustring str);
 
 public:
     StellarClassification() {}

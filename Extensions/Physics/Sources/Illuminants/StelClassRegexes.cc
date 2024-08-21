@@ -57,9 +57,20 @@ const ustringlist StellarClassification::__Spectral_Pecularities
     "CaIwk", "c", "[Swk]", "[S]", "d", "CaII", "metalweak"
 };
 
+const ustringlist StellarClassification::__WR_Spectral_Pecularities
+{
+    "h", "(h)", "ha", "E", "L", "d", "p", "-w", "-s", "b"
+};
+
+const ustringlist StellarClassification::__C_Spectral_Pecularities
+{
+    "p", "CH", "J", "e", ":", "m", "p", "pec", "-no", "-s",
+    "V", "..."
+};
+
 const ustringlist StellarClassification::__Absorption_Pecularities // For pecular reg/yellow giants such as barium star
 {
-    "Fe", "m", "CH", "Hdel", "Ba", "Ca", "CN", "HK", "Sr", "C2"
+    "Fe", "m", "CH", "Hdel", "Ba", "Ca", "CN", "HK", "Sr", "C2", "He", "MS"
 };
 
 const map<StellarClassification::__Load_Type, StellarClassification::__Export_Function_Type>
@@ -100,10 +111,14 @@ const string StellarClassification::__Metallic_Line_Single_RegexStr = []()->stri
 
 const string StellarClassification::__Spectral_Pecularities_RegexStr
     = GenerateListMatchRegexString(__Spectral_Pecularities, "");
+const string StellarClassification::__WR_Spectral_Pecularities_RegexStr
+    = GenerateListMatchRegexString(__WR_Spectral_Pecularities, "");
+const string StellarClassification::__C_Spectral_Pecularities_RegexStr
+    = GenerateListMatchRegexString(__C_Spectral_Pecularities, "");
 const string StellarClassification::__Element_Symbols_RegexStr =
     R"((((A[cglmrstu]|B[aehikr]|C[adeflmnorsu]?|D[bsy]|E[rsu]|F[elmr]|G[ade]|H[efgos]?|I[nr]|Kr|L[airuv]|M[cdgnot]|N[abdehiop]?|O[gs]|P[abdmortu]?|R[abefghnu]|S[bcegimnr]?|T[abcehilms]|U|W|Xe|Yb?|Z[nr])([\:\?])?)+))";
 const string StellarClassification::__Absorption_Pecularities_RegexStr
-    = GenerateListMatchRegexString(__Absorption_Pecularities, R"(([\+\-])?(([0-9])|([0-9]\.[0-9][0-9]?))([\+\-:\?])?)");
+    = GenerateListMatchRegexString(__Absorption_Pecularities, R"(([\+\-])?(([0-9]?[0-9])|([0-9]\.[0-9][0-9]?))([\+\-:\?])?)");
 
 const wstring StellarClassification::__MK_Class_General_RegexStr = []()->wstring
 {
@@ -164,15 +179,16 @@ const wstring StellarClassification::__Metallic_Line_Stars_RegexStr = []()->wstr
 
 const wstring StellarClassification::__Subdwarfs_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^([eu]?sd)(:)?{0}{1}?{2}?$)",
-        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr)));
+    ustring FinalRegex = ustring(vformat(R"(^([eu]?sd)([\:\?])?{0}(C|N)?{1}?{2}?{3}?{4}?{5}?$)",
+        make_format_args(__Spectal_Class_RegexStr, __Sub_Class_Full_RegexStr, __Luminosity_Class_Full_RegexStr,
+        __Spectral_Pecularities_RegexStr, __Absorption_Pecularities_RegexStr, __Element_Symbols_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
 
 const wstring StellarClassification::__Wolf_Rayet_Star_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^W{0}{1}?$)",
-        make_format_args(__WR_Class_RegexStr, __Sub_Class_Full_RegexStr)));
+    ustring FinalRegex = ustring(vformat(R"(^W{0}{1}?{2}?$)",
+        make_format_args(__WR_Class_RegexStr, __Sub_Class_Full_RegexStr, __WR_Spectral_Pecularities_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
 
@@ -185,8 +201,9 @@ const wstring StellarClassification::__WR_Class_Uncertain_RegexStr = []()->wstri
 
 const wstring StellarClassification::__Carbon_Star_1D_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^C(-{0})(:)?({1}[\+\-:]?)?{2}?$)",
-        make_format_args(__Carbon_Star_Class_RegexStr, __Sub_Class_RegexStr, __Luminosity_Class_Full_RegexStr)));
+    ustring FinalRegex = ustring(vformat(R"(^C(-{0})(:)?({1}[\+\-:]?)?{2}?{3}?$)",
+        make_format_args(__Carbon_Star_Class_RegexStr, __Sub_Class_RegexStr,
+        __Luminosity_Class_Full_RegexStr, __Spectral_Pecularities_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
 
@@ -195,14 +212,15 @@ const wstring StellarClassification::__Supplementary_Class_RegexStr = []()->wstr
     string SubCls1 = vformat(R"((({0})([\+\-:])?[\,\*]({0})([\+\-:]?)))", make_format_args(__Sub_Class_RegexStr));
     string SubCls2 = vformat(R"(({0}([\+\-:]|\-{0})?))", make_format_args(__Sub_Class_RegexStr));
     string SubCls3 = vformat(R"(({0}(/{0})?))", make_format_args(SubCls2));
-    ustring FinalRegex = ustring(vformat(R"(^(C|SC|S|R|N)({0}|{1}|{2})?$)",
-        make_format_args(__Sub_Class_RegexStr, SubCls1, SubCls3)));
+    ustring FinalRegex = ustring(vformat(R"(^(C|SC|S|R|N)({0}|{1}|{2})?{3}?{4}?$)",
+        make_format_args(__Sub_Class_RegexStr, SubCls1, SubCls3,
+        __C_Spectral_Pecularities_RegexStr, __Absorption_Pecularities_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
 
 const wstring StellarClassification::__White_Dwarf_RegexStr = []()->wstring
 {
-    ustring FinalRegex = ustring(vformat(R"(^(WD)$|^(D{0}+{1}?)$)",
+    ustring FinalRegex = ustring(vformat(R"(^(WD)$|^(D({0}+){1}?)$)",
         make_format_args(__White_Dwarf_Class_RegexStr, __Sub_Class_RegexStr)));
     return FinalRegex.ToStdWString();
 }();
@@ -211,6 +229,8 @@ const wstring StellarClassification::__White_Dwarf_RegexStr = []()->wstring
 // ------------------------- Regexes ------------------------ //
 
 const _REGEX_NS wregex StellarClassification::__Spectral_Pecularities_Regex(ustring(__Spectral_Pecularities_RegexStr).ToStdWString());
+const _REGEX_NS wregex StellarClassification::__WR_Spectral_Pecularities_Regex(ustring(__WR_Spectral_Pecularities_RegexStr).ToStdWString());
+const _REGEX_NS wregex StellarClassification::__C_Spectral_Pecularities_Regex(ustring(__C_Spectral_Pecularities_RegexStr).ToStdWString());
 const _REGEX_NS wregex StellarClassification::__Absorption_Pecularities_Regex(ustring(__Absorption_Pecularities_RegexStr).ToStdWString());
 const _REGEX_NS wregex StellarClassification::__Element_Symbols_Regex(ustring(__Element_Symbols_RegexStr).ToStdWString());
 
