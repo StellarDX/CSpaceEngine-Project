@@ -50,6 +50,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         __Get_Value_With_Unit(&Obj.Mass, CurrentTable, L"Mass", _NoDataDbl, EarthMass,
         {
             {L"Kg", 1},
+            {L"Jup", JupiterMass},
             {L"Sol", SolarMass}
         });
         vec3 Dimensions;
@@ -142,6 +143,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         {
             auto RotModelSubTable = RotModelTable->SubTable;
             auto RotModelSubTableEnd = RotModelSubTable->Get().end();
+            __Get_Value_From_Table(&Obj.RotationIAU.ValidRange, CurrentTable, L"ValidRange", Obj.RotationIAU.ValidRange);
             __Get_Value_From_Table(&Obj.RotationIAU.Epoch, RotModelSubTable, L"Epoch", float64(J2000));
             __Get_Value_From_Table(&Obj.RotationIAU.PoleRA, RotModelSubTable, L"PoleRA", Obj.RotationIAU.PoleRA);
             __Get_Value_From_Table(&Obj.RotationIAU.PoleRARate, RotModelSubTable, L"PoleRARate", Obj.RotationIAU.PoleRARate);

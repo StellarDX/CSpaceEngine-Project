@@ -115,6 +115,7 @@ struct Object : public SEObject
 
     struct IAURotationModel
     {
+        ustring     ValidRange        = _NoDataStr;
         float64     Epoch             = _NoDataDbl; // J2000
         float64     PoleRA            = _NoDataDbl; // degrees
         float64     PoleRARate        = _NoDataDbl; // degrees/century

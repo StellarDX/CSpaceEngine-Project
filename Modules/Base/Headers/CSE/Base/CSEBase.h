@@ -112,6 +112,9 @@ inline constexpr genTypeB chtype(genTypeA Value)
 }
 
 // CSE Debugger
+#ifdef ERROR
+#undef ERROR
+#endif
 class CSEDebugger
 {
     std::ostream& Output;

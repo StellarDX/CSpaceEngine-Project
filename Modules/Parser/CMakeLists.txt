@@ -31,7 +31,7 @@ set(ParserAlgorithm LR1 CACHE STRING
     "Parser algorithm, default is LR(1)")
 
 # Disable octal parsing
-set(DisableOctalNumParsing OFF CACHE STRING
+set(DisableOctalNumParsing OFF CACHE BOOL
     "Disable octal parsing when parsing numbers")
 
 add_definitions(-DLOG_TIME_STAMP=${LogTimeStamp})
