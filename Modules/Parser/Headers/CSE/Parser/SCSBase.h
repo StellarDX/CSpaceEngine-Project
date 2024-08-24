@@ -28,16 +28,16 @@
 #include <iomanip>
 #include <map>
 
-#if __has_include(<boost/regex.hpp>)
-#include <boost/regex.hpp>
-#else
-#include <regex>
-#endif
-
 #include <CSE/Base/CSEBase.h>
 #include <CSE/Base/DateTime.h>
 #include <CSE/Base/GLTypes.h>
 #include <CSE/Base/Algorithms.h>
+
+#if _USE_BOOST_REGEX
+#include <boost/regex.hpp>
+#else
+#include <regex>
+#endif
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)

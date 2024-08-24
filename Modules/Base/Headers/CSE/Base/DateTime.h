@@ -37,7 +37,7 @@
 #include <CSE/Base/CSEBase.h>
 #include <ctime>
 
-#if __has_include(<boost/regex.hpp>)
+#if _USE_BOOST_REGEX
 #include <boost/regex.hpp>
 #else
 #include <regex>

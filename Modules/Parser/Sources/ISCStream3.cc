@@ -39,7 +39,7 @@ _SC SharedTablePointer ISCStream::Parse()const
 {
     ostringstream os;
     os << input.rdbuf();
-    ustring str = os.str();
+    ustring str = ustring::Decode(os.str(), Decoder);
     _SC SkipComments(str);
 
     _SC __SE_Lexicality Lex;

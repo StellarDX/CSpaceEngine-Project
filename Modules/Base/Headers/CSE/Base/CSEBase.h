@@ -77,7 +77,7 @@ _STL_DISABLE_CLANG_WARNINGS
 #endif
 
 #if __has_include(<boost/regex.hpp>)
-#define _USE_BOOST_REGEX
+#define _USE_BOOST_REGEX 1
 #define _REGEX_NS boost::
 #else
 #define _REGEX_NS std::

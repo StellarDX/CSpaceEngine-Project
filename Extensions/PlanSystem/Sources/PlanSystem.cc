@@ -91,6 +91,13 @@ PlanetarySystemPointer SystemBuilder::__BFS_BuildSystem(vector<Object> List, Ind
     return TotalSystem;
 }
 
+PlanetarySystemPointer MakeSystem(std::vector<Object> List)
+{
+    uint64 BarycenterIndex;
+    auto IndexTree = SystemBuilder::__Sort_Indices(List, &BarycenterIndex);
+    return SystemBuilder::__BFS_BuildSystem(List, IndexTree, BarycenterIndex);
+}
+
 #ifdef _CSE_SCSTREAM
 
 using namespace __scstream_table_helpers;
