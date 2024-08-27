@@ -10,6 +10,7 @@
 #include <CSE/Base/MathFuncs.h>
 #include <CSE/Base/LinAlg.h>
 #include <CSE/Base/AdvMath.h>
+#include <CSE/Base/Random.h>
 
 #ifdef _USE_CSE_DEFINES
 #include <CSE/Base/ConstLists.h>
