@@ -334,6 +334,33 @@ public:
     friend bool IsStarRemnant(StellarClassification _Spec);
 };
 
+bool IsGiant(StellarClassification _Spec); // III, II, I, 0
+bool IsNormalGiant(StellarClassification _Spec); // III
+bool IsBrightGiant(StellarClassification _Spec); // II
+bool IsSuperGiant(StellarClassification _Spec); // I
+bool IsHyperGiant(StellarClassification _Spec); // 0
+bool IsSubGiant(StellarClassification _Spec); // IV
+bool IsMainSequence(StellarClassification _Spec); // V
+bool IsSubDwarf(StellarClassification _Spec); // VI
+bool IsOType(StellarClassification _Spec); // O
+bool IsBType(StellarClassification _Spec); // B
+bool IsAType(StellarClassification _Spec); // A
+bool IsFType(StellarClassification _Spec); // F
+bool IsGType(StellarClassification _Spec); // G
+bool IsKType(StellarClassification _Spec); // K
+bool IsMType(StellarClassification _Spec); // M
+bool IsWolfRayet(StellarClassification _Spec); // WR
+bool IsBrownDwarf(StellarClassification _Spec); // L, T, Y
+bool IsLType(StellarClassification _Spec); // L
+bool IsTType(StellarClassification _Spec); // T
+bool IsYType(StellarClassification _Spec); // Y
+bool IsCarbonStar(StellarClassification _Spec); // C
+bool IsSTypeStar(StellarClassification _Spec); // S
+bool IsWhiteDwarf(StellarClassification _Spec);
+bool IsNeutronStar(StellarClassification _Spec);
+bool IsBlackHole(StellarClassification _Spec);
+bool IsStarRemnant(StellarClassification _Spec);
+
 _OPTICS_END
 
 _CSE_END

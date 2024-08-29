@@ -390,6 +390,8 @@ void __SE_Lexicality::Run(const ustring& Input, TokenArrayType* Output)
 
         if (isspace(*it)) {ConsumeWhiteSpace(it, end, &LineNumber, &ColumnNumber);}
 
+        if (it == end) {break;}
+
         // Parse Punctuator
         auto IsPunc = find(std::begin(Tokens::Punctuators), std::end(Tokens::Punctuators), *it);
         if (IsPunc != std::end(Tokens::Punctuators))
