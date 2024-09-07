@@ -1688,6 +1688,7 @@ StellarClassification StellarClassification::__White_Dwarf_Parse(ustring str)
                 break;
             }
         }
+        Data.SpClsState = StellarClassificationDataType::Single;
 
         if (__SPEC_REGEX_MATCHED(Match[WDSubClass]))
         {

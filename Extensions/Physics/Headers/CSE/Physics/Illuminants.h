@@ -294,6 +294,7 @@ protected:
     static StellarClassification __White_Dwarf_Parse(ustring str);
 
     friend bool operator|(StellarClassification Spec, StelClassFlags Flag);
+    friend bool operator&(StellarClassification Spec, StelClassFlags Flag);
 
 public:
     StellarClassification() {}

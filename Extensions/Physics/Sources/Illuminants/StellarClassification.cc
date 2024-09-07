@@ -194,6 +194,21 @@ bool operator|(StellarClassification Spec, StellarClassification::StelClassFlags
     return OK;
 }
 
+bool operator&(StellarClassification Spec, StellarClassification::StelClassFlags Flag)
+{
+    bool OK = 0;
+    for (int i = 0; i < 3 && Spec.Data[i].SpClsState != StellarClassification::StellarClassificationDataType::Null; ++i)
+    {
+        if (Spec.Data[i].SpecClass[0] & Flag) {OK = 1;}
+        if (Spec.Data[i].SpClsState == StellarClassification::StellarClassificationDataType::Range
+            && (Spec.Data[i].SpecClass[1] & Flag))
+        {
+            OK = 1;
+        }
+    }
+    return OK;
+}
+
 bool IsGiant(StellarClassification _Spec)
 {
     return IsNormalGiant(_Spec) || IsBrightGiant(_Spec) || IsSuperGiant(_Spec) || IsHyperGiant(_Spec);
@@ -201,37 +216,37 @@ bool IsGiant(StellarClassification _Spec)
 
 bool IsNormalGiant(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::g;
+    return _Spec & StellarClassification::g;
 }
 
 bool IsBrightGiant(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::bg;
+    return _Spec & StellarClassification::bg;
 }
 
 bool IsSuperGiant(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::sg;
+    return _Spec & StellarClassification::sg;
 }
 
 bool IsHyperGiant(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::hg;
+    return _Spec & StellarClassification::hg;
 }
 
 bool IsSubGiant(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::subg;
+    return _Spec & StellarClassification::subg;
 }
 
 bool IsMainSequence(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::ms;
+    return _Spec & StellarClassification::ms;
 }
 
 bool IsSubDwarf(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::sd;
+    return _Spec & StellarClassification::sd;
 }
 
 bool IsOType(StellarClassification _Spec)
@@ -271,12 +286,12 @@ bool IsMType(StellarClassification _Spec)
 
 bool IsWolfRayet(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::WR;
+    return _Spec & StellarClassification::WR;
 }
 
 bool IsBrownDwarf(StellarClassification _Spec)
 {
-    return (_Spec.MaxType() != 0b1111) && (_Spec.MaxType() | 0b1000);
+    return (_Spec.MaxType() != 0b1111) && (_Spec.MaxType() & 0b1000);
 }
 
 bool IsLType(StellarClassification _Spec)
@@ -296,22 +311,22 @@ bool IsYType(StellarClassification _Spec)
 
 bool IsCarbonStar(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::C;
+    return _Spec & StellarClassification::C;
 }
 
 bool IsSTypeStar(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::S;
+    return _Spec & StellarClassification::S;
 }
 
 bool IsWhiteDwarf(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::WD;
+    return _Spec & StellarClassification::WD;
 }
 
 bool IsNeutronStar(StellarClassification _Spec)
 {
-    return _Spec | StellarClassification::NS;
+    return _Spec & StellarClassification::NS;
 }
 
 bool IsBlackHole(StellarClassification _Spec)
