@@ -104,7 +104,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             __Get_Value_From_Table(&Obj.LumBol, CurrentTable, L"LuminosityBol", Obj.LumBol);
         }
         Obj.Luminosity *= SolarLum;
-        Obj.LumBol *= SolarLumBol;
+        Obj.LumBol *= SolarLum;
         __Get_Value_From_Table(&Obj.FeH, CurrentTable, L"FeH", Obj.FeH);
         __Get_Value_From_Table(&Obj.CtoO, CurrentTable, L"CtoO", Obj.CtoO);
         __Get_Value_With_Unit(&Obj.Age, CurrentTable, L"Age", Obj.Age, 1E12, {});
@@ -793,7 +793,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         {
             __Add_Key_Value(&ContentTable, L"Teff", Obj.Temperature, FixedOutput, Prec);
             __Add_Key_Value(&ContentTable, L"Luminosity", Obj.Luminosity / SolarLum, FixedOutput, Prec);
-            __Add_Key_Value(&ContentTable, L"LumBol", Obj.LumBol / SolarLumBol, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"LumBol", Obj.LumBol / SolarLum, FixedOutput, Prec);
             __Add_Key_Value(&ContentTable, L"FeH", Obj.FeH, FixedOutput, Prec);
             __Add_Key_Value(&ContentTable, L"CtoO", Obj.CtoO, FixedOutput, Prec);
             __Add_Key_Value(&ContentTable, L"Age", Obj.Age / 1E+12, FixedOutput, Prec);
