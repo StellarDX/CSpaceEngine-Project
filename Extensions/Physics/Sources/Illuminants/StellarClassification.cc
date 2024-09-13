@@ -199,9 +199,9 @@ bool operator&(StellarClassification Spec, StellarClassification::StelClassFlags
     bool OK = 0;
     for (int i = 0; i < 3 && Spec.Data[i].SpClsState != StellarClassification::StellarClassificationDataType::Null; ++i)
     {
-        if (Spec.Data[i].SpecClass[0] & Flag) {OK = 1;}
+        if ((Spec.Data[i].SpecClass[0] & Flag) == Flag) {OK = 1;}
         if (Spec.Data[i].SpClsState == StellarClassification::StellarClassificationDataType::Range
-            && (Spec.Data[i].SpecClass[1] & Flag))
+            && ((Spec.Data[i].SpecClass[1] & Flag) == Flag))
         {
             OK = 1;
         }
