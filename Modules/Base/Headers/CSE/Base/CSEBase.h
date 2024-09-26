@@ -54,6 +54,11 @@ _STL_DISABLE_CLANG_WARNINGS
 #undef new
 #endif
 
+#if defined __linux__
+#define __declspec(attribute) __attribute__((attribute))
+#define __cdecl __attribute__((__cdecl__))
+#endif
+
 // CMake boolean definations
 #define ON true
 #define OFF false

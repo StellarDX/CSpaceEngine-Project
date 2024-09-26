@@ -386,7 +386,7 @@ _NODISCARD constexpr _Tp __linalg_vector_min(gvec<_Tp, _Nm> _Vec, std::size_t* _
 template<std::size_t N, std::size_t M>
 void __linalg_gauss_elimination_rref(__linalg_matrix_row_operator<N, M>* op)
 {
-    std::size_t _Rsize = min(N, M);
+    std::size_t _Rsize = min(uint64(N), M);
     std::size_t PivotOffset = 0;
     for (std::size_t col = 0; col < _Rsize; ++col)
     {

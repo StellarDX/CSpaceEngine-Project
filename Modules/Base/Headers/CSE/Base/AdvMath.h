@@ -76,22 +76,22 @@ using Function1D = std::function<float64(float64)>; // 1D Function type
 /**
  * @brief Convert XY coordinate to polar coordinate, in format (r, Theta)
  */
-vec2 _cdecl XYToPolar(vec2 XY);
+vec2 __cdecl XYToPolar(vec2 XY);
 
 /**
  * @brief Convert XYZ coordinate (Based on X-Z plane) to polar coordinate, in format (Lon, Lat, Dist)
  */
-vec3 _cdecl XYZToPolar(vec3 XYZ);
+vec3 __cdecl XYZToPolar(vec3 XYZ);
 
 /**
  * @brief Convert polar coordinate in format (r, Theta) to XY coordinate
  */
-vec2 _cdecl PolarToXY(vec2 Polar);
+vec2 __cdecl PolarToXY(vec2 Polar);
 
 /**
  * @brief Convert polar coordinate in format (Lon, Lat, Dist) to XYZ coordinate (Based on X-Z plane)
  */
-vec3 _cdecl PolarToXYZ(vec3 Polar);
+vec3 __cdecl PolarToXYZ(vec3 Polar);
 
 
 

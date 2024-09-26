@@ -159,7 +159,7 @@ struct ValueType
         *((int64*)Dst) = std::stoll(Value.front(), nullptr, Base);
     }
 
-    template<typename _Tp, std::size_t _Nm>
+    template<typename _Tp, uint64 _Nm>
     void GetAsArray(gvec<_Tp, _Nm>* Dst)
     {
         if (ToTypeID<_Tp>() != GetTypeID())
@@ -397,7 +397,7 @@ template<typename _Tp, size_t _Nm>
 inline void __Get_Value_From_Table(gvec<_Tp, _Nm>* Dst, const _SC SharedTablePointer& Src, ustring Key, gvec<_Tp, _Nm> Alt)
 {
     auto it = __Find_Table_From_List(Src, Key);
-    if (it != Src->Get().end()) {it->Value.front().GetAsArray(Dst);}
+    if (it != Src->Get().end()) {it->Value.front().GetAsArray<_Tp, _Nm>(Dst);}
     else {*Dst = Alt;}
 }
 
@@ -442,7 +442,7 @@ inline void __Get_Value_With_Unit(gvec<float64, _Nm>* Dst, const _SC SharedTable
     auto it = __Find_Table_With_Unit(Src, Key);
     if (it != Src->Get().end())
     {
-        it->Value.front().GetAsArray(Dst);
+        it->Value.front().GetAsArray<float64, _Nm>(Dst);
         if (it->Key != Key)
         {
             ustring Unit = ustring(it->Key.substr(Key.size(), it->Key.size() - Key.size()));

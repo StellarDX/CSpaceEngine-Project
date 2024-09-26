@@ -2,8 +2,8 @@
 // written by International Business Machines Corp. (LGPL Licence)
 // Port by StellarDX
 
-#include "CSE/base/CSEbase.h"
-#include "CSE/base/MathFuncs.h"
+#include "CSE/Base/CSEBase.h"
+#include "CSE/Base/MathFuncs.h"
 #include "CSE/Base/Algorithms.h"
 
 #include <algorithm>

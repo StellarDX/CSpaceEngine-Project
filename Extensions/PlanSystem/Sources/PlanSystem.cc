@@ -184,7 +184,7 @@ StarBarycenter GetStarBarycenterFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
                 if (OblateTable->Value.front().Type & _SC ValueType::Array)
                 {
-                    OblateTable->Value.front().GetAsArray(&Flattening);
+                    OblateTable->Value.front().GetAsArray<float64, 3>(&Flattening);
                 }
                 else {OblateTable->Value.front().GetQualified(&Flattening[1]);}
             }

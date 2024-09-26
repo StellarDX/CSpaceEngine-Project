@@ -74,7 +74,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             {
                 if (OblateTable->Value.front().Type & _SC ValueType::Array)
                 {
-                    OblateTable->Value.front().GetAsArray(&Flattening);
+                    OblateTable->Value.front().GetAsArray<float64, 3>(&Flattening);
                 }
                 else {OblateTable->Value.front().GetQualified(&Flattening[1]);}
             }
@@ -174,7 +174,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         if (StaticPosTable != CurrentTableEnd)
         {
             vec3 StaticPos;
-            StaticPosTable->Value.front().GetAsArray(&StaticPos);
+            StaticPosTable->Value.front().GetAsArray<float64, 3>(&StaticPos);
             if (StaticPosTable->Key == L"StaticPosPolar")
             {
                 Obj.Position = PolarToXYZ(vec3(StaticPos));
@@ -186,7 +186,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         if (FixedPosTable != CurrentTableEnd)
         {
             vec3 FixedPos;
-            FixedPosTable->Value.front().GetAsArray(&FixedPos);
+            FixedPosTable->Value.front().GetAsArray<float64, 3>(&FixedPos);
             if (StaticPosTable->Key == L"FixedPosPolar")
             {
                 Obj.Position = PolarToXYZ(vec3(FixedPos));
