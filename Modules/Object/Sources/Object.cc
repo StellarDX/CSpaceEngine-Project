@@ -1551,7 +1551,7 @@ vec3 Flattening(Object Obj)
     return (MaxRad - Radius) / MaxRad;
 }
 
-float64 EquatorialCircumference(Object Obj)
+/*float64 EquatorialCircumference(Object Obj)
 {
     float64 a = max(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
     float64 b = min(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
@@ -1563,9 +1563,9 @@ float64 EquatorialCircumference(Object Obj)
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
     };
     return 4. * a * E(0, CSE_PI_D2);
-}
+}*/
 
-float64 MeridionalCircumference(Object Obj)
+/*float64 MeridionalCircumference(Object Obj)
 {
     float64 a = EquatorialRadius(Obj);
     float64 b = PolarRadius(Obj);
@@ -1577,9 +1577,9 @@ float64 MeridionalCircumference(Object Obj)
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
     };
     return 4. * a * E(0, CSE_PI_D2);
-}
+}*/
 
-float64 SurfaceArea(Object Obj)
+/*float64 SurfaceArea(Object Obj)
 {
     std::array<float64, 3> Radius = Obj.Dimensions / 2.;
     std::sort(Radius.begin(), Radius.end());
@@ -1608,7 +1608,7 @@ float64 SurfaceArea(Object Obj)
     float64 k2 = (a * a * (b * b - c * c)) / (b * b * (a * a - c * c));
     return 2. * CSE_PI * c * c + (2. * CSE_PI * a * b) / sin(phi) *
         (E(phi.ToRadians(), k2) * pow(sin(phi), 2) + F(phi.ToRadians(), k2) * pow(cos(phi), 2));
-}
+}*/
 
 float64 Volume(Object Obj)
 {

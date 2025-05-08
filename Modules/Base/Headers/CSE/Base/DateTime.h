@@ -35,6 +35,7 @@
 #define _CSE_DATETIME_
 
 #include <CSE/Base/CSEBase.h>
+#include <CSE/Base/GLTypes.h>
 #include <ctime>
 
 #if _USE_BOOST_REGEX

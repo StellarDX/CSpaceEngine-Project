@@ -1,21 +1,19 @@
 /********************************************************************************
+  CSpaceEngine高等数学库，也称"SciC++"
   CSpaceEngine Advanced math Library, also called "SciC++"
 
-  Description:
+  介绍 / Description:
+    这些功能主要用于解决一些复杂度极高的数学问题
     This file contains classes and functions used to solve math problems
     with very high complexity.
 
-  Features:
-    1. Convertions between XYZ and polar coordinates
-    2. Limits of a function (Expermental)
-    3. Derivatives and integral engines
-    4. ODE Solvers
-    5. Inverting a function
+  功能 / Features:
+    1. 坐标转换(不在独立命名空间)
+    2. 导数
+    3. 积分
 
-  A ghost story that's been circulating in many colleges:
-    There is a tree in college with a lot of students hanging on it.
-    It is called "Advanced Maths".
-    (大学里有棵树，上面挂着很多人，这棵树叫“高数”。)
+  「从前有棵树，叫高数，上面挂了很多人；」
+  「旁边有座坟，叫微积分，里面葬了很多人。」
 ********************************************************************************/
 
 /**
@@ -40,14 +38,12 @@
 
 #ifndef _ADV_MATH_
 #define _ADV_MATH_
-
 #include "CSE/Base/CSEBase.h"
 #include "CSE/Base/Algorithms.h"
 #include "CSE/Base/MathFuncs.h"
 #include "CSE/Base/GLTypes.h"
 #include "CSE/Base/LinAlg.h"
 #include <map>
-#include <set>
 #include <functional>
 
 #if defined _MSC_VER
@@ -67,10 +63,8 @@ _CSE_BEGIN
 #define _SCICXX SciCxx::
 #define _SCICXX_END }
 
-using Function1D = std::function<float64(float64)>; // 1D Function type
-
 /****************************************************************************************\
-*                                Coordinate convertions                                  *
+*                                         坐标转换                                        *
 \****************************************************************************************/
 
 /**
@@ -94,1252 +88,907 @@ vec2 _cdecl PolarToXY(vec2 Polar);
 vec3 _cdecl PolarToXYZ(vec3 Polar);
 
 
-
-/****************************************************************************************\
-*                                   Function Invoker                                     *
-\****************************************************************************************/
-
 _SCICXX_BEGIN
 
-template<typename _Signature> struct __CSE_AdvMath_Function_Invoker;
-template<typename _Res, typename... _ArgTypes>
-struct __CSE_AdvMath_Function_Invoker<_Res(_ArgTypes...)>
-{
-    std::function<_Res(_ArgTypes...)> _M_Invoker;
-
-    __CSE_AdvMath_Function_Invoker() {}
-
-    __CSE_AdvMath_Function_Invoker(std::function<_Res(_ArgTypes...)> _Right)
-        : _M_Invoker(_Right) {}
-
-    __CSE_AdvMath_Function_Invoker(_Res (*_PFunc)(_ArgTypes...))
-        : _M_Invoker(_PFunc) {}
-
-    template<typename _Functor>
-    __CSE_AdvMath_Function_Invoker(_Functor _Func)
-        : _M_Invoker(_Func) {}
-
-    template<typename _Functor>
-    __CSE_AdvMath_Function_Invoker& operator=(_Functor _Func)
-    {
-        _M_Invoker = _Func;
-        return *this;
-    }
-
-    virtual _Res operator()(_ArgTypes...)const = 0;
-};
-
-_SCICXX_END
-
-
+using Function1D = std::function<float64(float64)>;
 
 /****************************************************************************************\
-*                                       Derivatives                                      *
+*                                         变长矩阵                                        *
 \****************************************************************************************/
 
-_SCICXX_BEGIN
-
-class __Basic_FDM_Derivative_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
+/**
+ * @brief 可变大小的矩阵，功能与定长矩阵一样
+ */
+template<typename _Ty>
+class DynamicMatrix
 {
 public:
-    using _Mybase = __CSE_AdvMath_Function_Invoker<float64(float64)>;
+    typedef _Ty               value_type;
+    typedef value_type*       pointer;
+    typedef const value_type* const_pointer;
+    typedef value_type&       reference;
+    typedef const value_type& const_reference;
+    typedef uvec2             size_type;
 
-    std::vector<float64> _M_Coefficients;
-    std::vector<float64> _M_CoeffOffsets;
-    uint64               _M_DeriOrder;
+    typedef std::vector<_Ty>  col_type;
+    typedef std::vector<_Ty>  row_type;
+    typedef DynamicMatrix     transpose_type;
 
-    enum DiffType
+private:
+    std::vector<_Ty> Data; // 列向量降维储存
+    size_type Size = size_type(0, 0);
+
+public:
+    DynamicMatrix() = default;
+
+    /**
+     * @brief 创建一个任意大小的矩阵
+     */
+    explicit DynamicMatrix(size_type _Sz) : Size(_Sz)
     {
-        Central,
-        Forward,
-        Backward
-    }_M_Differences;
-
-    // StellarDX: Step scale is initially decided to use binary logarithm,
-    // but common logarithm is used finally because it need to compat with
-    // common usage in scientific calculating.
-    constexpr static const float64 _DefStepLength = 7.8267798872635110755572112628368; // -0.5 * log(0x1p-52)
-    float64              _M_StepScaleNLog;
-
-    __Basic_FDM_Derivative_Engine()
-        : _Mybase(), _M_StepScaleNLog(_DefStepLength) {SetCoefficients<3>(1);}
-
-    __Basic_FDM_Derivative_Engine(std::function<float64(float64)> _Right,
-                                  float64 _Scale = _DefStepLength)
-        : _Mybase(_Right), _M_StepScaleNLog(_Scale) {SetCoefficients<3>(1);}
-
-    __Basic_FDM_Derivative_Engine(float64 (*_PFunc)(float64),
-                                  float64 _Scale = _DefStepLength)
-        : _Mybase(_PFunc), _M_StepScaleNLog(_Scale) {SetCoefficients<3>(1);}
-
-    template<typename _Functor>
-    __Basic_FDM_Derivative_Engine(_Functor _Func,
-                                  float64 _Scale = _DefStepLength)
-        : _Mybase(_Func), _M_StepScaleNLog(_Scale) {SetCoefficients<3>(1);}
-
-    template<typename _Functor>
-    __Basic_FDM_Derivative_Engine& operator=(_Functor _Func)
-    {
-        this->_M_Invoker = _Func;
-        return *this;
+        Data.resize(_Sz.x * _Sz.y);
     }
 
-    template<typename _Iterator, uint64 CoeffCount>
-    void SetCoefficients(uint64 DeriOrder, _Iterator Begin, _Iterator End)
+    /**
+     * @brief 使用指针创建矩阵，并指定大小。指针对应的数组存储方式为行向量。
+     */
+    explicit DynamicMatrix(const pointer _Ptr, size_type _Sz) : Size(_Sz)
     {
-        if (End - Begin < CoeffCount) {throw std::logic_error("Coefficients is too few.");}
-        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
-        std::set<float64> COffsets(Begin, Begin + CoeffCount);
-        if (COffsets.size() < CoeffCount) {throw std::logic_error("Coefficients is too few.");}
-        _M_CoeffOffsets = std::vector<float64>(COffsets.begin(), COffsets.end());
-        _M_DeriOrder = DeriOrder;
-
-        matrix<CoeffCount, CoeffCount> CoeffMatrix(0.);
-        for (size_t i = 0; i < CoeffCount; ++i)
+        Data.resize(_Sz.x * _Sz.y);
+        for (std::size_t col = 0; col < _Sz.x; ++col)
         {
-            for (size_t j = 0; j < CoeffCount; ++j)
+            for (std::size_t row = 0; row < _Sz.y; ++row)
             {
-                CoeffMatrix[i][j] = pow(_M_CoeffOffsets[i], float64(j));
+                at(col, row) = _Ptr[col + row * _Sz.x];
             }
         }
-
-        matrix<1, CoeffCount> KroneckerMatrix(0.);
-        KroneckerMatrix[0][DeriOrder] = tgamma(DeriOrder + 1);
-
-        std::array<float64, CoeffCount> CoeffArray = (linalg::Inverse(CoeffMatrix) * KroneckerMatrix)[0];
-        _M_Coefficients = std::vector<float64>(CoeffArray.begin(), CoeffArray.end());
     }
 
-    template<uint64 CoeffCount>
-    void SetCoefficients(uint64 DeriOrder, std::initializer_list<float64> _Ilist)
+    constexpr DynamicMatrix(DynamicMatrix const& m)
+        : Data(m.Data), Size(m.Size) {};
+
+    /**
+     * @brief 使用元素创建矩阵，并指定大小。此元素将被填充入矩阵的主对角线。
+     */
+    explicit constexpr DynamicMatrix(_Ty scalar, size_type _Sz) : Size(_Sz)
     {
-        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
-        SetCoefficients<decltype(_Ilist.begin()), CoeffCount>(DeriOrder, _Ilist.begin(), _Ilist.end());
+        Data.resize(_Sz.x * _Sz.y);
+        for (int i = 0; i < min(_Sz.x, _Sz.y); ++i)
+        {
+            at(i, i) = scalar;
+        }
     }
 
-    template<uint64 CoeffCount>
-    void SetCoefficients(uint64 DeriOrder, DiffType FDiff = Central)
+    /**
+     * @brief 使用列表创建矩阵，并指定大小。指针对应的数组存储方式为行向量。
+     */
+    constexpr DynamicMatrix(std::initializer_list<_Ty> _Ilist, size_type _Sz) : Size(_Sz)
     {
-        if (DeriOrder >= CoeffCount) {throw std::logic_error("Derivative order can't larger than coefficient count.");}
-        std::vector<float64> Offsets;
-        switch (FDiff)
+        Data.resize(_Sz.x * _Sz.y);
+        auto it = _Ilist.begin(), end = _Ilist.end();
+        for (std::size_t row = 0; row < _Sz.y; ++row)
         {
-        case Central:
-        {
-            int64 RealCoeffCount = CoeffCount;
-            if (CoeffCount % 2 == 0) {++RealCoeffCount;}
-            int64 OffsetCount = RealCoeffCount / 2;
-            for (int64 i = 0; i < RealCoeffCount; ++i)
+            for (std::size_t col = 0; col < _Sz.x; ++col)
             {
-                Offsets.push_back(float64(i - OffsetCount));
+                at(col, row) = *it;
+                ++it;
+                if (it == end) {break;}
+            }
+            if (it == end) {break;}
+        }
+    }
+
+    /**
+     * @brief 使用列向量创建矩阵，大小以列向量的个数和元素最多的列向量为准。
+     */
+    constexpr DynamicMatrix(std::initializer_list<col_type> _Ilist)
+    {
+        auto it = _Ilist.begin(), end = _Ilist.end();
+        for (; it < end; ++it)
+        {
+            Size.y = it->size() > Size.y ? it->size() : Size.y;
+        }
+
+        it = _Ilist.begin();
+        end = _Ilist.end();
+        for (; it < end; ++it)
+        {
+            Data.insert(Data.end(), it->begin(), it->end());
+            ++Size.x;
+            Data.resize(Size.x * Size.y);
+        }
+    }
+
+    template<typename _Ty2, std::size_t _Nm> requires std::convertible_to<_Ty2, _Ty>
+    constexpr DynamicMatrix(__StelCXX_GLM_GLVector_T<_Ty2, _Nm> Right) : Size(1, _Nm)
+    {
+        Data.resize(this->col() * this->row());
+        for (int i = 0; i < _Nm; ++i)
+        {
+            Data[i] = Right[i];
+        }
+    }
+
+    template<typename _Ty2, std::size_t _Col, std::size_t _Row> requires std::convertible_to<_Ty2, _Ty>
+    constexpr DynamicMatrix(__StelCXX_GLM_Generic_Matrix<_Ty2, _Col, _Row> Right) : Size(_Col, _Row)
+    {
+        Data.resize(this->col() * this->row());
+        for (std::size_t col = 0; col < _Col; ++col)
+        {
+            for (std::size_t row = 0; row < _Row; ++row)
+            {
+                at(col, row) = Right[col][row];
             }
         }
-            break;
-        case Forward:
-            for (int64 i = 0; i < CoeffCount; ++i)
+    }
+
+    _NODISCARD _CONSTEXPR20 size_type size() const noexcept {return Size;}
+
+    _CONSTEXPR20 void resize(size_type NewSize)
+    {
+        if (NewSize.x < this->col())
+        {
+            Data.erase(Data.begin() + NewSize.x * this->row(), Data.end());
+        }
+        else if (NewSize.x > this->col())
+        {
+            for (int i = 0; i < (NewSize.x - this->col()) * this->row(); ++i)
             {
-                Offsets.push_back(float64(i));
+                Data.push_back(_Ty());
             }
-            break;
-        case Backward:
-            for (int64 i = 0; i < CoeffCount; ++i)
+        }
+        Size.x = NewSize.x;
+
+        if (NewSize.y < this->row())
+        {
+            std::size_t EraseSize = this->row() - NewSize.y;
+            std::size_t OffsetSize = 0;
+            for (std::size_t i = 0; i < this->col(); ++i)
             {
-                Offsets.push_back(float64(i - int64(CoeffCount)));
+                Data.erase(Data.begin() + ((i + 1) * NewSize.y),
+                    Data.begin() + ((i + 1) * this->row() - OffsetSize));
+                OffsetSize += EraseSize;
             }
-            break;
         }
-
-        SetCoefficients<decltype(Offsets.begin()), CoeffCount>(DeriOrder, Offsets.begin(), Offsets.end());
-    }
-
-    float64 operator()(float64 _Xx)const;
-};
-
-_SCICXX_END
-
-using DerivativeFunction = _SCICXX __Basic_FDM_Derivative_Engine;
-
-
-
-/****************************************************************************************\
-*                                  Limit of a function                                   *
-\****************************************************************************************/
-
-// These functions are normal operator or math functions with L'Hopital's rule
-
-_SCICXX_BEGIN
-
-class __Calculateur_Limite_LHopital
-{
-public:
-    DerivativeFunction _M_Fx;
-    DerivativeFunction _M_Gx;
-
-    __Calculateur_Limite_LHopital() {}
-
-    __Calculateur_Limite_LHopital(Function1D _Fx, Function1D _Gx)
-        : _M_Fx(_Fx), _M_Gx(_Gx) {}
-
-    __Calculateur_Limite_LHopital(float64 (*_PFunc1)(float64), float64 (*_PFunc2)(float64))
-        : _M_Fx(_PFunc1), _M_Gx(_PFunc2) {}
-
-    template<typename _Functor1, typename _Functor2>
-    __Calculateur_Limite_LHopital(_Functor1 _Func1, _Functor2 _Func2)
-        : _M_Fx(_Func1), _M_Gx(_Func2) {}
-
-    template<uint64 CoeffCount>
-    void SetDeriOrder(uint64 DeriOrder, __Basic_FDM_Derivative_Engine::DiffType FDiff
-                                        = __Basic_FDM_Derivative_Engine::Central)
-    {
-        _M_Fx.SetCoefficients<CoeffCount>(DeriOrder, FDiff);
-        _M_Gx.SetCoefficients<CoeffCount>(DeriOrder, FDiff);
-    }
-
-    void SetPrecision(float64 PErr)
-    {
-        _M_Fx._M_StepScaleNLog = PErr;
-        _M_Gx._M_StepScaleNLog = PErr;
-    }
-
-    float64 operator()(float64 x);
-};
-
-_SCICXX_END
-
-/**
- * @brief Divition with L'Hopital's rule, use for 0/0 and inf/inf
- */
-float64 LHopitalDiv(Function1D Numerateur, Function1D Denominateur, float64 x, float64 PErr = 10,
-    _SCICXX __Calculateur_Limite_LHopital _Engine = _SCICXX __Calculateur_Limite_LHopital());
-
-/**
- * @brief Multiplication with L'Hopital's rule, use for 0 * inf
- */
-float64 LHopitalMul(Function1D Facteur1, Function1D Facteur2, float64 x, float64 PErr = 10,
-    _SCICXX __Calculateur_Limite_LHopital _Engine = _SCICXX __Calculateur_Limite_LHopital());
-
-/**
- * @brief Subtract with L'Hopital's rule, use for inf - inf
- */
-float64 LHopitalSub(Function1D Diminuende, Function1D Diminuteur, float64 x, float64 PErr = 10,
-    _SCICXX __Calculateur_Limite_LHopital _Engine = _SCICXX __Calculateur_Limite_LHopital());
-
-/**
- * @brief Power with L'Hopital's rule, use for 0^0, 1^inf and inf^0
- */
-float64 LHopitalPow(Function1D Base, Function1D Exposant, float64 x, float64 PErr = 10,
-    _SCICXX __Calculateur_Limite_LHopital _Engine = _SCICXX __Calculateur_Limite_LHopital());
-
-
-
-/****************************************************************************************\
-*                                        Integrals                                       *
-\****************************************************************************************/
-
-/**
- *  Presets of samples for sample-based integral functions
- */
-
-#define __LO_PREC 4.0000000000000000000000000000000 // Low precision with 10000 sample points
-#define __MD_PREC 4.5563025007672872650175335959592 // Mid precision with 36000 sample points
-#define __HI_PREC 4.8920946026904804017152719559219 // High precision with 78000 sample points
-#define __UT_PREC 5.1335389083702175141813865785018 // Ultra precision with 136000 sample points
-#define __EX_PREC 5.2504200023088939799372822644269 // Extreme precision with 178000 sample points
-
-_SCICXX_BEGIN
-
-class __Trapezoidal_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
-{
-public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
-    using _Sample_Type = std::vector<float64>;
-
-    enum Method
-    {
-        NonUniform,
-        Uniform
-    }_M_Method;
-
-    constexpr static const float64 _DefLogSteps = __HI_PREC;
-    float64 _M_LogSteps; // logarithm of steps of the procedure
-
-    __Trapezoidal_Integral_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(Uniform) {}
-
-    __Trapezoidal_Integral_Engine(std::function<float64(float64)> _Right,
-                                  float64 _Steps = _DefLogSteps, Method _Method = Uniform)
-        : _Mybase(_Right), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    __Trapezoidal_Integral_Engine(float64 (*_PFunc)(float64),
-                                  float64 _Steps = _DefLogSteps, Method _Method = Uniform)
-        : _Mybase(_PFunc), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    template<typename _Functor>
-    __Trapezoidal_Integral_Engine(_Functor _Func,
-                                  float64 _Steps = _DefLogSteps, Method _Method = Uniform)
-        : _Mybase(_Func), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    template<typename _Functor>
-    __Trapezoidal_Integral_Engine& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    float64 _E_NonUniform(_Sample_Type _Samples, bool IsInterval = 0)const;
-    float64 _E_Uniform(float64 _Min, float64 _Max)const;
-
-    float64 operator()(float64 _Xx)const override; // override
-    float64 operator()(float64 _Min, float64 _Max)const;
-
-    template<typename _Iterator>
-    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)const
-    {
-        if (IsInterval)
+        else if (NewSize.y > this->row())
         {
-            _Sample_Type _Samples(_First, _Last);
-            return _E_NonUniform(_Samples, 1);
+            std::size_t InsertSize = NewSize.y - this->row();
+            std::size_t OffsetSize = 0;
+            for (std::size_t i = 0; i < this->col(); ++i)
+            {
+                std::vector<_Ty> Insert(InsertSize);
+                Data.insert(Data.begin() + (i + 1) * this->row() + OffsetSize,
+                    Insert.begin(), Insert.end());
+                OffsetSize += InsertSize;
+            }
         }
-
-        switch (_M_Method)
-        {
-        default:
-        case NonUniform:
-            return _E_NonUniform(_Sample_Type(_First, _Last));
-        case Uniform:
-            return _E_Uniform(*_First, *(_Last - 1));
-        }
-    }
-};
-
-class __Simpson_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
-{
-public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
-    using _Sample_Type = std::vector<float64>;
-
-    enum Method
-    {
-        /**
-         * @brief Simpson method based upon a quadratic interpolation.
-         * also called Simpson's 1/3 rule
-         */
-        CompositeQuadratic,
-
-        /**
-         * @brief Simpson method based upon a cubic interpolation.
-         * also called Simpson's 3/8 rule
-         */
-        CompositeCubic,
-
-        /**
-         * @brief Method obtained by combining the composite Simpson's 1/3 rule
-         * with the one consisting of using Simpson's 3/8 rule in the extreme
-         * subintervals and Simpson's 1/3 rule in the remaining subintervals.
-         */
-        Extended,
-
-        /**
-         * @brief Method used for estimating full area of narrow peak-like functions
-         * with two points outside of the integrated region are exploited.
-         * Sample format: x.front() and x.back() are the points outside the range
-         * and real range is x[1 - (size-2)].
-         */
-        NarrowPeaks1,
-
-        /**
-         * @brief Another method used for narrow peak-like functions
-         * but only points within integration region are used.
-         */
-        NarrowPeaks2,
-
-        /**
-         * @brief Composite Simpson's rule for irregularly spaced data.
-         * Both Sample points and sub-intervals data are supported.
-         * When using sub-intervals, Input array must begin with start point
-         * and rest values are the length of sub-intervals[1..n], the end
-         * point will be auto-calculated.
-         * This method has the highest precision from testing.
-         */
-        Irregularly
-    }_M_Method;
-
-    constexpr static const float64 _DefLogSteps = __HI_PREC;
-    float64 _M_LogSteps; // logarithm of steps of the procedure
-
-    __Simpson_Integral_Engine() : _Mybase(), _M_LogSteps(_DefLogSteps), _M_Method(CompositeQuadratic) {}
-
-    __Simpson_Integral_Engine(std::function<float64(float64)> _Right,
-                              float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
-        : _Mybase(_Right), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    __Simpson_Integral_Engine(float64 (*_PFunc)(float64),
-                              float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
-        : _Mybase(_PFunc), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    template<typename _Functor>
-    __Simpson_Integral_Engine(_Functor _Func,
-                              float64 _Steps = _DefLogSteps, Method _Method = CompositeQuadratic)
-        : _Mybase(_Func), _M_LogSteps(_Steps), _M_Method(_Method) {}
-
-    template<typename _Functor>
-    __Simpson_Integral_Engine& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
+        Size.y = NewSize.y;
     }
 
-    float64 _E_CompositeQuadratic(_Sample_Type _Samples)const;
-    float64 _E_CompositeCubic(_Sample_Type _Samples)const;
-    float64 _E_Extended(_Sample_Type _Samples)const;
-    float64 _E_NarrowPeaks1(_Sample_Type _Samples)const;
-    float64 _E_NarrowPeaks2(_Sample_Type _Samples)const;
-    float64 _E_Irregularly(_Sample_Type _Samples, bool IsInterval = 0)const;
+    _NODISCARD _CONSTEXPR20 std::size_t col()const noexcept {return Size.x;}
+    _NODISCARD _CONSTEXPR20 std::size_t row()const noexcept {return Size.y;}
 
-    float64 operator()(float64 _Xx)const override; // override
-    float64 operator()(float64 _Min, float64 _Max)const;
+    _NODISCARD _CONSTEXPR20 bool empty() const noexcept {return Data.empty();}
 
-    template<typename _Iterator>
-    float64 operator()(_Iterator& _First, _Iterator& _Last, bool IsInterval = 0)const
+    _NODISCARD _CONSTEXPR20 col_type operator[](size_t row)const noexcept
     {
-        _Sample_Type _Samples(_First, _Last);
-
-        if (IsInterval) {return _E_Irregularly(_Samples, 1);}
-
-        switch (_M_Method)
-        {
-        default:
-        case CompositeQuadratic:
-            return _E_CompositeQuadratic(_Samples);
-        case CompositeCubic:
-            return _E_CompositeCubic(_Samples);
-        case Extended:
-            return _E_Extended(_Samples);
-        case NarrowPeaks1:
-            return _E_NarrowPeaks1(_Samples);
-        case NarrowPeaks2:
-            return _E_NarrowPeaks2(_Samples);
-        case Irregularly:
-            return _E_Irregularly(_Samples);
-        }
+        return GetColumn(row);
     }
-};
-
-class __Romberg_Integral_Engine : public __CSE_AdvMath_Function_Invoker<float64(float64)>
-{
-public:
-    using _Mybase = __CSE_AdvMath_Function_Invoker<float64(float64)>; // pointer to the function to be integrated
-
-    constexpr static const size_t _DefMaxSteps = 300;
-    constexpr static const float64 _DefPAcc = 8.;
-    size_t  _M_MaxSteps; // maximum steps of the procedure
-    float64 _M_p_Acc;    // negative logarithm of desired accuracy
-
-    __Romberg_Integral_Engine() : _Mybase(), _M_MaxSteps(_DefMaxSteps), _M_p_Acc(_DefPAcc) {}
-
-    __Romberg_Integral_Engine(std::function<float64(float64)> _Right,
-                              size_t _MaxSteps = _DefMaxSteps, float64 _p_Acc = _DefPAcc)
-        : _Mybase(_Right), _M_MaxSteps(_MaxSteps), _M_p_Acc(_p_Acc) {}
-
-    __Romberg_Integral_Engine(float64 (*_PFunc)(float64),
-                              size_t _MaxSteps = _DefMaxSteps, float64 _p_Acc = _DefPAcc)
-        : _Mybase(_PFunc), _M_MaxSteps(_MaxSteps), _M_p_Acc(_p_Acc) {}
-
-    template<typename _Functor>
-    __Romberg_Integral_Engine(_Functor _Func,
-                              size_t _MaxSteps = _DefMaxSteps, float64 _p_Acc = _DefPAcc)
-        : _Mybase(_Func), _M_MaxSteps(_MaxSteps), _M_p_Acc(_p_Acc) {}
-
-    template<typename _Functor>
-    __Romberg_Integral_Engine& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    float64 operator()(float64 _Xx)const override; // override
-    float64 operator()(float64 _Min, float64 _Max)const;
-
-    // A debugger for Romberg integration
-    matrix<5, 5> RombergAnalysis(float64 _Min, float64 _Max);
-    static matrix<5, 5> RombergAnalysis(std::function<float64(float64)> _Func, float64 _Min, float64 _Max);
-};
-
-class __Infinite_Integral_Nomalizer : public __CSE_AdvMath_Function_Invoker<float64(float64)>
-{
-public:
-    using _Mybase      = __CSE_AdvMath_Function_Invoker<float64(float64)>;
-    using _Sample_Type = std::map<float64, float64>;
-
-    enum FuncType
-    {
-        WholeLine,   // [-inf, +inf]
-        HasMaxValue, // [-inf, x]
-        HasMinValue  // [x, +inf]
-    }_M_FuncType;
-
-    _Sample_Type _M_Special_Cases; // Special case of function points, normally values at breakopint.
-    float64 _M_Breakpoint;
-
-    __Infinite_Integral_Nomalizer() : _Mybase() {}
-
-    __Infinite_Integral_Nomalizer(std::function<float64(float64)> _Right)
-        : _Mybase(_Right) {}
-
-    __Infinite_Integral_Nomalizer(float64 (*_PFunc)(float64))
-        : _Mybase(_PFunc) {}
-
-    template<typename _Functor>
-    __Infinite_Integral_Nomalizer(_Functor _Func)
-        : _Mybase(_Func) {}
-
-    template<typename _Functor>
-    __Infinite_Integral_Nomalizer& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    float64 LowLimit()const;
-    float64 UpLimit()const;
-
-    void SetSpecialCase(float64 _Xx, float64 _Fx, bool _Cover = 0);
-    void DelSpecialCase(float64 _Xx);
-
-    constexpr auto _K_WholeLine()const;
-    constexpr auto _K_HasMaxValue()const;
-    constexpr auto _K_HasMinValue()const;
-
-    void CreateDefSpecialCases();
-    std::function<float64(float64)> gen()const;
-
-    float64 operator()(float64)const override;
-};
-
-_SCICXX_END
-
-        /**
- * @brief Normalize a function for solving Integrals over infinite intervals
- * @link https://en.wikipedia.org/wiki/Numerical_integration
- * @param PFunc - Input function
- * @param FuncType - Type of Infinite integral, values can be the whole line or has begin or end point
- * @param Breakpoint - Begin or end point of the integral, used for semi-infinite intervals
- * @param AddDefaultSpecialCases - Create default special cases.
- * @param SpecialCases - Special cases. Some of the points, espeially the upper or lower limit
- * in normalized function, aka. -1 and 1 for whole-line and 0 or 1 for semi-infinite integrals,
- * maybe has undefined values but their limits are exists. These values need to be set manually.
- * @return the normalized function. Use "gen()" to generate lambda expression.
- */
-_SCICXX __Infinite_Integral_Nomalizer Normalize(std::function<float64(float64)> PFunc,
-    _SCICXX __Infinite_Integral_Nomalizer::FuncType FuncType =
-    _SCICXX __Infinite_Integral_Nomalizer::WholeLine, float64 Breakpoint = 0,
-    bool AddDefaultSpecialCases = true, std::map<float64, float64> SpecialCases
-        = std::map<float64, float64>());
-
-// Default engines
-using IntegralFunction = _SCICXX __Romberg_Integral_Engine;
-using NormalizedInfiniteIntegral = _SCICXX __Infinite_Integral_Nomalizer;
-
-/****************************************************************************************\
-*                            Ordinary Differential Equations                             *
-\****************************************************************************************/
-
-_SCICXX_BEGIN
-
-/**
- * Standard identifier of ODEs
- * Converted from the same feature in SciPy, almost a literal translation.
- *
- * Below is the original description from SciPy:
- *
- *  This function numerically integrates a system of ordinary differential
- *  equations given an initial value:
- *
- *      y' = f(x, y)
- *      y(x0) = y0
- *
- *  Here x is a 1-D independent variable (time), y(x) is an
- *  N-D vector-valued function (state), and an N-D
- *  vector-valued function f(x, y) determines the differential equations.
- *  The goal is to find y(x) approximately satisfying the differential
- *  equations, given an initial value y(x0)=y0.
- *
- *  SciPy is available under the BSD-3-clause license,
- *  see "ODEs.cc" for more information.
- *
- *  This function using iterator-form to make compatibilities for
- *  pointers and iterators in C++, like this:
- *
- *      y' = f(x, begin, end, solutions)
- *
- *  where "begin" and "end" is the begin and end iterator of cofficient
- *  (y0) array, and [begin, end) is used in processing. Results will be
- *  stored in "solution" array and this parameter is the begin iterator
- *  of this array. "x" is the scalar (x0).
- *
- * @param _CoeffFirst - Begin iterator of coefficient array.
- * @param _CoeffLast - End iterator of coefficient array,
- * and this iterator won't included when processing.
- * @param _RootDestination - Begin iterator of solution array,
- * aka. roots will be exported to this array.
- * @param _Scalar - Scalar
- */
-template<uint64 EquationCount>
-using __ODE_Fty_Untemplated = fvec<EquationCount>(float64 _Scalar, fvec<EquationCount> _Coeffs);
-
-template<std::size_t _Nm>
-float64 __RMS_Norm(fvec<_Nm> Input)
-{
-    float64 SumTemp = 0;
-    for (size_t i = 0; i < _Nm; ++i){SumTemp += pow(Input[i], 2);}
-    return sqrt(SumTemp / float64(_Nm));
-}
-
-template<uint64 EquationCount> requires (EquationCount > 0)
-struct __ODE_Engine_Base// : public __CSE_AdvMath_Function_Invoker<__ODE_Fty<IteratorType>>
-{
-public:
-    using _Fty       = __ODE_Fty_Untemplated<EquationCount>;
-    //using _Mybase    = __CSE_AdvMath_Function_Invoker<_Fty>;
-
-    using ValueArray = fvec<EquationCount>;
-    using StateType  = std::map<float64, ValueArray>;
-
-    struct DenseOutput;
-    virtual void SaveDenseOutput() = 0;
-
-    enum State
-    {
-        Processing = -1,
-        Succeeded  = 0,
-        Failed     = 1
-    };
 
 protected:
-    std::function<_Fty>  _M_Invoker;      // Function invoker
-    enum State           _M_State;        // Current status of the engine.
-    float64              _M_EndPoint;     // End point
-    bool                 _M_Direction;    // 0 if positive and 1 if negative
-    StateType            _M_StateBuffer;  // Current state
+    void _M_throw_out_of_range()const {throw std::logic_error("Dynamic Matrix index out of range.");}
 
-public:
-    __ODE_Engine_Base() {}
-
-    __ODE_Engine_Base(std::function<_Fty> _Right)
-        : _M_Invoker(_Right) {}
-
-    __ODE_Engine_Base(_Fty* _PFunc)
-        : _M_Invoker(_PFunc) {}
-
-    template<typename _Functor>
-    __ODE_Engine_Base(_Functor _Func)
-        : _M_Invoker(_Func) {}
-
-    template<typename _Functor>
-    __ODE_Engine_Base& operator=(_Functor _Func)
+    _CONSTEXPR20 void _M_range_check(size_type __n)const
     {
-        _M_Invoker = _Func;
-        return *this;
-    }
-
-    float64 CurrentPoint()const // Current point
-    {
-        return _M_Direction ? (_M_StateBuffer.begin())->first : (--_M_StateBuffer.end())->first;
-    }
-
-    float64 PrevPoint()const // Previous point
-    {
-        if (_M_StateBuffer.size() <= 1) {return __Float64::FromBytes(BIG_NAN_DOUBLE);}
-        if (_M_Direction) {return ++_M_StateBuffer.begin()->first;}
-        auto end = --_M_StateBuffer.end();
-        return (--end)->first;
-    }
-
-    StateType Solutions()const {return _M_StateBuffer;}
-
-    enum State CurrentState()const {return _M_State;}
-
-    constexpr float64 size()const {return abs(CurrentPoint() - PrevPoint());}
-
-    virtual void Clear() = 0;
-
-    void __cdecl InvokeRun() throw()
-    {
-        if (_M_State != Processing) {throw std::logic_error("Engine is finished.");}
-
-        if (CurrentPoint() == _M_EndPoint)
+        if (__n.x >= this->col() || __n.y >= this->row())
         {
-            _M_State = Succeeded;
-            return;
-        }
-
-        int ExitCode = Run();
-
-        if (ExitCode)
-        {
-            _M_State = State(ExitCode);
-            return;
-        }
-
-        if (((_M_Direction ? -1. : 1.) * (CurrentPoint() - _M_EndPoint)) > 0)
-        {
-            _M_State = Succeeded;
-            return;
+            _M_throw_out_of_range();
         }
     }
 
-    virtual int Run() = 0;
-
-    virtual ValueArray operator()(float64 _Xx)const = 0;
-};
-
-template<uint64 EquationCount>
-struct __ODE_Dense_Output_Base
-{
 public:
-    using ValueArray = fvec<EquationCount>;
-
-protected:
-    float64 _M_First, _M_Last;
-
-public:
-    __ODE_Dense_Output_Base() {}
-    __ODE_Dense_Output_Base(float64 _Fi, float64 _La)
-        : _M_First(_Fi), _M_Last(_La) {}
-
-    float64 first()const {return _M_First;}
-    float64 last()const {return _M_Last;}
-    float64 size()const {return _M_Last - _M_First;}
-
-    virtual ValueArray operator()(float64 _Xx)const = 0;
-};
-
-///////////////////////////////////RUNGE-KUTTA METHODS///////////////////////////////////
-
-/**
- * @brief Base class for explicit Runge-Kutta methods.
- */
-template<uint32_t ErrorEsitmatorOrder, uint32_t StepTakenOrder, uint32_t NStages,
-         uint64 DenseOutputOrder, uint64 EquationCount> requires (EquationCount > 0)
-struct __Runge_Kutta_ODE_Engine_Base : public __ODE_Engine_Base<EquationCount>
-{
-public:
-    using _Mybase    = __ODE_Engine_Base<EquationCount>;
-    using ValueArray = _Mybase::ValueArray;
-    using StateType  = matrix<NStages + 1, EquationCount>;
-
-    struct DenseOutput : public __ODE_Dense_Output_Base<EquationCount>
+    _CONSTEXPR20 reference at(size_type pos)
     {
-        using Mybase   = __ODE_Dense_Output_Base<EquationCount>;
-        using QTblType = matrix<DenseOutputOrder, EquationCount>;
+        return at(pos.x, pos.y);
+    }
 
-        QTblType   QTable = QTblType(0.);
-        ValueArray Base;
-
-        DenseOutput() {}
-        DenseOutput(float64 First, float64 Last, ValueArray BaseValue, QTblType QTbl)
-            : Mybase(First, Last), Base(BaseValue), QTable(QTbl) {}
-
-        ValueArray operator()(float64 _Xx)const override
-        {
-            float64 x = (_Xx - Mybase::_M_First) / Mybase::size();
-            matrix<1, DenseOutputOrder> p;
-            for (int i = 0; i < DenseOutputOrder; ++i)
-            {
-                p[0][i] = pow(x, i + 1);
-            }
-            auto y = Mybase::size() * (QTable * p)[0];
-            return Base + y;
-        }
-
-        friend struct __Runge_Kutta_ODE_Engine_Base;
-    };
-
-    std::map<float64, DenseOutput> Interpolants;
-
-    void SaveDenseOutput()override
+    _CONSTEXPR20 reference at(size_t col, size_t row)
     {
-        matrix<DenseOutputOrder, NStages + 1> PTable;
-        for (int i = 0; i < DenseOutputOrder; ++i)
-        {
-            for (int j = 0; j < NStages + 1; ++j)
-            {
-                PTable[i][j] = *(_T_PTable + (DenseOutputOrder) * j + i);
-            }
-        }
+        _M_range_check({col, row});
+        return Data[col * this->row() + row];
+    }
 
-        decltype(_Mybase::_M_StateBuffer.begin()) PrevState;
-        if (_Mybase::_M_Direction)
+    _CONSTEXPR20 const_reference at(size_type pos)const
+    {
+        return at(pos.x, pos.y);
+    }
+
+    _CONSTEXPR20 const_reference at(size_t col, size_t row)const
+    {
+        _M_range_check({col, row});
+        return Data[col * this->row() + row];
+    }
+
+    void fill(_Ty value)
+    {
+        std::fill(Data.begin(), Data.end(), value);
+    }
+
+    // ------------------------------ CURD ------------------------------ //
+
+    /**
+     * @brief 添加整列
+     */
+    _CONSTEXPR20 void AddColumn(size_t pos, const col_type& col)noexcept
+    {
+        if (pos > this->col()) {_M_throw_out_of_range();}
+        if (col.size() >= this->row())
         {
-            PrevState = ++_Mybase::_M_StateBuffer.begin();
+            Data.insert(Data.begin() + (pos * this->row()), col.begin(), col.begin() + this->row());
         }
         else
         {
-            auto end = --_Mybase::_M_StateBuffer.end();
-            PrevState = --end;
+            col_type NewCol(col);
+            NewCol.resize(this->row());
+            Data.insert(Data.begin() + (pos * this->row()), NewCol.begin(), NewCol.end());
         }
-
-        Interpolants.insert({_Mybase::CurrentPoint(),
-            DenseOutput(PrevState->first, _Mybase::CurrentPoint(), PrevState->second, KTable * PTable)});
+        ++Size.x;
     }
-
-    constexpr static const float64 MinFactor  = 0.2;
-    constexpr static const float64 MaxFactor  = 10.;
-    constexpr static const float64 FactorSafe = 0.9;
-
-protected:
-    const float64* _T_CTable;
-    const float64* _T_ATable;
-    const float64* _T_BTable;
-    const float64* _T_ETable;
-    const float64* _T_PTable;
-
-    ValueArray     CurrentFx;
-    StateType      KTable       = StateType(0.);
-
-    float64        RelTolerNLog = 3;
-    float64        AbsTolerNLog = 6;
-    float64        MaxStep      = __Float64::FromBytes(POS_INF_DOUBLE);
-    float64        AbsStep;
-    const float64  ErrExponent  = ErrorEsitmatorOrder + 1;
-
-public:
-    __Runge_Kutta_ODE_Engine_Base() : _Mybase() {}
-
-    __Runge_Kutta_ODE_Engine_Base(std::function<typename _Mybase::_Fty> _Right)
-        : _Mybase(_Right) {}
-
-    __Runge_Kutta_ODE_Engine_Base(typename _Mybase::_Fty* _PFunc)
-        : _Mybase(_PFunc) {}
-
-    template<typename _Functor>
-    __Runge_Kutta_ODE_Engine_Base(_Functor _Func)
-        : _Mybase(_Func) {}
-
-    template<typename _Functor>
-    __Runge_Kutta_ODE_Engine_Base& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    void Init(ValueArray InitState, float64 First, float64 Last,
-        float64 InitStep = __Float64::FromBytes(BIG_NAN_DOUBLE))
-    {
-        _Mybase::_M_StateBuffer.insert({First, InitState});
-        _Mybase::_M_EndPoint = Last;
-        CurrentFx = _Mybase::_M_Invoker(First, InitState);
-        _Mybase::_M_Direction = __Float64(_Mybase::_M_EndPoint - _Mybase::CurrentPoint()).Negative;
-        _Mybase::_M_State = _Mybase::Processing;
-        if (isnan(InitStep)){SetInitStep();}
-        else {AbsStep = InitStep;}
-    }
-
-    void SetInitStep()
-    {
-        if (_Mybase::_M_StateBuffer.empty()) {AbsStep = __Float64::FromBytes(POS_INF_DOUBLE);}
-
-        float64 RelToler = pow(10, -RelTolerNLog);
-        float64 AbsToler = pow(10, -AbsTolerNLog);
-
-        ValueArray y0 = _Mybase::_M_StateBuffer.begin()->second;
-        ValueArray Scale = AbsToler + abs(y0) * RelToler;
-
-        float64 d0 = __RMS_Norm(y0 / Scale), d1 = __RMS_Norm(CurrentFx / Scale), h0;
-
-        if (d0 < 1E-5 || d1 < 1E-5) {h0 = 1E-6;}
-        else {h0 = 0.01 * d0 / d1;}
-
-        ValueArray y1 = y0 + h0 * (_Mybase::_M_Direction ? -1 : 1) * CurrentFx, f1;
-        f1 = _Mybase::_M_Invoker(_Mybase::CurrentPoint() + h0 * (_Mybase::_M_Direction ? -1 : 1), y1);
-
-        float64 d2 = __RMS_Norm((f1 - CurrentFx) / Scale) / h0;
-
-        float64 h1;
-        if (d1 <= 1E-15 && d2 <= 1E-15){h1 = max(1E-6, h0 * 1E-3);}
-        else {h1 = yroot((0.01 / max(d1, d2)), ErrExponent);}
-
-        AbsStep = min(100 * h0, h1);
-    };
-
-    void Clear()override
-    {
-        _Mybase::_M_State = _Mybase::Processing;
-        _Mybase::_M_EndPoint = 0;
-        _Mybase::_M_Direction = 0;
-        _Mybase::_M_StateBuffer.clear();
-        Interpolants.clear();
-        CurrentFx = ValueArray(0.);
-        KTable = StateType(0.);
-        AbsStep = 0;
-    }
-
-    int Run()override
-    {
-        auto t = _Mybase::CurrentPoint();
-        ValueArray y = _Mybase::_M_Direction ?
-            _Mybase::_M_StateBuffer.begin()->second :
-            (--_Mybase::_M_StateBuffer.end())->second;
-
-        float64 RelToler = pow(10, -RelTolerNLog);
-        float64 AbsToler = pow(10, -AbsTolerNLog);
-        float64 MinStep = 10. * abs((nextafter(t, (_Mybase::_M_Direction ? -1 : 1) *
-            std::numeric_limits<float64>::infinity())) - t);
-
-        float64 AbsH;
-        if (AbsStep > MaxStep) {AbsH = MaxStep;}
-        else if (AbsStep < MinStep) {AbsH = MinStep;}
-        else {AbsH = AbsStep;}
-
-        bool Accept = 0, Reject = 0;
-        float64 h, NextT;
-        ValueArray NewY, NewF;
-
-        while (!Accept)
-        {
-            if (AbsH < MinStep) {return 1;}
-
-            h = (_Mybase::_M_Direction ? -1 : 1) * AbsH;
-            NextT = t + h;
-
-            if ((_Mybase::_M_Direction ? -1 : 1) * (NextT - _Mybase::_M_EndPoint) > 0)
-            {
-                NextT = _Mybase::_M_EndPoint;
-            }
-
-            h = NextT - t;
-            float64 NewAbsStep = abs(h);
-
-            KTable[0] = CurrentFx;
-            for (int i = 1; i < NStages; ++i)
-            {
-                ValueArray dy;
-                for (int j = 0; j < EquationCount; ++j)
-                {
-                    dy[j] = 0;
-                    for (int k = 0; k < i; ++k)
-                    {
-                        dy[j] += KTable[k][j] * _T_ATable[i * StepTakenOrder + k];
-                    }
-                    dy[j] *= h;
-                }
-                KTable[i] = _Mybase::_M_Invoker(t + _T_CTable[i] * h, y + dy);
-            }
-
-            matrix<NStages, EquationCount> KTableWithoutBack(KTable);
-            matrix<1, NStages> BTable((float64*)_T_BTable);
-            auto YScale = KTableWithoutBack * BTable;
-            NewY = y + h * YScale[0];
-            NewF = _Mybase::_M_Invoker(t + h, NewY);
-            KTable[NStages] = NewF;
-
-            // ---------- Runge-Kutta solver End ---------- //
-
-            ValueArray Scale = AbsToler + max(y, NewY) * RelToler;
-
-            // ---------- Error Esitmator Begin ---------- //
-
-            matrix<1, NStages + 1> ETable((float64*)_T_ETable);
-            auto EstmErrorMat = KTable * ETable;
-            ValueArray EstmError = (EstmErrorMat[0] * h) / Scale;
-
-            float64 EstmErrNorm, EENTempSum = 0;
-            for (size_t i = 0; i < EquationCount; ++i) {EENTempSum += pow(EstmError[i], 2);}
-            EstmErrNorm = sqrt(EENTempSum / float64(EstmError.size()));
-
-            // ---------- Error Esitmator End ---------- //
-
-            float64 Factor;
-            if (EstmErrNorm < 1)
-            {
-                if (EstmErrNorm == 0) {Factor = MaxFactor;}
-                else {Factor = min(MaxFactor, FactorSafe * yroot(EstmErrNorm, -ErrExponent));}
-                if (Reject) {Factor = min(1, Factor);}
-                AbsH *= Factor;
-                Accept = 1;
-            }
-            else
-            {
-                AbsH *= max(MinFactor, FactorSafe * yroot(EstmErrNorm, -ErrExponent));
-                Reject = 1;
-            }
-        }
-
-        _Mybase::_M_StateBuffer.insert({NextT, NewY});
-        AbsStep = AbsH;
-        CurrentFx = NewF;
-
-        return 0;
-    }
-
-    ValueArray operator()(float64 _Xx)const override
-    {
-        DenseOutput Segment;
-        for (auto i : Interpolants)
-        {
-            float64 Min = min(i.second._M_First, i.second._M_Last);
-            float64 Max = max(i.second._M_First, i.second._M_Last);
-            if (Min <= _Xx && _Xx <= Max)
-            {
-                Segment = i.second;
-                break;
-            }
-        }
-        return Segment(_Xx);
-    }
-};
-
-// Below are implementations of this base class above.
-
-extern const uint64 __RK23_C_Table[3];
-extern const uint64 __RK23_A_Table[9];
-extern const uint64 __RK23_B_Table[3];
-extern const uint64 __RK23_E_Table[4];
-extern const uint64 __RK23_P_Table[12];
-
-/**
- * Explicit Runge-Kutta method of order 3(2). (From SciPy)
- *
- * Explicit Runge-Kutta method of order 3(2) [3]. The error is controlled
- * assuming accuracy of the second-order method, but steps are taken using
- * the third-order accurate formula (local extrapolation is done). A cubic
- * Hermite polynomial is used for the dense output. Can be applied in the
- * complex domain.
- *
- * Can be applied in the complex domain.(Not implemented)
- *
- * @link P. Bogacki, L.F. Shampine, “A 3(2) Pair of Runge-Kutta Formulas”,
- * Appl. Math. Lett. Vol. 2, No. 4. pp. 321-325, 1989.
- * https://www.sciencedirect.com/science/article/pii/0893965989900797?via%3Dihub
- */
-template<uint64 EquationCount> requires (EquationCount > 0)
-class __RK23_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>
-{
-public:
-    using _Mybase = __Runge_Kutta_ODE_Engine_Base<2, 3, 3, 3, EquationCount>;
-
-    __RK23_Runge_Kutta_Engine() : _Mybase() {}
-
-    __RK23_Runge_Kutta_Engine(std::function<typename _Mybase::_Fty> _Right)
-        : _Mybase(_Right) {}
-
-    __RK23_Runge_Kutta_Engine(typename _Mybase::_Fty* _PFunc)
-        : _Mybase(_PFunc) {}
-
-    template<typename _Functor>
-    __RK23_Runge_Kutta_Engine(_Functor _Func)
-        : _Mybase(_Func) {}
-
-    template<typename _Functor>
-    __RK23_Runge_Kutta_Engine& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    void Init(_Mybase::ValueArray InitState, float64 First, float64 Last,
-        float64 InitStep = __Float64::FromBytes(BIG_NAN_DOUBLE))
-    {
-        _Mybase::_T_CTable = (float64*)__RK23_C_Table;
-        _Mybase::_T_ATable = (float64*)__RK23_A_Table;
-        _Mybase::_T_BTable = (float64*)__RK23_B_Table;
-        _Mybase::_T_ETable = (float64*)__RK23_E_Table;
-        _Mybase::_T_PTable = (float64*)__RK23_P_Table;
-        _Mybase::Init(InitState, First, Last, InitStep);
-    }
-};
-
-extern const float64 __RK45_C_Table[6];
-extern const float64 __RK45_A_Table[30];
-extern const float64 __RK45_B_Table[6];
-extern const float64 __RK45_E_Table[7];
-extern const float64 __RK45_P_Table[28];
-
-/**
- * Explicit Runge-Kutta method of order 4 and 5. (From SciPy)
- *
- * This uses the Dormand-Prince pair of formulas [1]. The error is controlled
- * assuming accuracy of the fourth-order method accuracy, but steps are taken
- * using the fifth-order accurate formula (local extrapolation is done).
- * A quartic interpolation polynomial is used for the dense output [2].
- *
- * Can be applied in the complex domain.(Not implemented)
- *
- * @link [1] J. R. Dormand, P. J. Prince, “A family of embedded Runge-Kutta formulae”,
- * Journal of Computational and Applied Mathematics, Vol. 6, No. 1, pp. 19-26, 1980.
- * https://core.ac.uk/download/pdf/81989096.pdf
- * @link [2] L. W. Shampine, “Some Practical Runge-Kutta Formulas”,
- * Mathematics of Computation,, Vol. 46, No. 173, pp. 135-150, 1986.
- * https://www.semanticscholar.org/paper/Some-practical-Runge-Kutta-formulas-Shampine/61b1c882c3c728c2772dd19f75ba41e7b3e5e9af
- */
-template<uint64 EquationCount> requires (EquationCount > 0)
-class __RK45_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>
-{
-public:
-    using _Mybase = __Runge_Kutta_ODE_Engine_Base<4, 5, 6, 4, EquationCount>;
-
-    __RK45_Runge_Kutta_Engine() : _Mybase() {}
-
-    __RK45_Runge_Kutta_Engine(std::function<typename _Mybase::_Fty> _Right)
-        : _Mybase(_Right) {}
-
-    __RK45_Runge_Kutta_Engine(typename _Mybase::_Fty* _PFunc)
-        : _Mybase(_PFunc) {}
-
-    template<typename _Functor>
-    __RK45_Runge_Kutta_Engine(_Functor _Func)
-        : _Mybase(_Func) {}
-
-    template<typename _Functor>
-    __RK45_Runge_Kutta_Engine& operator=(_Functor _Func)
-    {
-        return _Mybase::operator=(_Func);
-    }
-
-    void Init(_Mybase::ValueArray InitState, float64 First, float64 Last,
-        float64 InitStep = __Float64::FromBytes(BIG_NAN_DOUBLE))
-    {
-        _Mybase::_T_CTable = __RK45_C_Table;
-        _Mybase::_T_ATable = __RK45_A_Table;
-        _Mybase::_T_BTable = __RK45_B_Table;
-        _Mybase::_T_ETable = __RK45_E_Table;
-        _Mybase::_T_PTable = __RK45_P_Table;
-        _Mybase::Init(InitState, First, Last, InitStep);
-    }
-};
-
-#if 0
-extern const __float128 __DOP853_C_Table[16];
-extern const __float128 __DOP853_AB_Table[256];
-extern const __float128 __DOP853_E3_Table_Offset[6];
-extern const __float128 __DOP853_E5_Table[13];
-extern const __float128 __DOP853_D_Table[64];
-
-/**
- * Explicit Runge-Kutta method of order 8. (From SciPy, Unused feature)
- *
- *  This is a Python implementation of "DOP853" algorithm originally written
- *  in Fortran [1], [2]. Note that this is not a literate translation, but
- *  the algorithmic core and coefficients are the same.
- *
- *  Can be applied in the complex domain.(Not implemented)
- *
- *  @link [1] E. Hairer, S. P. Norsett G. Wanner, "Solving Ordinary Differential
- *  Equations I: Nonstiff Problems", Sec. II. (ISBN 978-3-540-56670-0)
- *  @link [2] Page with original Fortran code of DOP853
- *  http://www.unige.ch/~hairer/software.html.
- */
-template<uint64 EquationCount> requires (EquationCount > 0)
-class __DOP853_Runge_Kutta_Engine : public __Runge_Kutta_ODE_Engine_Base<7, 8, 12, 4, EquationCount>
-{
-    // Not translated...
-};
-#endif
-
-_SCICXX_END
 
     /**
- * @brief Solve an initial value problem for a system of ODEs.
- * @param _Func - Input Function: the time derivative of the state y at time x.
- * The calling signature is _Func(x, y, Roots&), where x is a scalar and y is
- * an std::array with y.size() = y0.size(). Result will be stored in Roots.
- * @param _Coeffs - Initial state.
- * @param _First, _Last - The solver starts with _First and integrates until it reaches _Last.
- * @return Result function, with the domain of [_First, _Last]
- */
-template<typename _Engine, uint64 EquationCount>
-_Engine CreateODEFunction(std::function<_SCICXX __ODE_Fty_Untemplated<EquationCount>> _Func,
-    typename _Engine::ValueArray _Coeffs, float64 _First, float64 _Last)
-{
-    _Engine Engine = _Func;
-    Engine.Init(_Coeffs, _First, _Last);
-    while (Engine.CurrentState() == Engine.Processing)
+     * @brief 添加整行
+     */
+    _CONSTEXPR20 void AddRow(size_t pos, const row_type& row)noexcept
     {
-        Engine.InvokeRun();
-        Engine.SaveDenseOutput();
+        if (pos > this->row()) {_M_throw_out_of_range();}
+        std::size_t OffsetSize = 0;
+        for (std::size_t i = 0; i < this->col(); ++i)
+        {
+            Data.insert(Data.begin() + i * this->row() + pos + OffsetSize,
+                row.size() > i ? row[i] : _Ty());
+            ++OffsetSize;
+        }
+        ++Size.y;
     }
-    return Engine;
-}
 
-// Default engines
-template<uint64 EquationCount> requires (EquationCount > 0)
-using DefaultODEFunction = _SCICXX __RK45_Runge_Kutta_Engine<EquationCount>;
-
-
-
-/****************************************************************************************\
-*                                  Inverting a function                                  *
-\****************************************************************************************/
-
-_SCICXX_BEGIN
-
-class __Basic_Bisection_Searcher
-{
-public:
-    Function1D _M_Invoker;    // The function whose inverse we are trying to find
-    float64    _M_MaxIterLog; // The maximum number of iterations to compute
-    float64    _M_TolerNLog;  // Stop when iterations change by less than this
-
-    __Basic_Bisection_Searcher() {}
-
-    __Basic_Bisection_Searcher(Function1D _PFunc, float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
-
-    __Basic_Bisection_Searcher(float64(*_PFunc)(float64), float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
-
-    template<typename _Functor>
-    __Basic_Bisection_Searcher(_Functor _PFunc, float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
-
-    template<typename _Functor>
-    __Basic_Bisection_Searcher& operator=(_Functor _Func)
+    /**
+     * @brief 设置整列
+     */
+    _CONSTEXPR20 void SetColumn(size_t pos, const col_type& col)noexcept
     {
-        this->_M_Invoker = _Func;
+        for (size_t i = 0; i < this->row(); ++i)
+        {
+            at(pos, i) = col[i];
+        }
+    }
+
+    /**
+     * @brief 设置整行
+     */
+    _CONSTEXPR20 void SetRow(size_t pos, const row_type& row)noexcept
+    {
+        for (size_t i = 0; i < this->col(); ++i)
+        {
+            at(i, pos) = row[i];
+        }
+    }
+
+    /**
+     * @brief 获取整列
+     */
+    _NODISCARD _CONSTEXPR20 col_type GetColumn(size_t pos)const noexcept
+    {
+        col_type col(this->row());
+        for (size_t i = 0; i < this->row(); ++i)
+        {
+            col[i] = at(pos, i);
+        }
+        return col;
+    }
+
+    /**
+     * @brief 获取整行
+     */
+    _NODISCARD _CONSTEXPR20 row_type GetRow(size_t pos)const noexcept
+    {
+        row_type row(this->col());
+        for (size_t i = 0; i < this->col(); ++i)
+        {
+            row[i] = at(i, pos);
+        }
+        return row;
+    }
+
+    /**
+     * @brief 删除整列
+     */
+    _CONSTEXPR20 void DeleteColumn(size_t pos)noexcept
+    {
+        if (pos > this->col()) {_M_throw_out_of_range();}
+        Data.erase(Data.begin() + (pos * this->row()), Data.begin() + (pos * this->row() + 1));
+        --Size.x;
+    }
+
+    /**
+     * @brief 删除整行
+     */
+    _CONSTEXPR20 void DeleteRow(size_t pos)noexcept
+    {
+        if (pos > this->row()) {_M_throw_out_of_range();}
+        std::size_t OffsetSize = 0;
+        for (std::size_t i = 0; i < this->col(); ++i)
+        {
+            Data.erase(Data.begin() + (i * this->row() + pos - OffsetSize));
+            ++OffsetSize;
+        }
+        --Size.y;
+    }
+
+    // ----------------------------- 运算符 ----------------------------- //
+
+    DynamicMatrix& operator+=(const DynamicMatrix& other)
+    {
+        if (other.col() != col() || other.row() != row())
+        {
+            throw std::logic_error("Size of matrices is not equal.");
+        }
+        for (std::size_t col = 0; col < this->col(); ++col)
+        {
+            for (std::size_t row = 0; row < this->row(); ++row)
+            {
+                at(col, row) += other.at(col, row);
+            }
+        }
         return *this;
     }
 
-    float64 operator()(float64 _Xx, float64 _Xa, float64 _Xb)const throw();
+    DynamicMatrix& operator-=(const DynamicMatrix& other)
+    {
+        if (other.col() != col() || other.row() != row())
+        {
+            throw std::logic_error("Size of matrices is not equal.");
+        }
+        for (std::size_t col = 0; col < this->col(); ++col)
+        {
+            for (std::size_t row = 0; row < this->row(); ++row)
+            {
+                at(col, row) -= other.at(col, row);
+            }
+        }
+        return *this;
+    }
+
+    DynamicMatrix& operator*=(_Ty factor)
+    {
+        for (std::size_t col = 0; col < this->col(); ++col)
+        {
+            for (std::size_t row = 0; row < this->row(); ++row)
+            {
+                at(col, row) *= factor;
+            }
+        }
+        return *this;
+    }
+
+    DynamicMatrix& operator/=(_Ty divisor)
+    {
+        for (std::size_t col = 0; col < this->col(); ++col)
+        {
+            for (std::size_t row = 0; row < this->row(); ++row)
+            {
+                at(col, row) /= divisor;
+            }
+        }
+        return *this;
+    }
+
+    bool operator==(const DynamicMatrix& other) const
+    {
+        if (other.col() != col() || other.row() != row())
+        {
+            return false;
+        }
+        for (std::size_t col = 0; col < this->col(); ++col)
+        {
+            for (std::size_t row = 0; row < this->row(); ++row)
+            {
+                if (at(col,row) != other.at(col,row))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    bool operator!=(const DynamicMatrix& other) const
+    {
+        return !(*this == other);
+    }
 };
 
-class __Newton_Raphson_Iterator
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator+(const DynamicMatrix<_Tp>& matrix)
+{
+    return matrix;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator-(const DynamicMatrix<_Tp>& matrix)
+{
+    DynamicMatrix<_Tp> result(matrix);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) = -result.at(col, row);
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator+(const DynamicMatrix<_Tp>& m1, const DynamicMatrix<_Tp>& m2)
+{
+    if (m1.col() != m2.col() || m1.row() != m2.row())
+    {
+        throw std::logic_error("Size of matrices is not equal.");
+    }
+    DynamicMatrix<_Tp> result(m1);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) += m2.at(col, row);
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator-(const DynamicMatrix<_Tp>& m1, const DynamicMatrix<_Tp>& m2)
+{
+    if (m1.col() != m2.col() || m1.row() != m2.row())
+    {
+        throw std::logic_error("Size of matrices is not equal.");
+    }
+    DynamicMatrix<_Tp> result(m1);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) -= m2.at(col, row);
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator*(_Tp factor, const DynamicMatrix<_Tp>& matrix)
+{
+    DynamicMatrix<_Tp> result(matrix);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) *= factor;
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator*(const DynamicMatrix<_Tp>& matrix, _Tp factor)
+{
+    DynamicMatrix<_Tp> result(matrix);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) *= factor;
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator/(const DynamicMatrix<_Tp>& matrix, _Tp divisor)
+{
+    DynamicMatrix<_Tp> result(matrix);
+    for (std::size_t col = 0; col < result.col(); ++col)
+    {
+        for (std::size_t row = 0; row < result.row(); ++row)
+        {
+            result.at(col, row) /= divisor;
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+inline DynamicMatrix<_Tp> operator*(const DynamicMatrix<_Tp>& m1, const DynamicMatrix<_Tp>& m2)
+{
+    if (m1.col() != m2.row())
+    {
+        throw std::logic_error("Matrices can't multiply.");
+    }
+    DynamicMatrix<_Tp> result;
+    result.resize({m2.col(), m1.row()});
+    for (int row = 0; row < m1.row(); ++row)
+    {
+        for (int col = 0; col < m2.col(); ++col)
+        {
+            _Tp sum(0.0);
+            for (int j = 0; j < m1.col(); ++j) {sum += m1.at(j, row) * m2.at(col, j);}
+            result.at(col, row) = sum;
+        }
+    }
+    return result;
+}
+
+template<typename _Tp>
+std::ostream& operator<<(std::ostream& dbg, const DynamicMatrix<_Tp> &m)
+{
+    dbg << '[';
+    for (int row = 0; row < m.row(); ++row)
+    {
+        if (row != 0) {dbg << ' ';}
+        for (int col = 0; col < m.col(); ++col)
+        {
+            dbg << m.at(col, row);
+            if (row < m.row() - 1 || col < m.col() - 1) {dbg << ", ";}
+        }
+        if (row < m.row() - 1) {dbg << '\n';}
+    }
+    dbg << ']' << '\n';
+    return dbg;
+}
+
+template<typename _Tp>
+std::wostream& operator<<(std::wostream& dbg, const DynamicMatrix<_Tp> &m)
+{
+    dbg << '[';
+    for (int row = 0; row < m.row(); ++row)
+    {
+        if (row != 0) {dbg << ' ';}
+        for (int col = 0; col < m.col(); ++col)
+        {
+            dbg << m.at(col, row);
+            if (row < m.row() - 1 || col < m.col() - 1) {dbg << L", ";}
+        }
+        if (row < m.row() - 1) {dbg << '\n';}
+    }
+    dbg << ']' << '\n';
+    return dbg;
+}
+
+
+/****************************************************************************************\
+*                                         迭代器                                         *
+\****************************************************************************************/
+
+/**
+ * @brief 迭代型求解算法使用的通用迭代器(由SciPy翻译而来，并转写为抽象基类)
+ */
+class ElementwiseIterator
+{
+protected:
+    enum
+    {
+        InProgress = 1,
+        Finished   = 0,
+        ValueError = -3
+    }State;
+
+    uint64     IterCount     = 0;
+    uint64     EvaluateCount = 0;
+
+public:
+    //virtual void Callback() = 0;
+    virtual DynamicMatrix<float64> PreEvaluator() = 0;
+    virtual void PostEvaluator(DynamicMatrix<float64> x, DynamicMatrix<float64> fx) = 0;
+    virtual bool CheckTerminate() = 0;
+    virtual void Finalize() = 0;
+
+    void Run(Function1D Function, float64 MaxIterLog);
+};
+
+
+/****************************************************************************************\
+*                                         特殊函数                                        *
+\****************************************************************************************/
+
+/**
+ * @brief 计算初等对称多项式的值
+ *   https://en.wikipedia.org/wiki/Elementary_symmetric_polynomial
+ * @param Coeffs 参数
+ * @return 所有基本对称多项式的值，从e0-en排列(定义e0 = 1)
+ * @example
+ *      输入Coeffs = (2, 3, 4)
+ *
+ *      按定义：
+ *          e0 = 1;
+ *          e1 = 2 + 3 + 4 = 9;
+ *          e2 = 2 * 3 + 2 * 4 + 3 * 4 = 26;
+ *          e3 = 2 * 3 * 4 = 24;
+ *
+ *      结果为 (1, 9, 26, 24)
+ */
+std::vector<float64> ElementarySymmetricPolynomial(std::vector<float64> V);
+
+/**
+ * @brief 给定参数生成范德蒙德矩阵
+ * @param V 范德蒙德矩阵的参数
+ * @return 范德蒙德矩阵
+ * @example
+ *      输入Coeffs = (2, 3, 4, 5)
+ *      输出的矩阵为
+ *          [[1,  1,  1,  1  ],
+ *           [2,  3,  4,  5  ],
+ *           [4,  9,  16, 25 ],
+ *           [8,  27, 64, 125]]
+ */
+DynamicMatrix<float64> Vandermonde(std::vector<float64> V);
+
+/**
+ * @brief 给定参数快速生成范德蒙德矩阵的逆矩阵
+ *  算法来源：https://zhuanlan.zhihu.com/p/678666109
+ * @param V 范德蒙德矩阵的参数
+ * @return 范德蒙德矩阵的逆矩阵
+ * @example
+ *      输入Coeffs = (2, 3, 4, 5)
+ *      即范德蒙德矩阵
+ *          [[1,  1,  1,  1  ],
+ *           [2,  3,  4,  5  ],
+ *           [4,  9,  16, 25 ],
+ *           [8,  27, 64, 125]]
+ *      则其逆矩阵为
+ *          [ 10,  -7.83333333333333,  2,   -0.166666666666667,
+ *           -20,  19,                -5.5,  0.5,
+ *            15, -15.5,               5,   -0.5,
+ *           -4,    4.33333333333333, -1.5,  0.166666666666667]
+ */
+DynamicMatrix<float64> InverseVandermonde(std::vector<float64> V);
+
+/**
+ * @brief 多项式
+ */
+class Polynomial
+{
+protected:
+    std::vector<float64> Coefficients; // 多项式系数，降幂排序
+
+public:
+    Polynomial() {}
+    Polynomial(const std::vector<float64>& Coeffs) : Coefficients(Coeffs) {}
+
+    uint64 MaxPower()const {return Coefficients.size() - 1;}
+
+    float64 operator()(float64 x)const;
+    Polynomial Derivative()const; // 多项式的导函数还是多项式
+};
+
+/**
+ * @brief 生成n次第一类勒让德多项式的系数
+ * https://en.wikipedia.org/wiki/Legendre_polynomials
+ * @param n 勒让德多项式的次数
+ * @return n次第一类勒让德多项式的系数，降幂排列，没有的次数填0
+ */
+std::vector<float64> LegendrePolynomialCoefficients(uint64 n);
+
+/**
+ * @brief 生成n次斯蒂尔杰斯多项式的系数
+ *
+ *  斯蒂尔杰斯多项式定义为：
+ *       1
+ *       ∫ K_n+1(x) * P_n(x) * x^k * dx = 0
+ *      -1
+ *
+ *  其中K_n+1(x)即为n次斯蒂尔杰斯多项式，P_n(x)为n次勒让德多项式。
+ *  根据以上定义可以得出：
+ *                  r
+ *      K_n+1(x) =  Σ (a_i * P_2*i-1-q(x))
+ *                 i=1
+ *
+ *  其中系数a_i的递推公式为：
+ *              n-1
+ *      a_r-n =  Σ (-a_r-i * (S(r - i, n) / S(r - n, n)))
+ *              i=0
+ *
+ *      其中 S(i, k) / S(r - k, k) =
+ *          S(i - 1, k) / S(r - k, k) *
+ *          ((n - q + 2 * (i + k - 1)) * (n + q + 2 * (k - i + 1)) * (n - 1 - q + 2 * (i - k)) * (2 * (k + i - 1) - 1 - q - n)) /
+ *          ((n - q + 2 * (i - k)) * (2 * (k + i - 1) - q - n) * (n + 1 + q + 2 * (k - i)) * (n - 1 - q + 2 * (i + k)))
+ *
+ *  根据上式可以得到1-5次斯蒂尔杰斯多项式分别为：
+ *      E_1(x) = P_1(x)
+ *      E_2(x) = P_2(x) - 2/5 * P_0(x)
+ *      E_3(x) = P_3(x) - 9/14 * P_1(x)
+ *      E_4(x) = P_4(x) - 20/27 * P_2(x) + 14/891 * P_0(x)
+ *      E_5(x) = P_5(x) - 35/44 * P_3(x) + 135/12584 * P_1(x)
+ *
+ * 参考文献：
+ *  Patterson T N L. The optimum addition of points to quadrature formulae[J].
+ *  Mathematics of Computation, 1968, 22(104): 847-856.
+ *  http://www.ams.org/journals/mcom/1968-22-104/S0025-5718-68-99866-9/S0025-5718-68-99866-9.pdf
+ *
+ * @param N 斯蒂尔杰斯多项式的次数
+ * @return n次斯蒂尔杰斯多项式的系数，降幂排列，没有的次数填0
+ */
+std::vector<float64> StieltjesPolynomialCoefficients(uint64 N);
+
+
+/****************************************************************************************\
+*                                          导数                                          *
+\****************************************************************************************/
+
+// 参见：https://en.wikipedia.org/wiki/Numerical_differentiation
+
+/**
+ * @brief 生成一元函数的导函数。
+ */
+class DerivativeFunction
+{
+protected:
+    Function1D OriginalFunction; // 原函数
+    float64    DerivativeOrder;  // 导数阶数(可以为非整数)
+
+public:
+    virtual float64 operator()(float64 x) = 0;
+};
+
+/**
+ * @brief 基于有限差分法的一元函数的数值导数 (此功能翻译自SciPy，并转化为独立的类)
+ * 据SciPy的文档所说，此方法的实现受到了jacobi、numdifftools和DERIVEST的启发，但
+ * 其实现更直接地遵循了泰勒级数理论（可以说是天真地遵循了泰勒级数理论）。
+ * <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.differentiate.derivative.html#scipy.differentiate.derivative">参见官方文档</a>
+ *
+ * @example
+ * 求ln(x)的导函数，已知ln'(x) = 1 / x
+ *  float64 (*f)(float64) = cse::ln;
+ *  SciCxx::FiniteDifferenceDerivativeFunction df(f);
+ *  cout << df(1) << ' ';
+ *  cout << df(2) << ' ';
+ *  cout << df(5) << '\n';
+ *
+ * 输出: 0.999999999998355 0.499999999999178 0.200000000000003
+ */
+class FiniteDifferenceDerivativeFunction : public DerivativeFunction
 {
 public:
-    Function1D _M_Invoker;    // The function whose inverse we are trying to find
-    Function1D _M_Derivate;   // The derivative of the function
-    float64    _M_MaxIterLog; // The maximum number of iterations to compute
-    float64    _M_TolerNLog;  // Stop when iterations change by less than this
+    using Mybase = DerivativeFunction;
 
-    __Newton_Raphson_Iterator() {}
+protected:
+    float64 AbsoluteTolerence = 300; // 绝对误差的负对数，默认 -log(0x1p-2022) = 307.65265556858878150844115040843
+    float64 RealtiveTolerence = 7.5; // 相对误差的负对数，默认 -log(sqrt(0x1p-52)) ~= 7.8267798872635110755572112628368
+    uint64  FDMOrder          = 8;   // 有限差分阶数，必须为偶数(与导函数阶数无关)
+    float64 InitialStepSize   = 0.5; // 初始步长
+    float64 StepFactor        = 2;   // 每次迭代时步长减小的系数，即每迭代1次，步长减小n。
+    float64 MaxIteration      = 1;   // 最大迭代次数的对数，向下取整
 
-    __Newton_Raphson_Iterator(Function1D _PFunc, Function1D _PDFunc,
-                              float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
-        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+    enum DirectionType
+    {
+        Center = 0, Forward = 1, Backward = -1
+    }Direction = Center; // 采样点取值方向
 
-    __Newton_Raphson_Iterator(float64(*_PFunc)(float64), float64(*_PDFunc)(float64),
-                              float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
-        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+public:
+    FiniteDifferenceDerivativeFunction(Function1D Function)
+    {
+        OriginalFunction = Function;
+        DerivativeOrder = 1;
+    }
 
-    template<typename _Functor>
-    __Newton_Raphson_Iterator(_Functor _PFunc, float64(*_PDFunc)(float64),
-                              float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
-        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+    class Iterator : public ElementwiseIterator
+    {
+    public:
+        using Mybase = ElementwiseIterator;
+        friend class FiniteDifferenceDerivativeFunction;
 
-    template<typename _Functor>
-    __Newton_Raphson_Iterator(float64(*_PFunc)(float64), _Functor _PDFunc,
-                              float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
-        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+        enum StateType
+        {
+            ErrorIncrease = 2
+        };
 
-    template<typename _Functor, typename _DFunctor>
-    __Newton_Raphson_Iterator(_Functor _PFunc, _DFunctor _PDFunc,
-                              float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _M_Invoker(_PFunc), _M_Derivate(_PDFunc),
-        _M_MaxIterLog(_MaxItLog), _M_TolerNLog(_TolLog) {}
+    protected:
+        float64                Input;
+        float64                Output;
+        DynamicMatrix<float64> Intermediates;
+        float64                Error;
+        float64                Step;
+        float64                LastOutput;
+        float64                LastError;
+        float64                StepFactor;
+        float64                AbsoluteTolerence;
+        float64                RealtiveTolerence;
+        uint64                 Terms;
+        DirectionType          Direction;
+        std::vector<float64>   CentralWeights;
+        std::vector<float64>   ForwardWeights;
 
-    float64 operator()(float64 _Xx, float64 _X0)const throw();
+    public:
+        std::vector<float64> DerivativeWeight(uint64 n);
+
+        DynamicMatrix<float64> PreEvaluator() override; // 获取采样点
+        void PostEvaluator(DynamicMatrix<float64> x, DynamicMatrix<float64> fx) override; // 求解主函数
+        bool CheckTerminate() override; // 终止检测
+        void Finalize() override {}
+    };
+
+    float64 operator()(float64 x) override;
+};
+
+using DefaultDerivativeFunction = FiniteDifferenceDerivativeFunction;
+
+/****************************************************************************************\
+*                                          积分                                          *
+\****************************************************************************************/
+
+// 参见：https://en.wikipedia.org/wiki/Numerical_integration
+
+void __Infinite_Integration_Normalize
+    (const Function1D& f, const float64& a, const float64& b,
+    Function1D* F, float64* A, float64* B);
+
+/**
+ * @brief 一元函数的定积分。
+ */
+class DefiniteIntegratingFunction
+{
+protected:
+    virtual float64 Run(Function1D f, float64 a, float64 b) = 0;
+public:
+    float64 operator()(Function1D f, float64 a, float64 b);
+};
+
+/**
+ * @brief 基于采样点的定积分。
+ */
+class SampleBasedIntegratingFunction
+{
+protected:
+    virtual float64 Run(std::vector<vec2> Samples) = 0;
+public:
+    virtual std::vector<vec2> GetSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples) = 0;
+    float64 operator()(std::vector<vec2> Samples);
+    float64 operator()(Function1D f, float64 a, float64 b, uint64 Samples = 0);
+};
+
+// ------------------------------------------------------------------------------------- //
+
+#if defined __GNUG__
+#define __Tbl_FpType __float128 // GCC已经支持四倍精度(15+112)
+#define __Tbl_Fp(X) X ## Q
+#else
+#define __Tbl_FpType long double // 设置为当前编译器最大可支持精度(一般为15+64长精度)
+#define __Tbl_Fp(X) X ## L
+#endif
+
+extern const __Tbl_FpType __Gaussian07_Kronrod15_Table[16];
+extern const __Tbl_FpType __Gaussian10_Kronrod21_Table[22];
+extern const __Tbl_FpType __Gaussian15_Kronrod31_Table[32];
+extern const __Tbl_FpType __Gaussian20_Kronrod41_Table[42];
+extern const __Tbl_FpType __Gaussian25_Kronrod51_Table[52];
+extern const __Tbl_FpType __Gaussian30_Kronrod61_Table[62];
+
+#undef __Tbl_FpType
+#undef __Tbl_Fp
+
+/**
+ * @brief 高斯-克朗罗德积分
+ */
+class GaussKronrodQuadrature : public DefiniteIntegratingFunction
+{
+protected:
+    std::vector<float64> Coefficients;
+    bool EnableAdaptive = 1;
+
+    float64 Run(Function1D f, float64 a, float64 b) override;
+
+public:
+    static std::vector<float64> GetNodesAndWeights(uint64 N);
 };
 
 _SCICXX_END
-
-using BisectionSearcher = _SCICXX __Basic_Bisection_Searcher;
-using NewtonIterator = _SCICXX __Newton_Raphson_Iterator;
 
 _CSE_END
 

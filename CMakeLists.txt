@@ -40,13 +40,14 @@ endif()
 include("CMakeRes/Algorithms.CMake")
 
 # legacy headers
+add_definitions(-D_CSE_BUILD)
 add_subdirectory(Headers)
 
 # std::format is still not supported in some compilers while enable C++20
 # so a backup solution is needed for using format functions
-option (FMT_BACKUP_SOLUTION "std::format is still not supported in some compilers while enable C++20,
+option (EnableFMT "std::format is still not supported in some compilers while enable C++20,
     so a backup solution is needed for using format functions" OFF)
-if(FMT_BACKUP_SOLUTION)
+if(EnableFMT)
     option (FMT_AUTOFIND "Use 'find_package' function to find fmtlib automatically" OFF)
     if (FMT_AUTOFIND)
         set(FMT_FIND_DIRECTORY "" CACHE PATH "fmtlib directory")
@@ -69,9 +70,8 @@ endif()
 
 # std::regex will cause a rediculously high deley
 # so a backup solution is needed for regexes
-option (REGEX_BACKUP_SOLUTION "std::regex will cause a rediculously high deley,
-    so a backup solution is needed for regexes" OFF)
-if(REGEX_BACKUP_SOLUTION)
+option (EnableBoost "Some of functions requires boost library support." OFF)
+if(EnableBoost)
     option (BOOST_AUTOFIND "Use 'find_package' function to find boost library automatically" OFF)
     if (BOOST_AUTOFIND)
         set(BOOST_FIND_DIRECTORY "" CACHE PATH "boost library directory")

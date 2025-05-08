@@ -115,7 +115,7 @@ public:
     }
 };
 
-template <class _Ty = float64, class _CDFty = IntegralFunction>
+/*template <class _Ty = float64, class _CDFty = IntegralFunction>
 class _Custom_Distribution_Bi : public BisectionSearcher
 {
 public:
@@ -184,19 +184,19 @@ public:
     {
         return _Mybase::operator()(std::generate_canonical<_Ty, std::numeric_limits<_Ty>::digits>(_Eng), _InitValue);
     }
-};
+};*/
 
 /**
  * @brief Fast custom distribution based on Newton iterator, init with a PDF and its CDF.
  */
-template <class _Ty = float64, class _PDFty = Function1D, class _CDFty = IntegralFunction>
-using fast_custom_distribution = _Custom_Distribution_NR<_Ty, _PDFty, _CDFty>;
+/*template <class _Ty = float64, class _PDFty = Function1D, class _CDFty = IntegralFunction>
+using fast_custom_distribution = _Custom_Distribution_NR<_Ty, _PDFty, _CDFty>;*/
 
 /**
  * @brief Custom distribution based on Bisection search, only init with a CDF, slower but safer.
  */
-template <class _Ty = float64, class _CDFty = IntegralFunction>
-using safe_custom_distribution = _Custom_Distribution_Bi<_Ty, _CDFty>;
+/*template <class _Ty = float64, class _CDFty = IntegralFunction>
+using safe_custom_distribution = _Custom_Distribution_Bi<_Ty, _CDFty>;*/
 
 // Random Engine
 // reference: https://docs.python.org/3/library/random.html

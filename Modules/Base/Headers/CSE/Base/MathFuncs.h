@@ -903,170 +903,6 @@ int SolveQuartic(const InputArray& Coeffs, OutputArray& Roots, int64 p_Error = 1
 // functions is named "Fan Shengjin's algorithm" and for quartic function is
 // "Shen Tianheng's algorithm", but both of Su and Hua are wrong...)
 
-// A example method to solve quintic equation is provided below by Shen Tianheng(?).
-// But it can only solve equations has multiple-roots or in special conditions.
-// CAUTION: This function is unverified and untested so maybe unsafe!
-template<typename _IterC, typename _IterR>
-int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR RootsBegin, struct _SOLVEPOLY_CONFIG Conf);
-template<typename _IterC, typename _IterR>
-#ifndef _CRT_SECURE_NO_WARNINGS
-__declspec(deprecated
-("this function can only solve equations has multiple-roots or in special conditions and "
-"it is unverified and untested so maybe unsafe! Suggest using \"SolvePoly\" instead of this."))
-#endif
-int __Solve_Quintic_Function_Fast_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin, float64 p_Error)
-{
-    float64 a = *(CoeffsBegin + 0);
-    float64 b = *(CoeffsBegin + 1);
-    float64 c = *(CoeffsBegin + 2);
-    float64 d = *(CoeffsBegin + 3);
-    float64 e = *(CoeffsBegin + 4);
-    float64 f = *(CoeffsBegin + 5);
-    float64 RealError = pow(10, -p_Error);
-    if (a == 0) { throw std::logic_error("Highest power of polynomial can't be zero."); }
-
-    float64 L = 2. * pow(b, 2) - 5. * a * c;
-    float64 M = 4. * pow(b, 3) - 15. * a * b * c + 25. * pow(a, 2) * d;
-    float64 N = 7. * pow(b, 4) + 25. * pow(a, 2) * pow(c, 2) - 35. * a * pow(b, 2) * c + 50. * pow(a, 2) * b * d - 125. * pow(a, 3) * e;
-    float64 P = 4. * pow(b, 5) - 25. * a * pow(b, 3) * c + 125. * pow(a, 2) * pow(b, 2) * d - 625. * pow(a, 3) * b * e + 3125. * pow(a, 4) * f;
-
-    float64 G = 4. * pow(L, 3) - 9. * pow(M, 2) + 8 * L * N;
-    float64 H = 10. * pow(L, 2) * M - 6. * M * N + L * P;
-    float64 J = 4. * pow(L, 4) - 4. * pow(L, 2) * N + 3. * M * P;
-    float64 K = pow(M, 4) + pow(N, 3) - M * N * P;
-
-    float64 E = 2. * pow(G, 2) * pow(L, 2) - 2. * pow(G, 2) * N + 3 * G * H * M - 4. * pow(H, 2) * L - G * J * L;
-    float64 F = pow(G, 2) * P + 3. * G * J * M - 4. * H * J * L;
-
-    float64 A = pow(F, 2) - 12. * E * L;
-    float64 B = 6. * pow(F, 3) - 64. * pow(E, 2) * F * L - 72. * pow(E, 3) * M;
-    float64 C = 3. * pow(F, 4) - 24. * pow(E, 2) * pow(F, 2) * L - 48. * pow(E, 3) * F * M - 80. * pow(E, 4) * pow(L, 2);
-    float64 D = pow(F, 2) * G + 4. * E * F * H - 4. * pow(E, 2) * J;
-
-    float64 del1 = pow(B, 2) - 4. * A * C, del2 = pow(P, 2) - 4. * pow(L, 5);
-
-    if (__Is_Zero(L, RealError) && __Is_Zero(M, RealError) && __Is_Zero(N, RealError) && __Is_Zero(P, RealError))
-    {
-        *(RootsBegin + 0) = -(b / (5. * a));
-        *(RootsBegin + 1) = *(RootsBegin + 0); // -(c/(2.*b))
-        *(RootsBegin + 2) = *(RootsBegin + 0); // -(d/c)
-        *(RootsBegin + 3) = *(RootsBegin + 0); // -((2.*e)/d)
-        *(RootsBegin + 4) = *(RootsBegin + 0); // -((-5.*f)/e)
-
-        return 1;
-    }
-
-    if (!__Is_Zero(L, RealError) && (__Is_Zero(G, RealError) && __Is_Zero(H, RealError) && __Is_Zero(J, RealError)))
-    {
-        if (__Is_Zero(7. * pow(L, 2) - 4. * N, RealError))
-        {
-            *(RootsBegin + 0) = -(b * L + 2. * M) / (5. * a * L);
-            *(RootsBegin + 1) = (-2. * b * L + M) / (10. * a * L);
-            *(RootsBegin + 2) = *(RootsBegin + 1);
-            *(RootsBegin + 3) = *(RootsBegin + 1);
-            *(RootsBegin + 4) = *(RootsBegin + 1);
-        }
-        else
-        {
-            *(RootsBegin + 0) = -(2. * b * L + 9. * M) / (10. * a * L);
-            *(RootsBegin + 1) = *(RootsBegin + 0);
-            *(RootsBegin + 2) = (-b * L + 3. * M) / (5. * a * L);
-            *(RootsBegin + 3) = *(RootsBegin + 2);
-            *(RootsBegin + 4) = *(RootsBegin + 2);
-        }
-
-        return 2;
-    }
-
-    if (!__Is_Zero(G, RealError) && (__Is_Zero(E, RealError) && __Is_Zero(F, RealError)))
-    {
-        if (__Is_Zero(pow(H, 2) + G * J, RealError))
-        {
-            *(RootsBegin + 0) = (-2. * B * G - 3. * H + sqrtc(complex64(20. * pow(G, 2) * L - 15. * pow(H, 2)))[0]) / (10. * a * G);
-            *(RootsBegin + 1) = (-2. * B * G - 3. * H - sqrtc(complex64(20. * pow(G, 2) * L - 15. * pow(H, 2)))[0]) / (10. * a * G);
-            *(RootsBegin + 2) = (-b * G + H) / (5. * a * G);
-            *(RootsBegin + 3) = *(RootsBegin + 2);
-            *(RootsBegin + 4) = *(RootsBegin + 2);
-        }
-        else
-        {
-            *(RootsBegin + 0) = -((b * G + 4. * H) / (5. * a * G));
-            *(RootsBegin + 1) = (-b * G + H + sqrtc(complex64(pow(H, 2) + G * J))[0]) / (5. * a * G);
-            *(RootsBegin + 2) = (-b * G + H - sqrtc(complex64(pow(H, 2) + G * J))[0]) / (5. * a * G);
-            *(RootsBegin + 3) = *(RootsBegin + 1);
-            *(RootsBegin + 4) = *(RootsBegin + 2);
-        }
-
-        return 3;
-    }
-
-    if (!__Is_Zero(E, RealError) && __Is_Zero(D, RealError))
-    {
-        *(RootsBegin + 0) = -((2. * b * E + F) / (10. * a * E));
-        *(RootsBegin + 1) = *(RootsBegin + 0);
-
-        if (del1 > 0)
-        {
-            float64 y1 = 10. * A * F + 15. * ((-B + sqrt(del1)) / 2.);
-            float64 y2 = 10. * A * F + 15. * ((-B - sqrt(del1)) / 2.);
-
-            *(RootsBegin + 2) = (-6. * b * E + 2. * F - (cbrt(y1) + cbrt(y2))) / (30. * a * E);
-            *(RootsBegin + 3) = ((-12. * b * E + 4. * F + (cbrt(y1) + cbrt(y2))) / (60. * a * E)) + ((sqrt(3) * (cbrt(y1) - cbrt(y2))) / (60. * a * E)) * 1i;
-            *(RootsBegin + 4) = ((-12. * b * E + 4. * F + (cbrt(y1) + cbrt(y2))) / (60. * a * E)) - ((sqrt(3) * (cbrt(y1) - cbrt(y2))) / (60. * a * E)) * 1i;
-        }
-        else
-        {
-            float64 tet = arccos((3. * B - 4. * A * F) / (2. * A * sqrt(-5. * A)));
-
-            *(RootsBegin + 2) = (-3. * b * E + F - sqrt(-5. * A) * cos(tet / 3.)) / (15. * a * E);
-            *(RootsBegin + 3) = (-6. * b * E + 2. * F + sqrt(-5. * A) * (cos(tet / 3.) + sqrt(3) * sin(tet / 3.))) / (30. * a * E);
-            *(RootsBegin + 4) = (-6. * b * E + 2. * F + sqrt(-5. * A) * (cos(tet / 3.) - sqrt(3) * sin(tet / 3.))) / (30. * a * E);
-        }
-
-        return 4;
-    }
-
-    if (!__Is_Zero(D, RealError) && (__Is_Zero(M, RealError) && __Is_Zero(N, RealError)) && del2 > 0)
-    {
-        float64 y1 = (P + sqrt(del2)) / 2.;
-        float64 y2 = (P - sqrt(del2)) / 2.;
-
-        *(RootsBegin + 0) = (-b - (yroot(y1, 5) + yroot(y2, 5))) / (5. * a);
-        *(RootsBegin + 1) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) + (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
-        *(RootsBegin + 2) = ((-b + ((1. - sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) - (((sqrt(10. + 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
-        *(RootsBegin + 3) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) + (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
-        *(RootsBegin + 4) = ((-b + ((1. + sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) - (((sqrt(10. - 2. * sqrt(5)) / 4.) * (yroot(y1, 5) + yroot(y2, 5))) / (5. * a)) * 1i;
-
-        return 5;
-    }
-
-    if (!__Is_Zero(D, RealError) && (__Is_Zero(M, RealError) && __Is_Zero(N, RealError)) && del2 < 0)
-    {
-        float64 tet = arccos(P / (2. * pow(L, 2) * sqrt(L)));
-
-        *(RootsBegin + 0) = (-b - 2. * sqrt(L) * cos(tet / 5.)) / (5. * a);
-        *(RootsBegin + 1) = (-b + sqrt(L) * (((1. - sqrt(5)) / 2.) * cos(tet / 5.) + (sqrt(10. + 2. * sqrt(5)) / 2.) * sin(tet / 5.))) / (5. * a);
-        *(RootsBegin + 2) = (-b + sqrt(L) * (((1. - sqrt(5)) / 2.) * cos(tet / 5.) - (sqrt(10. + 2. * sqrt(5)) / 2.) * sin(tet / 5.))) / (5. * a);
-        *(RootsBegin + 3) = (-b + sqrt(L) * (((1. + sqrt(5)) / 2.) * cos(tet / 5.) + (sqrt(10. - 2. * sqrt(5)) / 2.) * sin(tet / 5.))) / (5. * a);
-        *(RootsBegin + 4) = (-b + sqrt(L) * (((1. + sqrt(5)) / 2.) * cos(tet / 5.) - (sqrt(10. - 2. * sqrt(5)) / 2.) * sin(tet / 5.))) / (5. * a);
-
-        return 6;
-    }
-
-    if (!__Is_Zero(D, RealError) && !__Is_Zero(M * N, RealError) && (__Is_Zero(L, RealError) && __Is_Zero(K, RealError)))
-    {
-        *(RootsBegin + 0) = (-b - yroot(pow(N, 2) / M, 5) - yroot(pow(M, 3) / N, 5)) / (5. * a);
-        *(RootsBegin + 1) = (-b + ((1 - sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 + sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) + ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
-        *(RootsBegin + 2) = (-b + ((1 - sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 + sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) - ((sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + (sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
-        *(RootsBegin + 3) = (-b + ((1 + sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 - sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) + ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
-        *(RootsBegin + 4) = (-b + ((1 + sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) + ((1 - sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) - ((sqrt(10. - 2. * sqrt(5)) / 4.) * yroot(pow(N, 2) / M, 5) - (sqrt(10. + 2. * sqrt(5)) / 4.) * yroot(pow(M, 3) / N, 5)) * 1i;
-
-        return 7;
-    }
-
-    return -(int)__Solve_Polynomial_Unchecked(CoeffsBegin, CoeffsBegin + 5, RootsBegin, { .P_ERROR = (float64)p_Error });
-}
-
 struct _SOLVEPOLY_CONFIG
 {
     float64          P_ERROR     = 15;
@@ -1074,83 +910,7 @@ struct _SOLVEPOLY_CONFIG
     complex64        BASE        = 0.4 + 0.9i;
 };
 
-template<typename iterator> requires std::random_access_iterator<iterator>
-_NODISCARD constexpr iterator max(iterator begin, iterator end)noexcept;
-
-template<typename _IterC, typename _IterR>
-int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR RootsBegin, _SOLVEPOLY_CONFIG Conf)
-{
-    std::vector<float64> _Coeffs(CoeffsBegin, CoeffsEnd);
-    std::vector<complex64> Roots;
-
-    if (_Coeffs[0] == 0 || _Coeffs.empty())
-    {
-        throw std::logic_error("Highest power of polynomial can't be zero.");
-    }
-    float64 Base = _Coeffs[0];
-    for (size_t i = 0; i < _Coeffs.size(); i++)
-    {
-        _Coeffs[i] /= Base;
-    }
-
-    // The clue to the method now is to combine the fixed-point iteration for P with similar iterations for Q, R, S into a simultaneous iteration for all roots.
-    // Initialize p, q, r, s:
-    for (size_t i = 0; i < _Coeffs.size() - 1; i++)
-    {
-        Roots.push_back(_CSE powc(Conf.BASE, complex64((float64)i)));
-    }
-
-    // Make the substitutions
-    auto f = [&](complex64 x)->complex64
-    {
-        complex64 SIG = 0;
-        for (size_t i = 0; i < _Coeffs.size(); i++)
-        {
-            SIG += _Coeffs[i] * _CSE powc(x, (complex64)(_Coeffs.size() - i - 1.));
-        }
-        return SIG;
-    };
-
-    auto g = [&](complex64 x, uint64 Ignore)->complex64
-    {
-        complex64 PI = 1;
-        for (size_t i = 0; i < Roots.size(); i++)
-        {
-            if (i != Ignore) { PI *= x - Roots[i]; }
-        }
-        return PI;
-    };
-
-    uint64 it = 0;
-
-    while (it < _CSE pow(10, Conf.MAXITER_LOG))
-    {
-        std::vector<float64> Diffs;
-        for (size_t i = 0; i < _Coeffs.size() - 1; i++)
-        {
-            complex64 Diff = f(Roots[i]) / g(Roots[i], i);
-            Diffs.push_back(abs(Diff));
-            Roots[i] -= Diff;
-        }
-
-        // Re-iterate until the numbers p, q, r, s essentially stop changing relative to the desired precision.
-        // They then have the values P, Q, R, S in some order and in the chosen precision. So the problem is solved.
-        auto MaxDiff = _CSE max(Diffs.begin(), Diffs.end());
-        if (-pow(10, (float64)-Conf.P_ERROR) < *MaxDiff && *MaxDiff < pow(10, (float64)-Conf.P_ERROR))
-        {
-            break;
-        }
-
-        ++it;
-    }
-
-    for (size_t i = 0; i < Roots.size(); ++i)
-    {
-        *(RootsBegin + i) = Roots[i];
-    }
-
-    return it;
-}
+int DurandKernerSolvePoly(std::vector<float64> Coeffs, std::vector<complex64>& Roots, _SOLVEPOLY_CONFIG Conf);
 
 /**
  * @brief finds complex roots of a polynomial using Durand-Kerner method.
@@ -1161,7 +921,8 @@ int __Solve_Polynomial_Unchecked(_IterC CoeffsBegin, _IterC CoeffsEnd, _IterR Ro
  * @return Number of iteration
  */
 template<typename InputArray, typename OutputArray>
-uint64 SolvePoly(const InputArray& Coeffs, OutputArray& Roots, _SOLVEPOLY_CONFIG Conf = _SOLVEPOLY_CONFIG())
+uint64 SolvePoly(const InputArray& Coeffs, OutputArray& Roots, _SOLVEPOLY_CONFIG Conf = _SOLVEPOLY_CONFIG(),
+    int (*Routine)(std::vector<float64>, std::vector<complex64>&, _SOLVEPOLY_CONFIG) = DurandKernerSolvePoly)
 {
     // Check Coefficents array
     auto itc = std::begin(Coeffs);
@@ -1172,7 +933,13 @@ uint64 SolvePoly(const InputArray& Coeffs, OutputArray& Roots, _SOLVEPOLY_CONFIG
     auto endr = std::end(Roots);
     if (endr - itr < CoeffsSize - 1) {throw std::logic_error("Root container is too small.");}
 
-    return __Solve_Polynomial_Unchecked(itc, endc, itr, Conf);
+    std::vector<float64> _Coeffs(itc, endc);
+    std::vector<complex64> _Roots;
+
+    auto it = Routine(_Coeffs, _Roots, Conf);
+
+    std::copy(_Roots.begin(), _Roots.end(), itr);
+    return it;
 }
 
 _CSE_END

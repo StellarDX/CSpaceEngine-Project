@@ -246,7 +246,7 @@ inline __StelCXX_GLM_Generic_Matrix<_Tp, _Col, _Row> operator*(
     {
         for (int col = 0; col < _Col; ++col)
         {
-            _Tp sum(0.0f);
+            _Tp sum(0.0);
             for (int j = 0; j < _Sz; ++j) {sum += m1[j][row] * m2[col][j];}
             result[col][row] = sum;
         }

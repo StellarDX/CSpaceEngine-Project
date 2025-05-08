@@ -63,6 +63,7 @@ _STL_DISABLE_CLANG_WARNINGS
 #define _CSE_END   }
 #define _CSE       cse::
 
+// M$兼容
 #ifndef _CONSTEXPR20
 #define _CONSTEXPR20 constexpr
 #endif
@@ -76,6 +77,7 @@ _STL_DISABLE_CLANG_WARNINGS
 #define _NODISCARD [[nodiscard]]
 #endif
 
+// 正则表达式提速
 #if __has_include(<boost/regex.hpp>)
 #define _USE_BOOST_REGEX 1
 #define _REGEX_NS boost::
@@ -88,10 +90,25 @@ _STL_DISABLE_CLANG_WARNINGS
 #define __interface struct
 #endif
 
+// 动态链接
+#if defined _MSC_VER
+#ifdef _CSE_BUILD
+#define _PUBLIC __declspec(dllexport)
+#else
+#define _PUBLIC __declspec(dllimport)
+#endif
+#elif defined __GNUG__
+#ifdef _CSE_BUILD
+#define _PUBLIC __attribute__((visibility("default")))
+#else
+#define _PUBLIC
+#endif
+#endif
+
 // Include Resources
 #include <CSE/Base/StelCXXRes/StelCXX-IEEE754-Dbl64.h>
 #include <CSE/Base/StelCXXRes/StelCXX-UniString.h>
-#include <CSE/Base/StelCXXRes/GLM/StelCXX-GLM.hh>
+//#include <CSE/Base/StelCXXRes/GLM/StelCXX-GLM.hh>
 
 _CSE_BEGIN
 
