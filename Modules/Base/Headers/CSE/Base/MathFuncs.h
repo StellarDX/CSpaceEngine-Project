@@ -542,405 +542,106 @@ fvec<N> __cdecl gamma(fvec<N> _X); // TODO
 
 
 /////////////////////////////////////////////////////////////////
-//                      Solving Equations                      //
+//                            解方程                            //
 //                                                             //
-// Finds roots of Polynomial equations.                        //
-// Linear and Quadratic function use common algorithm.         //
-// Cubic function using Fan Shengjin's algorithm.              //
-// polynomials using Durand-Kerner method.                     //
+// 求解由以下形式定义的多项式方程的解(降幂排序)                    //
+//      n                                                      //
+//      Σ (a_i * x^(n - i - 1)) = 0                            //
+//     i=0                                                     //
 //                                                             //
-// Port by StellarDX, 2022.                                    //
+// 其中一次和二次使用求根公式，三次使用范盛金的算法，四次使用沈天珩  //
+// 的算法，五次及以上使用杜兰德-肯纳迭代。                         //
 /////////////////////////////////////////////////////////////////
 
-template<typename _IterC, typename _IterR>
-int __Solve_Linear_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin)
-{
-    float64 a = *(CoeffsBegin + 0);
-    float64 b = *(CoeffsBegin + 1);
-    if (a == 0) { throw std::logic_error("Highest power of polynomial can't be zero."); }
+using InputArray  = const std::vector<float64>&;
+using OutputArray = std::vector<complex64>&;
 
-    *RootsBegin = complex64(-b / a);
-
-    return 0;
-}
-
-template<typename _IterC, typename _IterR>
-int __Solve_Quadratic_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin)
-{
-    float64 a = *(CoeffsBegin + 0);
-    float64 b = *(CoeffsBegin + 1);
-    float64 c = *(CoeffsBegin + 2);
-    if (a == 0) { throw std::logic_error("Highest power of polynomial can't be zero."); }
-
-    float64 del = b * b - 4.0 * a * c;
-
-    *(RootsBegin + 0) = (-b + _CSE sqrtc(complex64(del))[0]) / (2.0 * a);
-    *(RootsBegin + 1) = (-b - _CSE sqrtc(complex64(del))[0]) / (2.0 * a);
-
-    return 0;
-}
-
-int __Is_Zero(float64 _In, float64 _Err);
-
-template<typename _IterC, typename _IterR>
-int __Solve_Cubic_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin, float64 p_Error)
-{
-    // Reference:
-    // NATURAL SCIENCE JOURNAL OF HAINAN TEACHERES COLLEGE,Hainan Province,China. Vol. 2,No. 2; Dec, 1989,
-    // A new extracting formula and a new distinguishing means on the one variable cubic equation., Fan Shengjin. PP.91-98 .
-    // Obituary: The author of this algorithm was passed away at Sep 8th 2018, age of 63.
-    float64 a = *(CoeffsBegin + 0);
-    float64 b = *(CoeffsBegin + 1);
-    float64 c = *(CoeffsBegin + 2);
-    float64 d = *(CoeffsBegin + 3);
-    float64 RealError = pow(10, -p_Error);
-    if (a == 0) { throw std::logic_error("Highest power of polynomial can't be zero."); }
-
-    float64 A = b * b - 3.0 * a * c;
-    float64 B = b * c - 9.0 * a * d;
-    float64 C = c * c - 3.0 * b * d;
-
-    float64 del = B * B - 4.0 * A * C;
-
-    if (__Is_Zero(A, RealError) && __Is_Zero(B, RealError))
-    {
-        *(RootsBegin + 0) = -b / (3.0 * a);
-        *(RootsBegin + 1) = *(RootsBegin + 0); // -c / b
-        *(RootsBegin + 2) = *(RootsBegin + 0); // -3 * d / c
-
-        return 1;
-    }
-
-    if (__Is_Zero(del, RealError))
-    {
-        float64 K = B / A;
-
-        *(RootsBegin + 0) = -b / a + K;
-        *(RootsBegin + 1) = -K / 2;
-        *(RootsBegin + 2) = *(RootsBegin + 1);
-
-        return 3;
-    }
-
-    if (del > 0)
-    {
-        float64 Y1 = A * b + (3. * a * (-B - _CSE sqrt(del)) / 2.);
-        float64 Y2 = A * b + (3. * a * (-B + _CSE sqrt(del)) / 2.);
-
-        *(RootsBegin + 0) = (-b - (_CSE cbrt(Y1) + _CSE cbrt(Y2))) / (3. * a);
-        *(RootsBegin + 1) = (-2. * b + (_CSE cbrt(Y1) + _CSE cbrt(Y2)) + _CSE sqrt(3.) * (_CSE cbrt(Y1) - _CSE cbrt(Y2)) * 1i) / (6. * a);
-        *(RootsBegin + 2) = (-2. * b + (_CSE cbrt(Y1) + _CSE cbrt(Y2)) - _CSE sqrt(3.) * (_CSE cbrt(Y1) - _CSE cbrt(Y2)) * 1i) / (6. * a);
-
-        return 2;
-    }
-
-    if (del < 0)
-    {
-        float64 tet = arccos((2 * A * b - 3 * a * B) / (2. * _CSE sqrt(_CSE pow(A, 3)))); // (+2*k*PI)
-
-        *(RootsBegin + 0) = (-b - 2. * _CSE sqrt(A) * _CSE cos(tet / 3.)) / (3. * a);
-        *(RootsBegin + 1) = (-b + _CSE sqrt(A) * (_CSE cos(tet / 3) + _CSE sqrt(3) * _CSE sin(tet / 3))) / (3. * a);
-        *(RootsBegin + 2) = (-b + _CSE sqrt(A) * (_CSE cos(tet / 3) - _CSE sqrt(3) * _CSE sin(tet / 3))) / (3. * a);
-
-        return 4;
-    }
-
-    return 0;
-}
-
-_NODISCARD float64 sgn(float64 _Xx)noexcept;
-
-template<typename _IterC, typename _IterR>
-int __Solve_Quartic_Unchecked(_IterC CoeffsBegin, _IterR RootsBegin, float64 p_Error)
-{
-    float64 a = *(CoeffsBegin + 0);
-    float64 b = *(CoeffsBegin + 1);
-    float64 c = *(CoeffsBegin + 2);
-    float64 d = *(CoeffsBegin + 3);
-    float64 e = *(CoeffsBegin + 4);
-    float64 RealError = pow(10, -p_Error);
-    if (a == 0) { throw std::logic_error("Highest power of polynomial can't be zero."); }
-
-    float64 D = 3.0 * b * b - 8.0 * a * c;
-    float64 E = - b * b * b + 4 * a * b * c - 8 * a * a * d;
-    float64 F =  3.0 * b * b * b * b + 16.0 * a * a * c * c - 16.0 * a * b * b * c + 16.0 * a * a * b * d - 64.0 * a * a * a * e;
-
-    float64 A = D * D - 3.0 * F;
-    float64 B = D * F - 9.0 * E * E;
-    float64 C = F * F - 3.0 * D * E * E;
-
-    float64 del = B * B - 4.0 * A * C;
-
-    if (__Is_Zero(D, RealError) && __Is_Zero(E, RealError) && __Is_Zero(F, RealError))
-    {
-        *(RootsBegin + 0) = -b / (4.0 * a);
-        *(RootsBegin + 1) = *(RootsBegin + 0); // -(2 * c) / (3 * b)
-        *(RootsBegin + 2) = *(RootsBegin + 0); // -(3 * d) / (2 * c)
-        *(RootsBegin + 3) = *(RootsBegin + 0); // -(4 * e) / d
-
-        return 1;
-    }
-
-    if (!__Is_Zero(D * E * F, RealError) && __Is_Zero(A, p_Error) && __Is_Zero(B, RealError) && __Is_Zero(C, RealError))
-    {
-        *(RootsBegin + 0) = (-b * D + 9. * E) / (4. * a * D);
-        *(RootsBegin + 1) = (-b * D - 3. * E) / (4. * a * D);
-        *(RootsBegin + 2) = *(RootsBegin + 1);
-        *(RootsBegin + 3) = *(RootsBegin + 1);
-
-        return 2;
-    }
-
-    if (__Is_Zero(E, RealError) && __Is_Zero(F, RealError) && !__Is_Zero(D, RealError))
-    {
-        *(RootsBegin + 0) = (-b + _CSE sqrtc(complex64(D))[0]) / (4. * a);
-        *(RootsBegin + 1) = *(RootsBegin + 0);
-        *(RootsBegin + 2) = (-b - _CSE sqrtc(complex64(D))[0]) / (4. * a);
-        *(RootsBegin + 3) = *(RootsBegin + 2);
-
-        return 3;
-    }
-
-    if (!__Is_Zero(A * B * C, RealError) && __Is_Zero(del, RealError))
-    {
-        *(RootsBegin + 0) = (-b + (2. * A * E) / B + _CSE sqrtc(complex64((2. * B) / A))[0]) / (4. * a);
-        *(RootsBegin + 1) = (-b + (2. * A * E) / B - _CSE sqrtc(complex64((2. * B) / A))[0]) / (4. * a);
-        *(RootsBegin + 2) = (-b - (2. * A * E) / B) / (4. * a);
-        *(RootsBegin + 3) = *(RootsBegin + 2);
-
-        return 4;
-    }
-
-    if (del > 0)
-    {
-        float64 z1 = A * D + 3. * ((-B + _CSE sqrt(del)) / 2.);
-        float64 z2 = A * D + 3. * ((-B - _CSE sqrt(del)) / 2.);
-        complex64 z = _CSE pow(D, 2.) - D * (_CSE cbrt(z1) + _CSE cbrt(z2)) + pow((_CSE cbrt(z1) + _CSE cbrt(z2)), 2.) - 3. * A;
-
-        *(RootsBegin + 0) = (-b + sgn(E) * _CSE sqrt((D + _CSE cbrt(z1) + _CSE cbrt(z2)) / 3.) + _CSE sqrtc((2. * D - (_CSE cbrt(z1) + _CSE cbrt(z2)) + 2. * _CSE sqrtc(z)[0]) / 3.)[0]) / (4. * a);
-        *(RootsBegin + 1) = (-b + sgn(E) * _CSE sqrt((D + _CSE cbrt(z1) + _CSE cbrt(z2)) / 3.) - _CSE sqrtc((2. * D - (_CSE cbrt(z1) + _CSE cbrt(z2)) + 2. * _CSE sqrtc(z)[0]) / 3.)[0]) / (4. * a);
-        *(RootsBegin + 2) = (-b - sgn(E) * _CSE sqrt((D + _CSE cbrt(z1) + _CSE cbrt(z2)) / 3.)) / (4. * a) + (_CSE sqrtc((-2. * D + _CSE cbrt(z1) + _CSE cbrt(z2) + 2. * _CSE sqrtc(z)[0]) / 3.)[0] / (4. * a)) * 1i;
-        *(RootsBegin + 3) = (-b - sgn(E) * _CSE sqrt((D + _CSE cbrt(z1) + _CSE cbrt(z2)) / 3.)) / (4. * a) - (_CSE sqrtc((-2. * D + _CSE cbrt(z1) + _CSE cbrt(z2) + 2. * _CSE sqrtc(z)[0]) / 3.)[0] / (4. * a)) * 1i;
-
-        return 5;
-    }
-
-    if (del < 0)
-    {
-        float64 tet = arccos((3. * B - 2. * A * D) / (2. * A * _CSE sqrt(A)));
-        float64 y1 = (D - 2. * _CSE sqrt(A) * _CSE cos(tet / 3.)) / 3.;
-        float64 y2 = (D + _CSE sqrt(A) * (_CSE cos(tet / 3.) + _CSE sqrt(3.) * _CSE sin(tet / 3.))) / 3.;
-        float64 y3 = (D + _CSE sqrt(A) * (_CSE cos(tet / 3.) - _CSE sqrt(3.) * _CSE sin(tet / 3.))) / 3.;
-
-        if (__Is_Zero(E, RealError) && D > 0 && F > 0)
-        {
-            *(RootsBegin + 0) = (-b + _CSE sqrt(D + 2. * _CSE sqrt(F))) / (4. * a);
-            *(RootsBegin + 1) = (-b - _CSE sqrt(D + 2. * _CSE sqrt(F))) / (4. * a);
-            *(RootsBegin + 2) = (-b + _CSE sqrt(D - 2. * _CSE sqrt(F))) / (4. * a);
-            *(RootsBegin + 3) = (-b - _CSE sqrt(D - 2. * _CSE sqrt(F))) / (4. * a);
-
-            return 6;
-        }
-
-        if (__Is_Zero(E, RealError) && D < 0 && F > 0)
-        {
-            *(RootsBegin + 0) = -b / (4. * a) + (_CSE sqrt(-D + 2. * _CSE sqrt(F)) / (4. * a)) * 1i;
-            *(RootsBegin + 1) = -b / (4. * a) - (_CSE sqrt(-D + 2. * _CSE sqrt(F)) / (4. * a)) * 1i;
-            *(RootsBegin + 2) = -b / (4. * a) + (_CSE sqrt(-D - 2. * _CSE sqrt(F)) / (4. * a)) * 1i;
-            *(RootsBegin + 3) = -b / (4. * a) - (_CSE sqrt(-D - 2. * _CSE sqrt(F)) / (4. * a)) * 1i;
-
-            return 7;
-        }
-
-        if (__Is_Zero(E, RealError) && F < 0)
-        {
-            *(RootsBegin + 0) = (-2. * b + _CSE sqrt(2. * D + 2. * _CSE sqrt(A - F))) / (8. * a) + ((_CSE sqrt(-2. * D + 2. * _CSE sqrt(A - F))) / (8. * a)) * 1i;
-            *(RootsBegin + 1) = (-2. * b + _CSE sqrt(2. * D + 2. * _CSE sqrt(A - F))) / (8. * a) - ((_CSE sqrt(-2. * D + 2. * _CSE sqrt(A - F))) / (8. * a)) * 1i;
-            *(RootsBegin + 2) = (-2. * b - _CSE sqrt(2. * D + 2. * _CSE sqrt(A - F))) / (8. * a) + ((_CSE sqrt(-2. * D + 2. * _CSE sqrt(A - F))) / (8. * a)) * 1i;
-            *(RootsBegin + 3) = (-2. * b - _CSE sqrt(2. * D + 2. * _CSE sqrt(A - F))) / (8. * a) - ((_CSE sqrt(-2. * D + 2. * _CSE sqrt(A - F))) / (8. * a)) * 1i;
-
-            return 8;
-        }
-
-        if (!__Is_Zero(E, RealError)) // max(y1, y2, y3) == y2
-        {
-            if (D > 0 && F > 0)
-            {
-                *(RootsBegin + 0) = (-b + sgn(E) * _CSE sqrt(y1) + (_CSE sqrt(y2) + _CSE sqrt(y3))) / (4. * a);
-                *(RootsBegin + 1) = (-b + sgn(E) * _CSE sqrt(y1) - (_CSE sqrt(y2) + _CSE sqrt(y3))) / (4. * a);
-                *(RootsBegin + 2) = (-b - sgn(E) * _CSE sqrt(y1) + (_CSE sqrt(y2) - _CSE sqrt(y3))) / (4. * a);
-                *(RootsBegin + 3) = (-b - sgn(E) * _CSE sqrt(y1) - (_CSE sqrt(y2) - _CSE sqrt(y3))) / (4. * a);
-
-                return 9;
-            }
-
-            else
-            {
-                *(RootsBegin + 0) = (-b - _CSE sqrt(y2)) / (4. * a) + ((sgn(E) * _CSE sqrt(-y1) + _CSE sqrt(-y3)) / (4. * a)) * 1i;
-                *(RootsBegin + 1) = (-b - _CSE sqrt(y2)) / (4. * a) - ((sgn(E) * _CSE sqrt(-y1) + _CSE sqrt(-y3)) / (4. * a)) * 1i;
-                *(RootsBegin + 2) = (-b + _CSE sqrt(y2)) / (4. * a) + ((sgn(E) * _CSE sqrt(-y1) - _CSE sqrt(-y3)) / (4. * a)) * 1i;
-                *(RootsBegin + 3) = (-b + _CSE sqrt(y2)) / (4. * a) - ((sgn(E) * _CSE sqrt(-y1) - _CSE sqrt(-y3)) / (4. * a)) * 1i;
-
-                return 10;
-            }
-        }
-    }
-
-    return 0;
-}
+void __Verify_Input_Output(InputArray Coeffs, OutputArray Roots, uint64 Power)noexcept(0);
 
 /**
- * @brief Finds the real root of a linear equation.
- * @param Coeffs - A 2-element vector to store coefficients(Sorted by descending powers)</param>
- * @param Roots - The roots are stored in this array
+ * @brief 求解线性方程，如 ax + b = 0
+ * @param Coeffs 参数，按x的降幂排序
+ * @param Roots 方程的解
  */
-template<typename InputArray, typename OutputArray>
-int SolveLinear(const InputArray& Coeffs, OutputArray& Roots)
-{
-    // Check Coefficents array
-    auto itc = std::begin(Coeffs);
-    auto endc = std::end(Coeffs);
-    if (endc - itc != 2) {throw std::logic_error("Number of Coefficients is not match. (correct size = 2)");}
-    // Check Results container
-    auto itr = std::begin(Roots);
-    auto endr = std::end(Roots);
-    if (endr - itr < 1) {throw std::logic_error("Root container is too small. (larger than 1)");}
-
-    return __Solve_Linear_Unchecked(itc, itr);
-}
+int SolveLinear(InputArray Coeffs, OutputArray Roots);
 
 /**
- * @brief Finds the complex roots of a quadratic equation.
- * @param Coeffs - A 3-element vector to store coefficients(Sorted by descending powers)
- * @param Roots - The roots are stored in this array
+ * @brief 求解二次方程，如 ax^2 + bx + c = 0
+ * @param Coeffs 参数，按x的降幂排序
+ * @param Roots 方程的解
  */
-template<typename InputArray, typename OutputArray>
-int SolveQuadratic(const InputArray& Coeffs, OutputArray& Roots)
-{
-    // Check Coefficents array
-    auto itc = std::begin(Coeffs);
-    auto endc = std::end(Coeffs);
-    if (endc - itc != 3) {throw std::logic_error("Number of Coefficients is not match. (correct size = 3)");}
-    // Check Results container
-    auto itr = std::begin(Roots);
-    auto endr = std::end(Roots);
-    if (endr - itr < 2) {throw std::logic_error("Root container is too small. (larger than 2)");}
-
-    return __Solve_Quadratic_Unchecked(itc, itr);
-}
+int SolveQuadratic(InputArray Coeffs, OutputArray Roots);
 
 /**
- * @brief Finds the complex roots of a cubic equation.
- * @param Coeffs - A 4-element vector to store coefficients(Sorted by descending powers)
- * @param Roots - The roots are stored in this array
- * @param p_Error - Negative logarithm of errors, default is 10, means 10^-10
- * @return Formula number used
+ * @brief 求解三次方程，如 ax^3 + bx^2 + cx + d = 0
+ * @param Coeffs 参数，按x的降幂排序
+ * @param Roots 方程的解
+ * @param Tolerence 误差的负对数
  */
-template<typename InputArray, typename OutputArray>
-int SolveCubic(const InputArray& Coeffs, OutputArray& Roots, int64 p_Error = 10)
-{
-    // Check Coefficents array
-    auto itc = std::begin(Coeffs);
-    auto endc = std::end(Coeffs);
-    if (endc - itc != 4) {throw std::logic_error("Number of Coefficients is not match. (correct size = 3)");}
-    // Check Results container
-    auto itr = std::begin(Roots);
-    auto endr = std::end(Roots);
-    if (endr - itr < 3) {throw std::logic_error("Root container is too small. (larger than 2)");}
-
-    return __Solve_Cubic_Unchecked(itc, itr, p_Error);
-}
+int SolveCubic(InputArray Coeffs, OutputArray Roots, float64 Tolerence = 10);
 
 /**
- * @brief Finds the complex roots of a quartic equation.
- * @param Coeffs - A 5-element vector to store coefficients(Sorted by descending powers)
- * @param Roots - The roots are stored in this array
- * @param p_Error - Negative logarithm of errors, default is 10, means 10^-10
- * @return Formula number used
+ * @brief 求解四次方程，如 ax^4 + bx^3 + cx^2 + dx + e = 0
+ * @param Coeffs 参数，按x的降幂排序
+ * @param Roots 方程的解
+ * @param Tolerence 误差的负对数
  */
-template<typename InputArray, typename OutputArray>
-int SolveQuartic(const InputArray& Coeffs, OutputArray& Roots, int64 p_Error = 10)
-{
-    // Check Coefficents array
-    auto itc = std::begin(Coeffs);
-    auto endc = std::end(Coeffs);
-    if (endc - itc != 5) {throw std::logic_error("Number of Coefficients is not match. (correct size = 3)");}
-    // Check Results container
-    auto itr = std::begin(Roots);
-    auto endr = std::end(Roots);
-    if (endr - itr < 4) {throw std::logic_error("Root container is too small. (larger than 2)");}
-
-    return __Solve_Quartic_Unchecked(itc, itr, p_Error);
-}
+int SolveQuartic(InputArray Coeffs, OutputArray Roots, float64 Tolerence = 10);
 
 /* ************************************************************************** *\
-   StellarDX: Finding the solving algorithms to a quintic or higher equation
-   had troubled mathematicians for more than 300 years.
-   Some people in history were tried to derivate the common solving algorithms,
-   but failed. In 1926, Su Jiaju published an article which introduced his
-   solution and derivation, and discovered a quintic equation solving formula.
-   But soon, his theory has been disproved by Hua Luogeng.
-   Now, it has been confirmed that solutions of a quintic or higher equation
-   can't be expressed as nth roots. In other words, there is no common solving
-   formulas for these equations. However, this doesn't mean that they are
-   completely unsolvable. Iterations maybe the best method to find numerical
-   roots. Here use the Durand–Kerner method to solve this problem.
+   丹霞：寻找五次或以上方程的解法是一个困扰了数学家们300多年的问题。历史上无数的数学
+   家试图推导这些多项式方程求解算法，但无一例外都失败了。1824年，阿贝尔等人证明了五次
+   及更高次的多项式方程没有一般的代数解法，即这样的方程不能由方程的系数经有限次四则运
+   算和开方运算求解。
+
+   1926年，苏家驹发表了一篇文章，声称自己发现了一个五次方程的求解算法。随后华罗庚在看
+   了苏家驹的文章以后尝试继续推导六次方程的求解算法，这意味着他要尝试否定先前阿贝尔等
+   人已经证实的“五次以上方程的解无法用系数表示”这一理论，但是当他看了阿贝尔的论文以后，
+   认为其“条理精严，无懈可击”。随后他就转而开始尝试在苏家驹的论文中寻找漏洞，最终发表
+   了他的成名之作《苏家驹之代数的五次方程式解法不能成立之理由》。
+
+   阿贝尔定律已经证实五次以上方程的解无法使用系数组成的根式表示。也就是这些方程没有通
+   用的求解算法。但是，这并不意味着它们完全没办法求解，此处使用杜兰德-肯纳算法求解这
+   些方程。
+
+   参考文献：
+    [1] 苏家驹.代数的五次方程式之解法[J].学艺,1926.
+    [2] 华罗庚.来件——苏家驹之代数的五次方程式解法不能成立之理由[J].科学,1930.
+    [3] Wikipedia Contributors. Durand–Kerner method — Wikipedia, The Free
+        Encyclopedia[A/OL]. (2025).
+        https://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method
 \* ************************************************************************** */
 
-// Addition:
-// In fact, after reading Su Jiaju's paper, Hua Luogeng also made mistakes.
-// He extends Su's work and published a root-finding algorithm for solving
-// sextic equation. Subsequently, Hua Luogeng tried to disprove Abel's theory
-// (Abel has proved that quintic or higher equations have no root-finding
-// formulae), but soon he had to admit that Abel's theory is "well-regulated
-// and impeccable" So, he began to turn to find errors in Su Jiaju's theory,
-// and published his second paper that disproved Su Jiaju's theory and his
-// previous theory.
-
-// (If they are correct, this library would contain their algorithms as functions
-// to solving quintic and sextic equations, and would name them as "Su Jiaju's
-// algorithm" and "Hua Luogeng's algorithm", because the formula for cubic
-// functions is named "Fan Shengjin's algorithm" and for quartic function is
-// "Shen Tianheng's algorithm", but both of Su and Hua are wrong...)
-
-struct _SOLVEPOLY_CONFIG
+__interface SolvePolyRoutine
 {
-    float64          P_ERROR     = 15;
-    float64          MAXITER_LOG = 3;
-    complex64        BASE        = 0.4 + 0.9i;
+public:
+    virtual int Run(InputArray Coeffs, OutputArray Roots)const = 0;
 };
 
-int DurandKernerSolvePoly(std::vector<float64> Coeffs, std::vector<complex64>& Roots, _SOLVEPOLY_CONFIG Conf);
+class DurandKernerSolvePoly : public SolvePolyRoutine
+{
+public:
+    std::vector<complex64> InitValue         = {};
+    float64                AbsoluteTolerence = 14;
+    float64                RelativeTolerence = 14;
+    float64                MaxIter           = 3;
+
+    static std::vector<complex64> GetInitValuePower(float64 Power, complex64 IValue = 0.4 + 0.9i);
+    static std::vector<complex64> GetInitValueCircle(InputArray Coeffs);
+    static std::vector<complex64> GetInitValueHomotopy(InputArray Coeffs, float64 a = 0.5);
+
+    int Run(InputArray Coeffs, OutputArray Roots)const override;
+};
 
 /**
- * @brief finds complex roots of a polynomial using Durand-Kerner method.
- * @link http://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method
- * @param Coeffs - A array to store coefficients
- * @param Roots - The roots are stored in this array
- * @param Conf - Function configs
- * @return Number of iteration
+ * @brief 求解任意多项式方程的解
+ * http://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method
+ * @param Coeffs 多项式的系数，降幂排序
+ * @param Roots 方程的解
+ * @param Routine 求解算法，默认使用杜兰德-肯纳算法
+ * @return 迭代次数
  */
-template<typename InputArray, typename OutputArray>
-uint64 SolvePoly(const InputArray& Coeffs, OutputArray& Roots, _SOLVEPOLY_CONFIG Conf = _SOLVEPOLY_CONFIG(),
-    int (*Routine)(std::vector<float64>, std::vector<complex64>&, _SOLVEPOLY_CONFIG) = DurandKernerSolvePoly)
-{
-    // Check Coefficents array
-    auto itc = std::begin(Coeffs);
-    auto endc = std::end(Coeffs);
-    auto CoeffsSize = endc - itc;
-    // Check Results container
-    auto itr = std::begin(Roots);
-    auto endr = std::end(Roots);
-    if (endr - itr < CoeffsSize - 1) {throw std::logic_error("Root container is too small.");}
-
-    std::vector<float64> _Coeffs(itc, endc);
-    std::vector<complex64> _Roots;
-
-    auto it = Routine(_Coeffs, _Roots, Conf);
-
-    std::copy(_Roots.begin(), _Roots.end(), itr);
-    return it;
-}
+uint64 SolvePoly(InputArray Coeffs, OutputArray Roots, const SolvePolyRoutine& Routine = DurandKernerSolvePoly());
 
 _CSE_END
 

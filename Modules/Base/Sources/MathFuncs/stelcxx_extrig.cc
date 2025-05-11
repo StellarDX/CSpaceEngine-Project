@@ -141,8 +141,8 @@ float64 __cdecl exc(float64 _X)
 // Inverse functions
 
 #ifndef TRIGONOMETRY_USE_RADIANS
-Angle __cdecl arcsin(float64 _X) { return arctan(_X / _CSE sqrt(1. - _X * _X)); }
-Angle __cdecl arccos(float64 _X) { return arctan(_CSE sqrt(1. - _X * _X) / _X); }
+Angle __cdecl arcsin(float64 _X) { return arctan(_X / sqrt(1. - _X * _X)); }
+Angle __cdecl arccos(float64 _X) { return arctan(sqrt(1. - _X * _X) / _X) + (_X < 0 ? 180 : 0); }
 #else
 Angle __cdecl arcsin(float64 _X) { return __IBM_ASIN64F(_X); }
 Angle __cdecl arccos(float64 _X) { return __IBM_ACOS64F(_X); }

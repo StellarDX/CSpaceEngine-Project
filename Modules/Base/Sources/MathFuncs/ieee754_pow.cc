@@ -36,6 +36,10 @@ float64 __cdecl pow(float64 _X, float64 _Power)
 
 complex64 __cdecl powc(complex64 _X, complex64 _Power, int64 K_OFFSET)
 {
+    if (_X == complex64(0) && _Power != complex64(0)) {return complex64(0);}
+    if (_Power == complex64(0)) {return 1;} // 定义0^0 = 1
+    if (_Power == complex64(1)) {return _X;}
+    if (_Power == complex64(2)) {return _X * _X;}
     return _CSE expc(_Power * lnc(_X, K_OFFSET));
 }
 

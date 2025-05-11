@@ -173,7 +173,7 @@ bool FiniteDifferenceDerivativeFunction::Iterator::CheckTerminate()
 
     if (IterCount > 1)
     {
-        bool EstimateError = Error < AbsoluteTolerence + RealtiveTolerence * abs(Output);
+        bool EstimateError = Error < AbsoluteTolerence + RelativeTolerence * abs(Output);
         if (EstimateError)
         {
             State = Finished;
@@ -190,7 +190,7 @@ bool FiniteDifferenceDerivativeFunction::Iterator::CheckTerminate()
     return 0;
 }
 
-float64 FiniteDifferenceDerivativeFunction::operator()(float64 x)
+float64 FiniteDifferenceDerivativeFunction::operator()(float64 x)const
 {
     Iterator it;
     it.Input = x;
@@ -199,7 +199,7 @@ float64 FiniteDifferenceDerivativeFunction::operator()(float64 x)
     it.Step = InitialStepSize;
     it.StepFactor = StepFactor;
     it.AbsoluteTolerence = pow(10, -AbsoluteTolerence);
-    it.RealtiveTolerence = pow(10, -RealtiveTolerence);
+    it.RelativeTolerence = pow(10, -RelativeTolerence);
     it.State = Iterator::InProgress;
     it.Terms = uint64(FDMOrder + 1) / 2ULL;
     it.Direction = Direction;

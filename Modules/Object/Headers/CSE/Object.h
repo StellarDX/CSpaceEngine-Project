@@ -9,6 +9,7 @@
 #include <CSE/Base/CSEBase.h>
 #include <CSE/Base/DateTime.h>
 #include <CSE/Base/GLTypes.h>
+#include <CSE/Base/AdvMath.h>
 #include <vector>
 #include <map>
 
@@ -661,9 +662,9 @@ float64 MeanRadius(Object Obj);
 float64 EquatorialRadius(Object Obj);
 float64 PolarRadius(Object Obj);
 vec3 Flattening(Object Obj);
-float64 EquatorialCircumference(Object Obj);
-float64 MeridionalCircumference(Object Obj);
-float64 SurfaceArea(Object Obj);
+float64 EquatorialCircumference(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction = SciCxx::GaussKronrodQuadrature());
+float64 MeridionalCircumference(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction = SciCxx::GaussKronrodQuadrature());
+float64 SurfaceArea(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction = SciCxx::GaussKronrodQuadrature());
 float64 Volume(Object Obj);
 float64 Mass(Object Obj);
 float64 MeanDensity(Object Obj);

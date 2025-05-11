@@ -763,6 +763,7 @@ public:
     Polynomial(const std::vector<float64>& Coeffs) : Coefficients(Coeffs) {}
 
     uint64 MaxPower()const {return Coefficients.size() - 1;}
+    std::vector<float64> GetCoefficients()const {return Coefficients;}
 
     float64 operator()(float64 x)const;
     Polynomial Derivative()const; // 多项式的导函数还是多项式
@@ -834,8 +835,10 @@ protected:
     float64    DerivativeOrder;  // 导数阶数(可以为非整数)
 
 public:
-    virtual float64 operator()(float64 x) = 0;
+    virtual float64 operator()(float64 x)const = 0;
 };
+
+// ------------------------------------------------------------------------------------- //
 
 /**
  * @brief 基于有限差分法的一元函数的数值导数 (此功能翻译自SciPy，并转化为独立的类)
@@ -859,8 +862,9 @@ public:
     using Mybase = DerivativeFunction;
 
 protected:
+    // 一些附加选项，懒得加getter和setter了
     float64 AbsoluteTolerence = 300; // 绝对误差的负对数，默认 -log(0x1p-2022) = 307.65265556858878150844115040843
-    float64 RealtiveTolerence = 7.5; // 相对误差的负对数，默认 -log(sqrt(0x1p-52)) ~= 7.8267798872635110755572112628368
+    float64 RelativeTolerence = 7.5; // 相对误差的负对数，默认 -log(sqrt(0x1p-52)) ~= 7.8267798872635110755572112628368
     uint64  FDMOrder          = 8;   // 有限差分阶数，必须为偶数(与导函数阶数无关)
     float64 InitialStepSize   = 0.5; // 初始步长
     float64 StepFactor        = 2;   // 每次迭代时步长减小的系数，即每迭代1次，步长减小n。
@@ -899,7 +903,7 @@ public:
         float64                LastError;
         float64                StepFactor;
         float64                AbsoluteTolerence;
-        float64                RealtiveTolerence;
+        float64                RelativeTolerence;
         uint64                 Terms;
         DirectionType          Direction;
         std::vector<float64>   CentralWeights;
@@ -914,7 +918,7 @@ public:
         void Finalize() override {}
     };
 
-    float64 operator()(float64 x) override;
+    float64 operator()(float64 x)const override;
 };
 
 using DefaultDerivativeFunction = FiniteDifferenceDerivativeFunction;
@@ -925,9 +929,7 @@ using DefaultDerivativeFunction = FiniteDifferenceDerivativeFunction;
 
 // 参见：https://en.wikipedia.org/wiki/Numerical_integration
 
-void __Infinite_Integration_Normalize
-    (const Function1D& f, const float64& a, const float64& b,
-    Function1D* F, float64* A, float64* B);
+// 「每日一积，成为积佬」
 
 /**
  * @brief 一元函数的定积分。
@@ -935,57 +937,81 @@ void __Infinite_Integration_Normalize
 class DefiniteIntegratingFunction
 {
 protected:
-    virtual float64 Run(Function1D f, float64 a, float64 b) = 0;
+    virtual float64 Run(Function1D f, float64 a, float64 b)const = 0;
 public:
-    float64 operator()(Function1D f, float64 a, float64 b);
+    float64 operator()(Function1D f, float64 a, float64 b)const;
 };
 
 /**
  * @brief 基于采样点的定积分。
  */
-class SampleBasedIntegratingFunction
+class SampleBasedIntegratingFunction : public DefiniteIntegratingFunction
 {
-protected:
-    virtual float64 Run(std::vector<vec2> Samples) = 0;
 public:
-    virtual std::vector<vec2> GetSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples) = 0;
-    float64 operator()(std::vector<vec2> Samples);
-    float64 operator()(Function1D f, float64 a, float64 b, uint64 Samples = 0);
+    using Mybase = DefiniteIntegratingFunction;
+protected:
+    float64 Run(Function1D f, float64 a, float64 b)const final;
+    virtual float64 Run(std::vector<vec2> Samples)const = 0;
+public:
+    static std::vector<vec2> GetSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples = 0);
+    float64 operator()(std::vector<vec2> Samples)const;
 };
 
 // ------------------------------------------------------------------------------------- //
 
 #if defined __GNUG__
 #define __Tbl_FpType __float128 // GCC已经支持四倍精度(15+112)
-#define __Tbl_Fp(X) X ## Q
 #else
 #define __Tbl_FpType long double // 设置为当前编译器最大可支持精度(一般为15+64长精度)
-#define __Tbl_Fp(X) X ## L
 #endif
 
-extern const __Tbl_FpType __Gaussian07_Kronrod15_Table[16];
-extern const __Tbl_FpType __Gaussian10_Kronrod21_Table[22];
-extern const __Tbl_FpType __Gaussian15_Kronrod31_Table[32];
-extern const __Tbl_FpType __Gaussian20_Kronrod41_Table[42];
-extern const __Tbl_FpType __Gaussian25_Kronrod51_Table[52];
-extern const __Tbl_FpType __Gaussian30_Kronrod61_Table[62];
+extern const __Tbl_FpType __Gaussian07_Table[8];
+extern const __Tbl_FpType __Kronrod15_Table[16];
+extern const __Tbl_FpType __Gaussian10_Table[10];
+extern const __Tbl_FpType __Kronrod21_Table[22];
+extern const __Tbl_FpType __Gaussian15_Table[16];
+extern const __Tbl_FpType __Kronrod31_Table[32];
+extern const __Tbl_FpType __Gaussian20_Table[20];
+extern const __Tbl_FpType __Kronrod41_Table[42];
+extern const __Tbl_FpType __Gaussian25_Table[26];
+extern const __Tbl_FpType __Kronrod51_Table[52];
+extern const __Tbl_FpType __Gaussian30_Table[30];
+extern const __Tbl_FpType __Kronrod61_Table[62];
 
 #undef __Tbl_FpType
 #undef __Tbl_Fp
 
 /**
- * @brief 高斯-克朗罗德积分
+ * @brief 高斯-克朗罗德积分 (实为高斯积分和高斯-克朗罗德积分两个类的合并)
  */
 class GaussKronrodQuadrature : public DefiniteIntegratingFunction
 {
-protected:
-    std::vector<float64> Coefficients;
-    bool EnableAdaptive = 1;
+public:
+    using Mybase = DefiniteIntegratingFunction;
 
-    float64 Run(Function1D f, float64 a, float64 b) override;
+protected:
+    std::vector<float64> GaussCoefficients;
+    std::vector<float64> KronrodCoefficients;
+
+    uint64  Order     = 21;
+    float64 Tolerence = 14;
+    uint64  MaxLevels = 15;
+
+    static bool GetNodesAndWeightsSpecialCases(uint64 N, std::vector<float64>* GaussCoeffs, std::vector<float64>* KronrodCoeffs = nullptr);
+
+    float64 GIntegrate(Function1D f, float64* pL1)const;
+    float64 GKAdaptiveIntegrate(Function1D f, float64 a, float64 b, uint64 Level, float64 Tol, float64* LastErr, float64* L1)const;
+    float64 GKNonAdaptiveIntegrate(Function1D f, float64* Error, float64* pL1)const;
+    float64 Run(Function1D f, float64 a, float64 b)const override;
 
 public:
-    static std::vector<float64> GetNodesAndWeights(uint64 N);
+    GaussKronrodQuadrature() : GaussKronrodQuadrature(21) {}
+    GaussKronrodQuadrature(uint64 N) : Order(N) {GetNodesAndWeights(N, &GaussCoefficients, &KronrodCoefficients);}
+
+    static void GetNodesAndWeights(uint64 N, std::vector<float64>* GaussCoeffs, std::vector<float64>* KronrodCoeffs = nullptr);
+
+    float64 GaussIntegrate(Function1D f, float64 a, float64 b, float64* L1Norm = nullptr)const;
+    float64 GaussKronrodIntegrate(Function1D f, float64 a, float64 b, float64* LastError = nullptr, float64* L1Norm = nullptr)const;
 };
 
 _SCICXX_END
