@@ -5,7 +5,7 @@ _SCICXX_BEGIN
 
 ////////////////////////////////////// FDM /////////////////////////////////////
 
-std::vector<float64> FiniteDifferenceDerivativeFunction::Iterator::DerivativeWeight(uint64 n)
+std::vector<float64> Adaptive1stOrderFDDerivativeFunction::Iterator::DerivativeWeight(uint64 n)
 {
     if (CentralWeights.size() != 2 * n + 1)
     {
@@ -37,7 +37,7 @@ std::vector<float64> FiniteDifferenceDerivativeFunction::Iterator::DerivativeWei
     return Direction == Center ? CentralWeights : ForwardWeights;
 }
 
-DynamicMatrix<float64> FiniteDifferenceDerivativeFunction::Iterator::PreEvaluator()
+DynamicMatrix<float64> Adaptive1stOrderFDDerivativeFunction::Iterator::PreEvaluator()
 {
     auto n = Terms;
     auto h = Step;
@@ -87,7 +87,7 @@ DynamicMatrix<float64> FiniteDifferenceDerivativeFunction::Iterator::PreEvaluato
     return Result;
 }
 
-void FiniteDifferenceDerivativeFunction::Iterator::PostEvaluator(DynamicMatrix<float64> x, DynamicMatrix<float64> fx)
+void Adaptive1stOrderFDDerivativeFunction::Iterator::PostEvaluator(DynamicMatrix<float64> x, DynamicMatrix<float64> fx)
 {
     uint64 n = Terms;
 
@@ -158,7 +158,103 @@ void FiniteDifferenceDerivativeFunction::Iterator::PostEvaluator(DynamicMatrix<f
     Error = abs(Output - LastOutput);
 }
 
-bool FiniteDifferenceDerivativeFunction::Iterator::CheckTerminate()
+bool Adaptive1stOrderFDDerivativeFunction::Iterator::CheckTerminate()
+{
+    if (IterCount)
+    {
+        bool IsInfinite = !(std::isfinite(Input) && std::isfinite(Output));
+        if (IsInfinite)
+        {
+            State = ValueError;
+            return 1;
+        }
+    }
+
+    if (IterCount > 1)
+    {
+        bool EstimateError = Error < AbsoluteTolerence + RelativeTolerence * abs(Output);
+        if (EstimateError)
+        {
+            State = Finished;
+            return 1;
+        }
+
+        auto IsErrorIncrease = Error > LastError * 10;
+        if (IsErrorIncrease)
+        {
+            State = decltype(State)(ErrorIncrease);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+float64 Adaptive1stOrderFDDerivativeFunction::operator()(float64 x)const
+{
+    Iterator it;
+    it.Input = x;
+    it.Intermediates.resize({1, 1});
+    it.Intermediates.at(0, 0) = OriginalFunction(x);
+    it.Step = InitialStepSize;
+    it.StepFactor = StepFactor;
+    it.AbsoluteTolerence = pow(10, -AbsoluteTolerence);
+    it.RelativeTolerence = pow(10, -RelativeTolerence);
+    it.State = Iterator::InProgress;
+    it.Terms = uint64(FDMOrder + 1) / 2ULL;
+    it.Direction = Direction;
+    it.Run(OriginalFunction, MaxIteration);
+    return it.State == it.Finished ? it.Output : it.LastOutput;
+}
+
+
+
+//////////////////////////////// 黎曼-刘维尔导数 ////////////////////////////////
+
+std::vector<float64> RiemannLiouvilleBinomialFDDerivativeFunction::Iterator::DerivativeWeight(uint64 n)
+{
+    if (Weights.size() != n + 1)
+    {
+        Weights.resize(n + 1);
+        Weights[0] = 1;
+        for (uint64 j = 1; j <= n; j++)
+        {
+            Weights[j] = Weights[j - 1] * (1. - (DerivativeOrder + 1.) / float64(j));
+        }
+    }
+
+    return Weights;
+}
+
+DynamicMatrix<float64> RiemannLiouvilleBinomialFDDerivativeFunction::Iterator::PreEvaluator()
+{
+    std::vector<float64> Samples;
+    for (int64 k = 0; k <= Terms; ++k)
+    {
+        Samples.push_back(k * (-Step));
+    }
+    DynamicMatrix<float64> Result;
+    Result.resize({1, Terms + 1});
+    Result.fill(Input);
+    Result += {Samples};
+    return Result;
+}
+
+void RiemannLiouvilleBinomialFDDerivativeFunction::Iterator::PostEvaluator(DynamicMatrix<float64> x, DynamicMatrix<float64> fx)
+{
+    std::vector<float64> WeightArray = DerivativeWeight(Terms);
+    LastOutput = Output;
+    float64 NewSolution = 0;
+    for (std::size_t i = 0; i <= Terms; ++i)
+    {
+        NewSolution += WeightArray[i] * fx.at({0, i});
+    }
+    Output = NewSolution / pow(Step, DerivativeOrder);
+    Step /= StepFactor;
+    LastError = Error;
+    Error = abs(Output - LastOutput);
+}
+
+bool RiemannLiouvilleBinomialFDDerivativeFunction::Iterator::CheckTerminate()
 {
     if (IterCount)
     {
@@ -190,21 +286,61 @@ bool FiniteDifferenceDerivativeFunction::Iterator::CheckTerminate()
     return 0;
 }
 
-float64 FiniteDifferenceDerivativeFunction::operator()(float64 x)const
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::IntegralInline(Function1D Func, float64 x)const
+{
+    return (*Engine)(Func, InitValue, x);
+}
+
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::DerivativeInline(Function1D Func, float64 x)const
 {
     Iterator it;
+    it.DerivativeOrder = ceil(DerivativeOrder);
     it.Input = x;
-    it.Intermediates.resize({1, 1});
-    it.Intermediates.at(0, 0) = OriginalFunction(x);
-    it.Step = InitialStepSize;
+    it.Step = pow(10, -InitialStepSize);
     it.StepFactor = StepFactor;
     it.AbsoluteTolerence = pow(10, -AbsoluteTolerence);
     it.RelativeTolerence = pow(10, -RelativeTolerence);
     it.State = Iterator::InProgress;
-    it.Terms = uint64(FDMOrder + 1) / 2ULL;
-    it.Direction = Direction;
-    it.Run(OriginalFunction, MaxIteration);
-    return it.Output;
+    it.Terms = ceil(DerivativeOrder);
+    it.Run(Func, MaxIteration);
+    return it.State == it.Finished ? it.Output : it.LastOutput;
+}
+
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::Binomial(uint64 x)const
+{
+    if (x == 0) {return OriginalFunction(x);}
+    return DerivativeInline(OriginalFunction, x);
+}
+
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::RiemannLiouville(float64 x) const
+{
+    if (x == 0) {return OriginalFunction(x);}
+    float64 alf = DerivativeOrder;
+    uint64 n = ceil(alf);
+    return DerivativeInline([this, alf, n](float64 _x)
+    {
+        return IntegralInline([this, alf, n, _x](float64 t)
+        {
+            return OriginalFunction(t) / pow(_x - t, alf + 1 - n);
+        }, _x);
+    }, x) / tgamma(n - alf);
+}
+
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::Caputo(float64 x) const
+{
+    if (x == 0) {return OriginalFunction(x);}
+    float64 alf = DerivativeOrder;
+    uint64 n = ceil(alf);
+    return IntegralInline([this, x, alf, n](float64 t)
+    {
+        return DerivativeInline(OriginalFunction, t) / pow(x - t, alf + 1 - n);
+    }, x) / tgamma(n - alf);
+}
+
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::operator()(float64 x) const
+{
+    if (CheckInt(__Float64(DerivativeOrder).Bytes)) {return Binomial(x);}
+    return RiemannLiouville(x);
 }
 
 _SCICXX_END

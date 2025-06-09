@@ -1,5 +1,6 @@
 #include "CSE/Base/AdvMath.h"
 #include "CSE/Base/ConstLists.h"
+#include <memory>
 
 _CSE_BEGIN
 _SCICXX_BEGIN
@@ -70,9 +71,35 @@ float64 SampleBasedIntegratingFunction::Run(Function1D f, float64 a, float64 b)c
     return Run(GetSamplesFromFunction(f, a, b, 0));
 }
 
-std::vector<vec2> SampleBasedIntegratingFunction::GetSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples)
+std::vector<vec2> SampleBasedIntegratingFunction::GetEvenlySpacedSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples)
 {
-    return std::vector<vec2>();
+    if (!Samples) {Samples = 33;} // 2^5 + 1
+    std::vector<vec2> Result;
+    float64 Step = (b - a) / float64(Samples - 1);
+    for (uint64 i = 0; i < Samples; ++i)
+    {
+        float64 X = a + i * Step;
+        Result.push_back({X, f(X)});
+    }
+    return Result;
+}
+
+std::vector<vec2> SampleBasedIntegratingFunction::GetSamplesFromParametricCurve(Function1D x, Function1D y, float64 a, float64 b, uint64 Samples)
+{
+    if (!Samples) {Samples = 1025;} // 2^10 + 1
+    std::vector<vec2> Result;
+    float64 Step = (b - a) / float64(Samples - 1);
+    for (uint64 i = 0; i < Samples; ++i)
+    {
+        float64 t = a + i * Step;
+        Result.push_back({x(t), y(t)});
+    }
+    return Result;
+}
+
+std::vector<vec2> SampleBasedIntegratingFunction::GetSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples)const
+{
+    return GetEvenlySpacedSamplesFromFunction(f, a, b, Samples);
 }
 
 float64 SampleBasedIntegratingFunction::operator()(std::vector<vec2> Samples)const
@@ -280,7 +307,7 @@ bool GaussKronrodQuadrature::GetNodesAndWeightsSpecialCases(uint64 N, std::vecto
 
 float64 GaussKronrodQuadrature::GIntegrate(Function1D f, float64 *pL1) const
 {
-    uint64 N = Order;
+    uint64 N = (Order - 1ULL) / 2ULL;
     uint64 GaussStart = 1;
     float64 Result = 0;
 
@@ -403,7 +430,7 @@ float64 GaussKronrodQuadrature::GKNonAdaptiveIntegrate(Function1D f, float64 *Er
 
 float64 GaussKronrodQuadrature::Run(Function1D f, float64 a, float64 b)const
 {
-    return GaussKronrodIntegrate(f, a, b);
+    return GaussOnly ? GaussIntegrate(f, a, b) : GaussKronrodIntegrate(f, a, b);
 }
 
 float64 GaussKronrodQuadrature::GaussIntegrate(Function1D f, float64 a, float64 b, float64* L1Norm)const
@@ -424,6 +451,377 @@ float64 GaussKronrodQuadrature::GaussIntegrate(Function1D f, float64 a, float64 
 float64 GaussKronrodQuadrature::GaussKronrodIntegrate(Function1D f, float64 a, float64 b, float64* LastError, float64* L1Norm)const
 {
     return GKAdaptiveIntegrate(f, a, b, MaxLevels, 0, LastError, L1Norm);
+}
+
+
+
+///////////////////////////////// 牛顿-科特斯积分 ////////////////////////////////
+
+#include "Integrations_NewtonCotes.tbl"
+
+#define __Newton_Cotes_Func_Disable \
+if (Level == 0) {throw std::logic_error("This function is disabled when zero-leveled.");}
+
+void NewtonCotesFormulae::GetEvenlySizedParameters(uint64 N, std::vector<float64>* Weight, float64* Error)
+{
+    if (!N) {throw std::logic_error("N is zero");}
+    if (N <= 14)
+    {
+        GetSpecialCaseParameters(N, Weight, Error);
+        return;
+    }
+
+    std::vector<float64> SamplePos;
+    for (int i = 0; i <= N; ++i)
+    {
+        SamplePos.push_back(i);
+    }
+    GetWeightsErrorsFromSamples(SamplePos, 1, Weight, Error);
+}
+
+void NewtonCotesFormulae::GetSpecialCaseParameters(uint64 N, std::vector<float64>* Weight, float64* Error)
+{
+    Weight->resize(N + 1);
+    for (int i = 0; i <= N; ++i)
+    {
+        Weight->at(i) = N * float64(__Newton_Cotes_Table[N - 1].Weights[i]) /
+            float64(__Newton_Cotes_Table[N - 1].Scale);
+    }
+    *Error = float64(__Newton_Cotes_Table[N - 1].ErrorCoeff1) /
+        float64(__Newton_Cotes_Table[N - 1].ErrorCoeff2);
+}
+
+void NewtonCotesFormulae::GetParametersFromSamples(std::vector<float64> SamplePos, std::vector<float64>* Weight, float64* Error)
+{
+    if (SamplePos.size() <= 1) {throw std::logic_error("Requires at least 2 sample points");}
+    Weight->resize(SamplePos.size());
+    bool IsEqual = 1;
+    for (uint64 i = 1; i < SamplePos.size(); ++i)
+    {
+        IsEqual &= (SamplePos[i] - SamplePos[i - 1] == 1);
+    }
+    GetWeightsErrorsFromSamples(SamplePos, IsEqual, Weight, Error);
+}
+
+void NewtonCotesFormulae::GetWeightsErrorsFromSamples(std::vector<float64> SamplePos, bool IsEqual, std::vector<float64>* WeightOut, float64* ErrorOut)
+{
+    uint64 Level = SamplePos.size() - 1;
+    if (SamplePos.front() != 0 || SamplePos.back() != Level)
+    {
+        throw std::logic_error("The sample positions must start at 0 and end at N");
+    }
+
+    // 权重计算参考以下文献：
+    // Keesling J. Closed Newton-Cotes Integration[R/OL].
+    // https://people.clas.ufl.edu/kees/files/NewtonCotes.pdf.
+    std::vector<float64> B;
+    for (uint64 N = 0; N <= Level; ++N)
+    {
+        B.push_back(pow(Level, N + 1) / (N + 1));
+    }
+    auto IV = InverseVandermonde(SamplePos);
+    auto A = IV * DynamicMatrix{B};
+    auto WResult = A.GetColumn(0);
+    std::copy(WResult.begin(), WResult.end(), WeightOut->begin());
+
+    // 误差系数的算法译自SciPy
+    float64 EResult, EPower;
+    if (!(Level % 2) && IsEqual)
+    {
+        EResult = Level / float64(Level + 3);
+        EPower = Level + 2;
+    }
+    else
+    {
+        EResult = Level / float64(Level + 2);
+        EPower = Level + 1;
+    }
+    for (int i = 0; i < SamplePos.size(); ++i)
+    {
+        EResult -= cse::pow(SamplePos[i] / float64(Level), EPower) * WResult[i];
+    }
+    *ErrorOut = EResult * (cse::pow(Level, EPower) / tgamma(EPower + 1));
+}
+
+bool NewtonCotesFormulae::IsEvenlySized(std::vector<vec2> Samples)
+{
+    if (Samples.size() <= 2) {return 1;}
+    bool IsEqual = 1;
+    auto Step = Samples[1].x - Samples[0].x;
+    for (uint64 i = 2; i < Samples.size(); ++i)
+    {
+        auto CurrentStep = Samples[i].x - Samples[i - 1].x;
+        IsEqual &= abs(CurrentStep - Step) < DOUBLE_EPSILON;
+    }
+    return IsEqual;
+}
+
+NewtonCotesFormulae::Block NewtonCotesFormulae::CreateBlock(uint64 N)const
+{
+    Block NewBlock;
+    GetEvenlySizedParameters(N, &NewBlock.Weights, &NewBlock.ErrorCoeff);
+    NewBlock.BStep = 1;
+    return NewBlock;
+}
+
+NewtonCotesFormulae::Block NewtonCotesFormulae::CreateBlock(std::vector<vec2> Samples)const
+{
+    Block NewBlock;
+    uint64 N = Samples.size() - 1;
+    float64 a = Samples.front().x;
+    float64 b = Samples.back().x;
+    float64 TrueStep = (b - a) / float64(N);
+
+    std::vector<float64> NormalizedX;
+    for (int i = 0; i < Samples.size(); ++i)
+    {
+        NormalizedX.push_back((Samples[i].x - a) / TrueStep);
+        NewBlock.Samples.push_back(Samples[i].y);
+    }
+    GetParametersFromSamples(NormalizedX, &NewBlock.Weights, &NewBlock.ErrorCoeff);
+    NewBlock.BStep = TrueStep;
+
+    return NewBlock;
+}
+
+float64 NewtonCotesFormulae::Block::Integrate()
+{
+    float64 sum = 0;
+    for (uint64 i = 0; i < Samples.size(); ++i)
+    {
+        sum += Weights[i] * Samples[i];
+    }
+    return BStep * sum; // + ErrorEstimate()
+}
+
+float64 NewtonCotesFormulae::Block::ErrorEstimate()
+{
+    return 0; // TODO.
+}
+
+float64 NewtonCotesFormulae::Trapezoidal(std::vector<vec2> Samples)
+{
+    if (Samples.size() < 2) {throw std::logic_error("need at least 2 sample points");}
+    float64 sum = 0;
+    for (uint64 i = 1; i < Samples.size(); ++i)
+    {
+        float64 d = Samples[i].x - Samples[i - 1].x;
+        sum += (Samples[i].y + Samples[i - 1].y) * d / 2.;
+    }
+    return sum;
+}
+
+float64 NewtonCotesFormulae::Simpson(std::vector<vec2> Samples)
+{
+    if (Samples.size() < 3) {throw std::logic_error("need at least 3 sample points");}
+    uint64 N = Samples.size() - 1;
+
+    if (N % 2)
+    {
+        float64 res = SimpsonImpl(std::vector<vec2>(Samples.begin(), Samples.end() - 1));
+        float64 hn2 = Samples[N - 1].x - Samples[N - 2].x;
+        float64 hn1 = Samples[N].x - Samples[N - 1].x;
+        float64 alf = ((2. * hn1 * hn1) + (3. * hn1 * hn2)) / (6. * (hn2 + hn1));
+        float64 bet = ((hn1 * hn1) + (3. * hn1 * hn2)) / (6. * hn2);
+        float64 eta = (hn1 * hn1 * hn1) / (6. * hn2 * (hn2 + hn1));
+        return res + alf * Samples[N].y + bet * Samples[N - 1].y - eta * Samples[N - 2].y;
+    }
+
+    return SimpsonImpl(Samples);
+}
+
+float64 NewtonCotesFormulae::SimpsonImpl(std::vector<vec2> Samples)
+{
+    if (IsEvenlySized(Samples)) // 等距样本使用辛普森1/4
+    {
+        float64 Result = 0;
+        float64 Step = Samples[1].x - Samples[0].x;
+        for (int i = 0; i < Samples.size() - 2; i += 2)
+        {
+            Result += Samples[i].y + 4. * Samples[i + 1].y + Samples[i + 2].y;
+        }
+        return (Step / 3.) * Result;
+    }
+    else // 非等距样本的辛普森
+    {
+        float64 Result = 0;
+        for (int i = 0; i <= (Samples.size() - 1) / 2 - 1; ++i)
+        {
+            float64 h2i = Samples[2 * i + 1].x - Samples[2 * i].x;
+            float64 h2ia1 = Samples[2 * i + 2].x - Samples[2 * i + 1].x;
+            Result += ((h2i + h2ia1) / 6.) *
+                ((2. - (h2ia1 / h2i)) * Samples[2 * i].y +
+                (((h2i + h2ia1) * (h2i + h2ia1)) / (h2i * h2ia1)) * Samples[2 * i + 1].y +
+                (2. - (h2i / h2ia1)) * Samples[2 * i + 2].y);
+        }
+        return Result;
+    }
+}
+
+float64 NewtonCotesFormulae::Romberg(std::vector<vec2> Samples, DynamicMatrix<float64>* RichardsonExtrapolationTable)
+{
+    if (!IsEvenlySized(Samples))
+    {
+        throw std::logic_error("Samples are unequally spaced.");
+    }
+
+    // 此基于样本点的龙贝格积分实现译自SciPy
+    float64 dx = Samples[1].x - Samples[0].x;
+    uint64 NSamples = Samples.size();
+    uint64 NSegments = NSamples - 1;
+
+    uint64 n = 1, k = 0;
+    while (n < NSegments)
+    {
+        n <<= 1;
+        ++k;
+    }
+    if (n != NSegments)
+    {
+        throw std::logic_error("Number of samples must be 2^N + 1 and N > 0.");
+    }
+
+    DynamicMatrix<float64> R({k + 1, k + 1});
+    float64 h = NSegments * dx;
+    R.at(0, 0) = h * ((Samples.front().y + Samples.back().y) / 2.);
+    uint64 Start = NSegments, Stop = NSegments, Step = NSegments;
+
+    for (uint64 i = 1; i <= k; ++i)
+    {
+        Start >>= 1;
+        float64 ysum = 0;
+        for (uint64 j = Start; j < Stop; j += Step)
+        {
+            ysum += Samples[j].y;
+        }
+        Step >>= 1;
+        R.at(0, i) = (R.at(0, i - 1) + h * ysum) / 2.;
+
+        for (uint64 j = 1; j <= i; ++j)
+        {
+            R.at(j, i) = R.at(j - 1, i) + (R.at(j - 1, i) - R.at(j - 1, i - 1)) / ((1 << (2 * j)) - 1);
+        }
+
+        h /= 2.0;
+    }
+
+    if (RichardsonExtrapolationTable) {*RichardsonExtrapolationTable = R;}
+
+    return R.at(k, k);
+}
+
+float64 NewtonCotesFormulae::SingleIntegrate(std::vector<vec2> Samples)const
+{
+    __Newton_Cotes_Func_Disable
+    if ((Samples.size() - 1) != Level)
+    {
+        throw std::logic_error("Number of samples doesn't match this level.");
+    }
+    return SingleIntegrateImpl(Samples, Level);
+}
+
+float64 NewtonCotesFormulae::SingleIntegrateImpl(std::vector<vec2> Samples, uint64 L) const
+{
+    if (IsEvenlySized(Samples))
+    {
+        Block Blk = CreateBlock(L);
+        float64 h = Samples[1].x - Samples[0].x;
+        for (int j = 0; j <= L; ++j)
+        {
+            Blk.Samples.push_back(Samples[j].y);
+        }
+        return h * Blk.Integrate();
+    }
+    else
+    {
+        Block CurrentBlock = CreateBlock(Samples);
+        return CurrentBlock.Integrate();
+    }
+}
+
+float64 NewtonCotesFormulae::CompositeIntegrate(std::vector<vec2> Samples)const
+{
+    __Newton_Cotes_Func_Disable
+    if (!IsEvenlySized(Samples))
+    {
+        throw std::logic_error("Samples are unequally spaced.");
+    }
+
+    uint64 FN = (Samples.size() - 1) % Level, N = (Samples.size() - 1) - FN;
+    Block Blk = CreateBlock(Level), FinalBlock;
+    if (FN) { FinalBlock = CreateBlock(FN);}
+    float64 sum = 0;
+    float64 h = Samples[1].x - Samples[0].x;
+    for (uint64 i = 0; i <= N - Level; i += Level)
+    {
+        for (int j = 0; j <= Level; ++j)
+        {
+            Blk.Samples.push_back(Samples[i + j].y);
+        }
+        sum += h * Blk.Integrate();
+        Blk.Samples.clear();
+    }
+    if (FN)
+    {
+        for (uint64 j = N; j < Samples.size(); ++j)
+        {
+            FinalBlock.Samples.push_back(Samples[j].y);
+        }
+        sum += h * FinalBlock.Integrate();
+    }
+    return sum;
+}
+
+float64 NewtonCotesFormulae::DiscreteIntegrate(std::vector<vec2> Samples)const
+{
+    __Newton_Cotes_Func_Disable
+    uint64 FN = (Samples.size() - 1) % Level, N = (Samples.size() - 1) - FN;
+    float64 sum = 0;
+    for (uint64 i = 0; i <= N - Level; i += Level)
+    {
+        sum += SingleIntegrateImpl(std::vector<vec2>
+            (Samples.begin() + i, Samples.begin() + i + Level + 1), Level);
+    }
+    if (FN)
+    {
+        sum += SingleIntegrateImpl(std::vector<vec2>(Samples.begin() + N, Samples.end()), FN);
+    }
+    return sum;
+}
+
+float64 NewtonCotesFormulae::Run(std::vector<vec2> Samples) const
+{
+    switch (Level)
+    {
+    case 0:
+        return Romberg(Samples);
+    case 1:
+        return Trapezoidal(Samples);
+    case 2:
+        return Simpson(Samples);
+    }
+
+    uint64 N = Samples.size() - 1;
+    if (N == Level) {return SingleIntegrate(Samples);}
+    else
+    {
+        if (IsEvenlySized(Samples)) {return CompositeIntegrate(Samples);}
+        else {return DiscreteIntegrate(Samples);}
+    }
+
+    throw std::logic_error("No matching function for call to these samples.");
+}
+
+
+
+///////////////////////////////// 黎曼-刘维尔积分 ////////////////////////////////
+
+float64 RiemannLiouvilleIntegratingFunction::operator()(float64 x) const
+{
+    return (*Engine)([&](float64 t)
+    {
+        return OriginalFunction(t) * pow(x - t, IntegralOrder - 1);
+    }, InitValue.x, x) / tgamma(IntegralOrder) + InitValue.y;
 }
 
 _SCICXX_END

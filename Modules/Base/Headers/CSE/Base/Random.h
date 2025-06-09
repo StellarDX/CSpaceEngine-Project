@@ -115,88 +115,40 @@ public:
     }
 };
 
-/*template <class _Ty = float64, class _CDFty = IntegralFunction>
-class _Custom_Distribution_Bi : public BisectionSearcher
+template <class _Ty = float64>
+class _Custom_Distribution
 {
 public:
-    using _Mybase = BisectionSearcher;
-    using result_type = _Ty;
-    float64 _MinVal;
-    float64 _MaxVal;
+    using result_type  = _Ty;
+    using icdf_Ptr     = std::shared_ptr<_SCICXX InverseFunction>;
+    using default_invf = _SCICXX BrentInverseFunction;
 
-    _Custom_Distribution_Bi() {}
+    icdf_Ptr ICDF;
+    vec2 Doamin = _SCICXX __Whole_Line;
 
-    _Custom_Distribution_Bi(_CDFty _CDFunc, float64 _Min, float64 _Max,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _MaxItLog, _TolLog), _MinVal(_Min), _MaxVal(_Max) {}
+    _Custom_Distribution(icdf_Ptr InvF) : ICDF(InvF) {}
 
-    _Custom_Distribution_Bi(float64(*_CDFunc)(float64), float64 _Min, float64 _Max,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _MaxItLog, _TolLog), _MinVal(_Min), _MaxVal(_Max) {}
-
-    template<typename _PDFunctor, typename _CDFunctor>
-    _Custom_Distribution_Bi(_CDFunctor _CDFunc, float64 _Min, float64 _Max,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _MaxItLog, _TolLog), _MinVal(_Min), _MaxVal(_Max) {}
+    _Custom_Distribution(_SCICXX Function1D CDF, vec2 Domain) : Doamin(Domain)
+    {
+        ICDF = std::make_shared<default_invf>(
+            default_invf([Domain, &CDF](float64 x)
+        {
+            vec2 _Domain = Domain;
+            if (_Domain[0] > _Domain[1]) {std::swap(_Domain[0], _Domain[1]);}
+            if (x < _Domain[0]) {return 0.;}
+            if (x > _Domain[1]) {return 1.;}
+            // 概率密度函数不可能为负，所以累积密度函数必然单调递增
+            float64 Min = CDF(_Domain[0]), Max = CDF(_Domain[1]);
+            return (CDF(x) - Min) / (Max - Min);
+        }, Domain));
+    }
 
     template <class _Engine>
     result_type operator()(_Engine& _Eng) const
     {
-        return _Mybase::operator()(std::generate_canonical<_Ty, std::numeric_limits<_Ty>::digits>(_Eng), _MinVal, _MaxVal);
+        return (*ICDF)(std::generate_canonical<_Ty, std::numeric_limits<_Ty>::digits>(_Eng));
     }
 };
-
-template <class _Ty = float64, class _PDFty = Function1D, class _CDFty = IntegralFunction>
-class _Custom_Distribution_NR : public NewtonIterator
-{
-public:
-    using _Mybase = NewtonIterator;
-    using result_type = _Ty;
-    float64 _InitValue;
-
-    _Custom_Distribution_NR() {}
-
-    _Custom_Distribution_NR(_PDFty _PDFunc, _CDFty _CDFunc, float64 _IVal,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _PDFunc, _MaxItLog, _TolLog), _InitValue(_IVal) {}
-
-    _Custom_Distribution_NR(float64(*_PDFunc)(float64), float64(*_CDFunc)(float64), float64 _IVal,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _PDFunc, _MaxItLog, _TolLog), _InitValue(_IVal) {}
-
-    template<typename _Functor>
-    _Custom_Distribution_NR(_Functor _PDFunc, float64(*_CDFunc)(float64), float64 _IVal,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _PDFunc, _MaxItLog, _TolLog), _InitValue(_IVal) {}
-
-    template<typename _Functor>
-    _Custom_Distribution_NR(float64(*_PDFunc)(float64),  _Functor _CDFunc, float64 _IVal,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _PDFunc, _MaxItLog, _TolLog), _InitValue(_IVal) {}
-
-    template<typename _PDFunctor, typename _CDFunctor>
-    _Custom_Distribution_NR(_PDFunctor _PDFunc, _CDFunctor _CDFunc, float64 _IVal,
-        float64 _MaxItLog = 3, float64 _TolLog = 8)
-        : _Mybase(_CDFunc, _PDFunc, _MaxItLog, _TolLog), _InitValue(_IVal) {}
-
-    template <class _Engine>
-    result_type operator()(_Engine& _Eng) const
-    {
-        return _Mybase::operator()(std::generate_canonical<_Ty, std::numeric_limits<_Ty>::digits>(_Eng), _InitValue);
-    }
-};*/
-
-/**
- * @brief Fast custom distribution based on Newton iterator, init with a PDF and its CDF.
- */
-/*template <class _Ty = float64, class _PDFty = Function1D, class _CDFty = IntegralFunction>
-using fast_custom_distribution = _Custom_Distribution_NR<_Ty, _PDFty, _CDFty>;*/
-
-/**
- * @brief Custom distribution based on Bisection search, only init with a CDF, slower but safer.
- */
-/*template <class _Ty = float64, class _CDFty = IntegralFunction>
-using safe_custom_distribution = _Custom_Distribution_Bi<_Ty, _CDFty>;*/
 
 // Random Engine
 // reference: https://docs.python.org/3/library/random.html

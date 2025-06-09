@@ -167,5 +167,49 @@ std::vector<float64> StieltjesPolynomialCoefficients(uint64 N)
     return Result;
 }
 
+uint64 __Int_Comb(uint64 n, uint64 k)
+{
+    if (k > n) {return 0;}
+    if (k == 0 || k == n) {return 1;}
+    k = min(k, n - k);
+    uint64 res1 = 1, res2 = 1;
+    for (uint64 i = 1; i <= k; i++)
+    {
+        res1 *= (n - k + i);
+        res2 *= i;
+    }
+    return res1 / res2;
+}
+
+DynamicMatrix<float64> BellPolynomialsTriangularArray(std::vector<float64> x)
+{
+    // 动态规划计算贝尔多项式
+    float64 N = x.size();
+    DynamicMatrix<float64> B(uvec2(N + 1));
+    B.fill(__Float64::FromBytes(BIG_NAN_DOUBLE));
+
+    B.at(0, 0) = 1;
+    for (uint64 n = 1; n <= N; ++n)
+    {
+        B.at(n, 0) = 0;
+        B.at(n, 1) = x[n - 1];
+        B.at(n, n) = pow(x[0], n);
+    }
+
+    for (uint64 n = 2; n < N; ++n)
+    {
+        for (uint64 k = 1; k < n; ++k)
+        {
+            B.at(n + 1, k + 1) = 0;
+            for (uint64 i = 0; i <= n - k; ++i)
+            {
+                B.at(n + 1, k + 1) += __Int_Comb(n, i) * x[i] * B.at(n - i, k);
+            }
+        }
+    }
+
+    return B;
+}
+
 _SCICXX_END
 _CSE_END
