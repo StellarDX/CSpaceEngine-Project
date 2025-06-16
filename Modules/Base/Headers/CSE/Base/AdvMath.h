@@ -49,7 +49,7 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-// SciPy：提供一阶导函数，牛顿-科特斯积分，龙格-库塔微分方程
+// SciPy：提供一阶导函数，牛顿-科特斯积分，龙格-库塔微分方程，牛顿迭代
 /*
     Copyright (c) 2001-2002 Enthought, Inc. 2003-2024, SciPy Developers.
     All rights reserved.
@@ -570,7 +570,7 @@ public:
 
 // ------------------------------------------------------------------------------------- //
 
-#if defined __GNUG__
+#if defined __GNUG__ && !defined(__clang__)
 #define __Tbl_FpType __float128 // GCC已经支持四倍精度(15+112)
 #else
 #define __Tbl_FpType long double // 设置为当前编译器最大可支持精度(一般为15+64长精度)

@@ -151,6 +151,7 @@ public:
 };
 
 _SC SharedTablePointer ParseFile(std::filesystem::path FileName)noexcept(false);
+_SC SharedTablePointer ParseScript(std::filesystem::path FileName, ustringlist VariableList)noexcept(false);
 
 #ifdef GetObject
 #undef GetObject

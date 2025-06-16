@@ -93,7 +93,7 @@ struct TokenType
 
 inline bool stob(const ustring& __str)
 {
-    return __str == L"true" ? 1 : 0;
+    return (__str == L"true") ? 1 : 0;
 }
 
 inline ustring __Matrix_To_String(struct ValueType Val);
@@ -371,13 +371,33 @@ inline auto __Find_Table_With_KeyWord(const _SC SharedTablePointer& Src, ustring
 template<typename VTy> requires
 (
     std::is_same_v<VTy, float64> ||
-    std::is_same_v<VTy, ustring> ||
-    std::is_same_v<VTy, bool>
+    std::is_same_v<VTy, ustring>
 )
 inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
 {
     auto it = __Find_Table_From_List(Src, Key);
     if (it != Src->Get().end()) {it->Value.front().GetQualified(Dst);}
+    else {*Dst = Alt;}
+}
+
+template<typename VTy> requires std::is_same_v<VTy, bool>
+inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end())
+    {
+        if (it->Value.front().Type == it->Value.front().Boolean)
+        {
+            it->Value.front().GetQualified(Dst);
+        }
+        else if (it->Value.front().Type == it->Value.front().Number)
+        {
+            int64 I;
+            it->Value.front().GetAsBasedInteger(&I);
+            *Dst = bool(I);
+        }
+        else {*Dst = Alt;}
+    }
     else {*Dst = Alt;}
 }
 
@@ -484,11 +504,6 @@ inline bool IsNoData(ustring Val)
     return IS_NO_DATA_STR(Val);
 }
 
-inline bool IsNoData(bool Val)
-{
-    return !Val;
-}
-
 template<typename Tp, size_t Nm>
 inline bool IsNoData(gvec<Tp, Nm> Val)
 {
@@ -509,8 +524,8 @@ template<typename genType> requires
     std::is_same_v<genType, float64> ||
     std::is_same_v<genType, uint64> ||
     std::is_same_v<genType, int64> ||
-    std::is_same_v<genType, ustring> ||
-    std::is_same_v<genType, bool>
+    std::is_same_v<genType, ustring> //||
+    //std::is_same_v<genType, bool>
 )
 inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, genType Value, bool Fixed, std::streamsize Preci)
 {
@@ -520,10 +535,24 @@ inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, genType Value, boo
         KeyValue.Key = Key;
         std::wostringstream ValueStr;
         if (Fixed) {ValueStr << std::fixed;}
-        if (std::is_same_v<genType, bool>) {ValueStr << std::boolalpha;}
+        //if (std::is_same_v<genType, bool>) {ValueStr << std::boolalpha;}
         if (std::is_same_v<genType, float64>) {ValueStr.precision(Preci);}
         if (std::is_same_v<genType, ustring>) {ValueStr << L'\"' << Value << L'\"';}
         else {ValueStr << Value;}
+        KeyValue.Value.push_back({.Type = _SC ValueType::ToTypeID<decltype(Value)>(), .Value = {ustring(ValueStr.str())}});
+        Table->Get().push_back(KeyValue);
+    }
+}
+
+template<typename genType> requires (std::is_same_v<genType, bool>)
+inline void __Add_Key_Value(_SC SCSTable* Table, ustring Key, genType Value, bool Reverse, std::streamsize Preci)
+{
+    if (Reverse ? !Value : Value)
+    {
+        _SC SCSTable::SCKeyValue KeyValue;
+        KeyValue.Key = Key;
+        std::wostringstream ValueStr;
+        ValueStr << std::boolalpha << Value;
         KeyValue.Value.push_back({.Type = _SC ValueType::ToTypeID<decltype(Value)>(), .Value = {ustring(ValueStr.str())}});
         Table->Get().push_back(KeyValue);
     }

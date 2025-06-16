@@ -1,4 +1,4 @@
-#if defined __GNUG__
+#if defined __GNUG__ && !defined(__clang__)
 #define __Tbl_FpType __float128 // GCC已经支持四倍精度(15+112)
 #define __Tbl_Fp(X) X ## Q
 #else

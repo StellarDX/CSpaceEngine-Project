@@ -60,4 +60,13 @@ _SC SharedTablePointer ParseFile(std::filesystem::path FileName)noexcept(false)
     return sc.Parse();
 }
 
+_SC SharedTablePointer ParseScript(std::filesystem::path FileName, ustringlist VariableList)noexcept(false)
+{
+    ifstream is(FileName);
+    if (!is) {throw _SC ParseException("File " + FileName.string() + " is not found.\n");}
+    ISCStream sc(is);
+    sc.VariableList = VariableList;
+    return sc.Parse();
+}
+
 _CSE_END

@@ -125,7 +125,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
         else {Obj.RotationModel = L"Simple";}
         //if (Obj.RotationModel == L"Simple")
         //{
-            __Get_Value_From_Table(&Obj.Rotation.RotationEpoch, CurrentTable, L"RotationEpoch", float64(J2000));
+            __Get_Value_From_Table(&Obj.Rotation.RotationEpoch, CurrentTable, L"RotationEpoch", Obj.Rotation.RotationEpoch);
             __Get_Value_From_Table(&Obj.Rotation.Obliquity, CurrentTable, L"Obliquity", Obj.Rotation.Obliquity);
             __Get_Value_From_Table(&Obj.Rotation.EqAscendNode, CurrentTable, L"EqAscendNode", Obj.Rotation.EqAscendNode);
             __Get_Value_From_Table(&Obj.Rotation.RotationOffset, CurrentTable, L"RotationOffset", Obj.Rotation.RotationOffset);
@@ -734,7 +734,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
 {
     _SC SCSTable MainTable, ContentTable;
     bool FixedOutput = !(Fl & __Object_Manipulator::Scientific);
-    bool NoBooleans = !(Fl & __Object_Manipulator::Booleans);
+    bool Booleans = (Fl & __Object_Manipulator::Booleans);
     __Add_Key_Value(&MainTable, Obj.Type, __Str_List_To_String(Obj.Name), Fl, Prec);
 
     __Add_Key_Value(&ContentTable, L"DateUpdated", Obj.DateUpdated, FixedOutput, Prec);
@@ -821,7 +821,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&ContentTable, L"Precession", Obj.Rotation.Precession / JulianYear, FixedOutput, Prec);
         if (Obj.Rotation.TidalLocked && (Fl & __Object_Manipulator::FTidalLock))
         {
-            __Add_Key_Value(&ContentTable, L"TidalLocked", Obj.Rotation.TidalLocked, FixedOutput, Prec);
+            __Add_Key_Value(&ContentTable, L"TidalLocked", Obj.Rotation.TidalLocked, 0, Prec);
         }
         else if (Obj.RotationModel == L"IAU")
         {
@@ -980,7 +980,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         }
     }
 
-    //if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoLife", bool(Obj.LifeCount), FixedOutput, Prec);}
+    //if (Booleans) {__Add_Key_Value(&ContentTable, L"NoLife", bool(Obj.LifeCount), 0, Prec);}
     if ((Fl & __Object_Manipulator::Life) && Obj.LifeCount)
     {
         auto AddLife = [&](Object::LifeParams Life)
@@ -991,7 +991,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             __Add_Key_Value(&LifeTable, L"Class", Life.Class, FixedOutput, Prec);
             __Add_Key_Value(&LifeTable, L"Type", Life.Type, FixedOutput, Prec);
             __Add_Key_Value(&LifeTable, L"Biome", __Str_List_To_String(Life.Biome), FixedOutput, Prec);
-            __Add_Key_Value(&LifeTable, L"Panspermia", Life.Panspermia, FixedOutput, Prec);
+            __Add_Key_Value(&LifeTable, L"Panspermia", Life.Panspermia, 0, Prec);
             ContentTable.Get().back().SubTable = make_shared<decltype(LifeTable)>(LifeTable);
         };
         switch (Obj.LifeCount)
@@ -1044,7 +1044,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         __Add_Key_Value(&SurfaceTable, L"GlowColor", Obj.Surface.GlowColor, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"GlowBright", Obj.Surface.GlowBright, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"SpecMap", Obj.Surface.SpecMap, FixedOutput, Prec);
-        __Add_Key_Value(&SurfaceTable, L"FlipMap", Obj.Surface.FlipMap, FixedOutput, Prec);
+        __Add_Key_Value(&SurfaceTable, L"FlipMap", Obj.Surface.FlipMap, 0, Prec);
         __Add_Key_Value(&SurfaceTable, L"Gamma", Obj.Surface.Gamma, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"Hapke", Obj.Surface.Hapke, FixedOutput, Prec);
         __Add_Key_Value(&SurfaceTable, L"SpotBright", Obj.Surface.SpotBright, FixedOutput, Prec);
@@ -1141,7 +1141,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(SurfaceTable)>(SurfaceTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoOcean", Obj.NoOcean, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoOcean", Obj.NoOcean, 0, Prec);}
     if ((Fl & __Object_Manipulator::Ocean) && !Obj.NoOcean)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1169,7 +1169,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(OceanTable)>(OceanTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoClouds", Obj.NoClouds, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoClouds", Obj.NoClouds, 0, Prec);}
     if ((Fl & __Object_Manipulator::Clouds) && !Obj.NoClouds)
     {
         auto AddClouds = [&](Object::CloudParams::CloudLayerParam Layer)
@@ -1230,6 +1230,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         }
         #endif
         _SC SCSTable CloudTable, ClApperTable;
+        __Add_Key_Value(&CloudTable, L"TidalLocked", Obj.Clouds.TidalLocked, 0, Prec);
         __Add_Key_Value(&CloudTable, L"Coverage", Obj.Clouds.Coverage, FixedOutput, Prec);
         __Add_Key_Value(&CloudTable, L"mainFreq", Obj.Clouds.mainFreq, FixedOutput, Prec);
         __Add_Key_Value(&CloudTable, L"mainOctaves", Obj.Clouds.mainOctaves, FixedOutput, Prec);
@@ -1263,7 +1264,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         }
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAtmosphere", Obj.NoAtmosphere, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoAtmosphere", Obj.NoAtmosphere, 0, Prec);}
     if ((Fl & __Object_Manipulator::Atmosphere) && !Obj.NoAtmosphere)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1303,7 +1304,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(ClimateTable)>(ClimateTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAurora", Obj.NoAurora, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoAurora", Obj.NoAurora, 0, Prec);}
     if ((Fl & __Object_Manipulator::Aurora) && !Obj.NoAurora)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1333,7 +1334,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(AuroraTable)>(AuroraTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoRings", Obj.NoRings, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoRings", Obj.NoRings, 0, Prec);}
     if ((Fl & __Object_Manipulator::Rings) && Obj.Type != L"Star" && !Obj.NoRings)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1369,7 +1370,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(RingsTable)>(RingsTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoAccretionDisk", Obj.NoAccretionDisk, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoAccretionDisk", Obj.NoAccretionDisk, 0, Prec);}
     if ((Fl & __Object_Manipulator::AccDisk) && Obj.Type == L"Star" && !Obj.NoAccretionDisk)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1412,7 +1413,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(AccDiskTable)>(AccDiskTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoCorona", Obj.NoCorona, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoCorona", Obj.NoCorona, 0, Prec);}
     if ((Fl & __Object_Manipulator::Corona) && Obj.Type == L"Star" && !Obj.NoCorona)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1426,7 +1427,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         ContentTable.Get().back().SubTable = make_shared<decltype(CoronaTable)>(CoronaTable);
     }
 
-    if (!NoBooleans) {__Add_Key_Value(&ContentTable, L"NoCometTail", Obj.NoCometTail, FixedOutput, Prec);}
+    if (Booleans) {__Add_Key_Value(&ContentTable, L"NoCometTail", Obj.NoCometTail, 0, Prec);}
     if ((Fl & __Object_Manipulator::CometTail) && !Obj.NoCometTail)
     {
         __Add_Empty_Tag(&ContentTable);
@@ -1551,57 +1552,60 @@ vec3 Flattening(Object Obj)
     return (MaxRad - Radius) / MaxRad;
 }
 
-float64 EquatorialCircumference(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction)
+float64 EquatorialCircumference(Object Obj)
 {
     float64 a = max(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
     float64 b = min(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
     if (a == b) {return 2. * CSE_PI * a;}
 
     float64 e2 = 1. - pow(b / a, 2);
+    SciCxx::DefaultIntegratingFunction IFunc;
     auto E = [e2](float64 tet)
     {
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
     };
-    return 4. * a * IntegralFunction(E, 0, CSE_PI_D2);
+    return 4. * a * IFunc(E, 0, CSE_PI_D2);
 }
 
-float64 MeridionalCircumference(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction)
+float64 MeridionalCircumference(Object Obj)
 {
     float64 a = EquatorialRadius(Obj);
     float64 b = PolarRadius(Obj);
     if (a == b) {return 2. * CSE_PI * a;}
 
     float64 e2 = 1. - pow(b / a, 2);
+    SciCxx::DefaultIntegratingFunction IFunc;
     auto E = [e2](float64 tet)
     {
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
     };
-    return 4. * a * IntegralFunction(E, 0, CSE_PI_D2);
+    return 4. * a * IFunc(E, 0, CSE_PI_D2);
 }
 
-float64 SurfaceArea(Object Obj, const SciCxx::DefiniteIntegratingFunction& IntegralFunction)
+float64 SurfaceArea(Object Obj)
 {
     std::array<float64, 3> Radius = Obj.Dimensions / 2.;
     std::sort(Radius.begin(), Radius.end());
     float64 a = Radius[2], b = Radius[1], c = Radius[0];
     if (a == b && b == c) {return 4. * CSE_PI * a * a;}
 
-    auto F = [&IntegralFunction](float64 phi, float64 k2)
+    SciCxx::DefaultIntegratingFunction IFunc;
+    auto F = [&IFunc](float64 phi, float64 k2)
     {
         auto EllipticalIntegral1st = [k2](float64 tet)
         {
             return inversesqrt(1. - k2 * pow(sin(Angle::FromRadians(tet)), 2));
         };
-        return IntegralFunction(EllipticalIntegral1st, 0, phi);
+        return IFunc(EllipticalIntegral1st, 0, phi);
     };
 
-    auto E = [&IntegralFunction](float64 phi, float64 k2)
+    auto E = [&IFunc](float64 phi, float64 k2)
     {
         auto EllipticalIntegral2nd = [k2](float64 tet)
         {
             return sqrt(1. - k2 * pow(sin(Angle::FromRadians(tet)), 2));
         };
-        return IntegralFunction(EllipticalIntegral2nd, 0, phi);
+        return IFunc(EllipticalIntegral2nd, 0, phi);
     };
 
     Angle phi = arccos(c / a);
