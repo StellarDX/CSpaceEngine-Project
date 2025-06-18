@@ -380,6 +380,33 @@ inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, 
     else {*Dst = Alt;}
 }
 
+inline void __Get_Angle_From_Table(Angle* Dst, const _SC SharedTablePointer& Src, ustring Key, Angle Alt, uint64 Unit = 0)
+{
+    auto it = __Find_Table_From_List(Src, Key);
+    if (it != Src->Get().end())
+    {
+        float64 Value;
+        it->Value.front().GetQualified(&Value);
+        switch (Unit)
+        {
+        case 0:
+        default:
+            *Dst = Angle::FromDegrees(Value);
+            return;
+        case 1:
+            *Dst = Angle::FromRadians(Value);
+            return;
+        case 2:
+            *Dst = Angle::FromTurns(Value);
+            return;
+        case 3:
+            *Dst = Angle::FromGradians(Value);
+            return;
+        }
+    }
+    else {*Dst = Alt;}
+}
+
 template<typename VTy> requires std::is_same_v<VTy, bool>
 inline void __Get_Value_From_Table(VTy* Dst, const _SC SharedTablePointer& Src, ustring Key, VTy Alt)
 {

@@ -827,6 +827,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
         {
             __Add_Key_Value(&ContentTable, L"RotationModel", Obj.RotationModel, FixedOutput, Prec);
             _SC SCSTable IAUTable;
+            __Add_Key_Value(&IAUTable, L"ValidRange", Obj.RotationIAU.ValidRange, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"Epoch", Obj.RotationIAU.Epoch, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"PoleRA", Obj.RotationIAU.PoleRA, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"PoleRARate", Obj.RotationIAU.PoleRARate, FixedOutput, Prec);
@@ -871,7 +872,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
      *     Asteroid	            e, a, i, Ω, ω, M0
      *     Two - line elements	e, i, Ω, ω, n, M0
      *
-     * @link https://en.wikipedia.org/wiki/Orbital_elements
+     * https://en.wikipedia.org/wiki/Orbital_elements
      */
     if (!IS_NO_DATA_STR(Obj.Orbit.RefPlane))
     {
@@ -944,6 +945,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
                         __Add_Key_Value(&OrbitTable, L"Epoch", Obj.Orbit.Epoch, FixedOutput, Prec);
                         __Add_Key_Value(&OrbitTable, L"Eccentricity", Obj.Orbit.Eccentricity, FixedOutput, Prec);
                         __Add_Key_Value(&OrbitTable, L"SemiMajorAxisKm", _ASOBJ SemiMajorAxis(Obj) / 1000., FixedOutput, Prec);
+                        __Add_Key_Value(&OrbitTable, L"PeriodDays", Obj.Orbit.Period / SynodicDay, FixedOutput, Prec);
                         __Add_Key_Value(&OrbitTable, L"Inclination", Obj.Orbit.Inclination, FixedOutput, Prec);
                         __Add_Key_Value(&OrbitTable, L"AscendingNode", Obj.Orbit.AscendingNode, FixedOutput, Prec);
                         __Add_Key_Value(&OrbitTable, L"ArgOfPericenter", Obj.Orbit.ArgOfPericenter, FixedOutput, Prec);

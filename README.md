@@ -21,7 +21,7 @@
     <body-->
 <!--a href="README_EN.md">English</a-->
 <div class="Head" align="center" style="width:100%;">
-    <h1 style="font-weight: bold;background: -webkit-linear-gradient(-66.5607189deg, rgb(41,82,190), rgb(41,82,190) 40%, rgb(254,226,223) 60%, rgb(251,172,19) 75%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;color: transparent;">CSpaceEngine·聚力新生</h1>
+    <h1 style="font-weight: bold;background: -webkit-linear-gradient(-66.5607189deg, rgb(41,82,190), rgb(41,82,190) 40%, rgb(254,226,223) 60%, rgb(251,172,19) 75%);-webkit-background-clip: text;-webkit-text-fill-color: transparent;color: transparent;">CSpaceEngine·文明启程</h1>
     <p>开源的SpaceEngine静态库，适配SE0.990</p>
     <p>许可证：<a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPL-3.0</a></p>
 </div>
@@ -52,8 +52,8 @@
     <li>一个经历了至少3次的更新换代的，基于LR(1)算法的sc文件读取</li>
     <li>SC文件输出流</li>
 </ul>
-<h3>功能很基础物理引擎(可选组件)</h3>
-<ul>
+<h3>功能很基础物理引擎(重构中)</h3>
+<!--ul>
     <li>轨道跟踪器，用于轨道根数和状态向量的转换，可以实时跟踪(目前只支持椭圆轨道，Bug多慎用)</li>
     <li>一些很基础的转换，比如双星轨道转开普勒轨道根数</li>
     <li>行星轨道分布模型</li>
@@ -66,11 +66,41 @@
     <li><b>星等-光度计算</b></li>
     <li><b>(未完全实现)光谱分析</b></li>
     <li><b>(未实现)基本热力学 (又是世纪难题)</b></li>
-</ul>
+</ul-->
 <h2>编译</h2>
+<h3>支持的编译器</h3>
 <p>此版本已经<b>放弃VS2022并迁移到CMake平台</b>，编译就正常使用CMake即可。</p>
+<table align="center">
+    <tr><th>MSC</th><th>GPP</th><th>Clang</th></tr>
+    <tr><td>停止支持</td><td>建议13.1.0以上，如果启用fmt备用功能可降低至11.2.0</td><td>建议17.0.6以上</td></tr>
+</table>
 <p>注：由于此版本的一些功能会大量使用format函数，而一些编译器在开启了C++20之下仍未支持此功能，所以这里给出了一个备用解决方案，此方案需安装<a href="https://github.com/fmtlib/fmt">fmtlib</a>。</p>
-<p>编译选项详见Building the library(还未上传)</p>
+
+
+<h3>编译选项</h3>
+<table>
+    <tr><th>选项</th><th>类型</th><th>默认值</th><th>简介</th></tr>
+    <tr><td>BUILD_CSE_xxx</td><td>BOOL</td><td>ON</td><td>组件编译开关，设为ON即编译此组件</td></tr>
+    <tr><td>CatalogLogLevel</td><td>STRING</td><td>2</td><td>SCStream的日志级别，0为不输出日志，1为输出警告和错误，2为输出所有</td></tr>
+    <!--tr><td>CsvLogLevel</td><td>STRING</td><td>1</td><td>CSV的日志级别(当前未启用)</td></tr-->
+    <!--tr><td>CsvPatchWarning</td><td>BOOL</td><td>ON</td><td>(当前未启用)</td></tr-->
+    <tr><td>DisableOctalNumParsing</td><td>BOOL</td><td>OFF</td><td>关闭八进制分析，开启此选项后SC文件读取时遇到0开头的数字将作为十进制数读取，而不是八进制。(推荐开启)</td></tr>
+    <tr><td>EnableAdditionalTriFuncs</td><td>BOOL</td><td>OFF</td><td>启用额外的三角函数，如chord，versines和exsecants</td></tr>
+    <tr><td>EnableBoost</td><td>BOOL</td><td>OFF</td><td>开启Boost库，用于加速正则匹配</td></tr>
+    <tr><td>BOOST_AUTOFIND</td><td>BOOL</td><td>OFF</td><td>Boost库自动查找开关</td></tr>
+    <tr><td>BOOST_FIND_DIRECTORY</td><td>PATH</td><td>空</td><td>Boost库自动查找目录</td></tr>
+    <tr><td>BOOST_ROOT_DIR</td><td>PATH</td><td>空</td><td>Boost库根目录，如果启用了自动查找则自动设置</td></tr>
+    <tr><td>EnableFMT</td><td>BOOL</td><td>OFF</td><td>std::format缺失的备用解决方案，需安装fmtlib</td></tr>
+    <tr><td>FMT_AUTOFIND</td><td>BOOL</td><td>OFF</td><td>fmtlib自动查找开关</td></tr>
+    <tr><td>FMT_FIND_DIRECTORY</td><td>PATH</td><td>空</td><td>fmtlib自动查找目录</td></tr>
+    <tr><td>FMT_HEADERS_DIR</td><td>PATH</td><td>空</td><td>fmtlib头文件目录，如果启用了自动查找则自动设置</td></tr>
+    <tr><td>FMT_LIBRARY_DIR</td><td>PATH</td><td>空</td><td>fmtlib库目录，如果启用了自动查找则自动设置</td></tr>
+    <tr><td>LogThreadStamp</td><td>BOOL</td><td>ON</td><td>日志记录模块信息</td></tr>
+    <tr><td>LogTimeStamp</td><td>BOOL</td><td>ON</td><td>日志记录时间信息</td></tr>
+    <tr><td>ParserAlgorithm</td><td>STRING</td><td>LR1</td><td>SC语法分析使用的算法，目前只有LR1</td></tr>
+    <tr><td>SysLogLevel</td><td>STRING</td><td>1</td><td>系统日志级别</td></tr>
+    <tr><td>TrigonoUseRadians</td><td>BOOL</td><td>OFF</td><td>使用弧度三角函数</td></tr>
+</table>
 <h2>遇到问题或想要新功能？</h2>
 <p>如果发现无法解决的问题或者bug，在issues告诉我。</p>
     <!--/body>

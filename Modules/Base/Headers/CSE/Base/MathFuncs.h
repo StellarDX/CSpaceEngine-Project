@@ -273,7 +273,7 @@ struct Angle
 
     float64 Data;
 
-    Angle() {}
+    Angle() : Data(_NoDataDbl) {}
     Angle(float64 _Data) : Data(_Data) {}
 
     static Angle FromTurns(float64 _Turns) {return Angle{_Turns * Turns};}

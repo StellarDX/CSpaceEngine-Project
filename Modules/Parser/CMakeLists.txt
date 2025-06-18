@@ -23,7 +23,7 @@ set(CsvLogLevel 1 CACHE STRING
     2 - log everything")
 
 # Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog
-set(CsvPatchWarning true CACHE STRING
+set(CsvPatchWarning true CACHE BOOL
 "Print a warning into log file if some *.csv catalog is going to update/patch some *.sc catalog")
 
 # Parser algorithm, default is LR(1)
