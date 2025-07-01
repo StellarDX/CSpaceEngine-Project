@@ -113,9 +113,8 @@ std::vector<float64> LegendrePolynomialCoefficients(uint64 n)
     for (uint64 k = 0; k <= uint64(floor(float64(n) / 2.)); ++k)
     {
         Coeffs[2. * k] = ((k % 2 ? -1 : 1) *
-            (__fact(n) * __fact(2 * n - 2 * k)) /
-            (__fact(k) * __fact(n - k) * __fact(n - 2 * k))) /
-            (pow(2, n) * __fact(n));
+            (__fact(2 * n - 2 * k)) /
+            (pow(2, n) * __fact(k) * __fact(n - k) * __fact(n - 2 * k)));
     }
     return Coeffs;
 }

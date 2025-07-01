@@ -159,7 +159,7 @@ void __SE_General_Parser::MakeSubMatrix(ValueType& ExpressionBuffer, ValueType S
     else {ExpressionBuffer.SubMatrices->insert({0, SubMatrix});}
 }
 
-void __SE_General_Parser::MoveSubMateix(ValueType& ExpressionBuffer)
+void __SE_General_Parser::MoveSubMatrix(ValueType& ExpressionBuffer)
 {
     if (!ExpressionBuffer.SubMatrices) {return;}
     std::vector<size_t> Keys;
@@ -388,7 +388,7 @@ SharedPointer<SCSTable> __SE_General_Parser::Run(TokenArrayType Tokens) noexcept
             case 21:
             case 22:
             case 23:
-                MoveSubMateix(ExpressionBuffer);
+                MoveSubMatrix(ExpressionBuffer);
                 if (ValueStack.top().Type & ValueStack.top().Array)
                 {
                     MakeSubMatrix(ExpressionBuffer, ValueStack.top());

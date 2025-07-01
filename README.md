@@ -68,39 +68,8 @@
     <li><b>(未实现)基本热力学 (又是世纪难题)</b></li>
 </ul-->
 <h2>编译</h2>
-<h3>支持的编译器</h3>
-<p>此版本已经<b>放弃VS2022并迁移到CMake平台</b>，编译就正常使用CMake即可。</p>
-<table align="center">
-    <tr><th>MSC</th><th>GPP</th><th>Clang</th></tr>
-    <tr><td>停止支持</td><td>建议13.1.0以上，如果启用fmt备用功能可降低至11.2.0</td><td>建议17.0.6以上</td></tr>
-</table>
-<p>注：由于此版本的一些功能会大量使用format函数，而一些编译器在开启了C++20之下仍未支持此功能，所以这里给出了一个备用解决方案，此方案需安装<a href="https://github.com/fmtlib/fmt">fmtlib</a>。</p>
+<p>编译器支持和编译选项相关内容详见<a href="https://github.com/StellarDX/CSpaceEngine-Documents">文档</a></p>
 
-
-<h3>编译选项</h3>
-<table>
-    <tr><th>选项</th><th>类型</th><th>默认值</th><th>简介</th></tr>
-    <tr><td>BUILD_CSE_xxx</td><td>BOOL</td><td>ON</td><td>组件编译开关，设为ON即编译此组件</td></tr>
-    <tr><td>CatalogLogLevel</td><td>STRING</td><td>2</td><td>SCStream的日志级别，0为不输出日志，1为输出警告和错误，2为输出所有</td></tr>
-    <!--tr><td>CsvLogLevel</td><td>STRING</td><td>1</td><td>CSV的日志级别(当前未启用)</td></tr-->
-    <!--tr><td>CsvPatchWarning</td><td>BOOL</td><td>ON</td><td>(当前未启用)</td></tr-->
-    <tr><td>DisableOctalNumParsing</td><td>BOOL</td><td>OFF</td><td>关闭八进制分析，开启此选项后SC文件读取时遇到0开头的数字将作为十进制数读取，而不是八进制。(推荐开启)</td></tr>
-    <tr><td>EnableAdditionalTriFuncs</td><td>BOOL</td><td>OFF</td><td>启用额外的三角函数，如chord，versines和exsecants</td></tr>
-    <tr><td>EnableBoost</td><td>BOOL</td><td>OFF</td><td>开启Boost库，用于加速正则匹配</td></tr>
-    <tr><td>BOOST_AUTOFIND</td><td>BOOL</td><td>OFF</td><td>Boost库自动查找开关</td></tr>
-    <tr><td>BOOST_FIND_DIRECTORY</td><td>PATH</td><td>空</td><td>Boost库自动查找目录</td></tr>
-    <tr><td>BOOST_ROOT_DIR</td><td>PATH</td><td>空</td><td>Boost库根目录，如果启用了自动查找则自动设置</td></tr>
-    <tr><td>EnableFMT</td><td>BOOL</td><td>OFF</td><td>std::format缺失的备用解决方案，需安装fmtlib</td></tr>
-    <tr><td>FMT_AUTOFIND</td><td>BOOL</td><td>OFF</td><td>fmtlib自动查找开关</td></tr>
-    <tr><td>FMT_FIND_DIRECTORY</td><td>PATH</td><td>空</td><td>fmtlib自动查找目录</td></tr>
-    <tr><td>FMT_HEADERS_DIR</td><td>PATH</td><td>空</td><td>fmtlib头文件目录，如果启用了自动查找则自动设置</td></tr>
-    <tr><td>FMT_LIBRARY_DIR</td><td>PATH</td><td>空</td><td>fmtlib库目录，如果启用了自动查找则自动设置</td></tr>
-    <tr><td>LogThreadStamp</td><td>BOOL</td><td>ON</td><td>日志记录模块信息</td></tr>
-    <tr><td>LogTimeStamp</td><td>BOOL</td><td>ON</td><td>日志记录时间信息</td></tr>
-    <tr><td>ParserAlgorithm</td><td>STRING</td><td>LR1</td><td>SC语法分析使用的算法，目前只有LR1</td></tr>
-    <tr><td>SysLogLevel</td><td>STRING</td><td>1</td><td>系统日志级别</td></tr>
-    <tr><td>TrigonoUseRadians</td><td>BOOL</td><td>OFF</td><td>使用弧度三角函数</td></tr>
-</table>
 <h2>遇到问题或想要新功能？</h2>
 <p>如果发现无法解决的问题或者bug，在issues告诉我。</p>
     <!--/body>

@@ -123,7 +123,7 @@ public:
     ustring TokenToString(TokenArrayType Tokens);
     SharedPointer<SCSTable> MakeTable(std::stack<SCSTable::SCKeyValue>& SubTableTempStack);
     void MakeSubMatrix(ValueType& ExpressionBuffer, ValueType SubMatrix);
-    void MoveSubMateix(ValueType& ExpressionBuffer);
+    void MoveSubMatrix(ValueType& ExpressionBuffer);
     void ThrowError(size_t CurrentState, ivec2 Pos, std::string Msg);
 
     SharedPointer<SCSTable> Run(TokenArrayType Tokens) noexcept(0);

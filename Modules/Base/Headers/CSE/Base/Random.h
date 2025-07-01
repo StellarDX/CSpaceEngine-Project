@@ -120,13 +120,13 @@ class _Custom_Distribution
 {
 public:
     using result_type  = _Ty;
-    using icdf_Ptr     = std::shared_ptr<_SCICXX InverseFunction>;
+    using icdf_ptr     = std::shared_ptr<_SCICXX InverseFunction>;
     using default_invf = _SCICXX BrentInverseFunction;
 
-    icdf_Ptr ICDF;
+    icdf_ptr ICDF;
     vec2 Doamin = _SCICXX __Whole_Line;
 
-    _Custom_Distribution(icdf_Ptr InvF) : ICDF(InvF) {}
+    _Custom_Distribution(icdf_ptr InvF) : ICDF(InvF) {}
 
     _Custom_Distribution(_SCICXX Function1D CDF, vec2 Domain) : Doamin(Domain)
     {

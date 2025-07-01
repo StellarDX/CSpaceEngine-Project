@@ -117,13 +117,13 @@ float64 BrentInverseFunction::operator()(float64 x) const
         return RefPoints[0];
     }
 
-    auto OptimizerFunc = [&Bound, x](float64 _x)
+    auto LossFunction = [&Bound, x](float64 _x)
     {
         return pow(Bound(_x) - x, 2);
     };
 
     BrentUnboundedMinimizer Minimizer;
-    vec2 Result = Minimizer.Run(OptimizerFunc, {RefPoints[0], RefPoints[1]});
+    vec2 Result = Minimizer.Run(LossFunction, {RefPoints[0], RefPoints[1]});
     return Result.x;
 }
 

@@ -260,7 +260,7 @@ vec2 BrentUnboundedMinimizer::Run(Function1D Func, std::vector<float64> Points)c
         {
             // 哦，天哪，新的点比我们现有的还要糟糕，
             // 即便如此，它“一定”比我们的一个端点要好:
-            // (丹霞：我实在有些不理解Boost库的程序员在编写这段代码时是有多“飘”)
+            // (丹霞：Boost库的程序员在编写这段代码时是在抖M吗?)
             if(u < x) {a = u;}
             else {b = u;}
             if((fu <= fw) || (w == x))

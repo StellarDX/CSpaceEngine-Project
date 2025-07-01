@@ -4,7 +4,7 @@
 //                                                         //
 // ------------------------------------------------------- //
 // This file includes some general calendar functions      //
-// Some of them taken from Stellarium 0.21.3(GPLv2 Lic.)   //
+// Some of them taken from Stellarium (GPLv2 Lic.)         //
 //                                                         //
 // Time classes is similar to Qt's time class.             //
 // But these are more simple to use.                       //

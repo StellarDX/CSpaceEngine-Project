@@ -20,7 +20,7 @@
   「旁边有座坟，叫微积分，里面葬了很多人。」
 ********************************************************************************/
 
-/**
+/*
     CSpaceEngine Advanced math Library.
     Copyright 漏 StellarDX Astronomy.
 
@@ -143,22 +143,50 @@ _CSE_BEGIN
 \****************************************************************************************/
 
 /**
- * @brief Convert XY coordinate to polar coordinate, in format (r, Theta)
+ * @brief 将直角坐标(XY)转换为极坐标(r, θ)
+ * @param[in] XY 直角坐标输入 (X: 水平分量, Y: 垂直分量)
+ * @return 极坐标输出 (r: 距离, θ: 方位角[角度制, 范围-180°~180°])
+ * @note
+ * - 坐标系定义：
+ *   - 本初子午线方向：X轴正方向
+ *   - 角度方向：X轴逆时针旋转为正（数学标准）
  */
 vec2 _cdecl XYToPolar(vec2 XY);
 
 /**
- * @brief Convert XYZ coordinate (Based on X-Z plane) to polar coordinate, in format (Lon, Lat, Dist)
+ * @brief 将三维直角坐标(XYZ)转换为极坐标(Lon, Lat, Dist)
+ * @param[in] XYZ 直角坐标输入 (X: 前方向分量, Y: 垂直分量, Z: 右方向分量)
+ * @return 极坐标输出 (Lon: 经度[角度制, 范围-180°~180°],
+ *                    Lat: 纬度[角度制, 范围-90°~90°],
+ *                    Dist: 距离)
+ * @note
+ * - 坐标系定义：
+ *   - 赤道平面：X-Z平面
+ *   - 春分点方向：Z轴负方向
+ *   - 经度方向：由西向东为正（从北极俯视逆时针）
  */
 vec3 _cdecl XYZToPolar(vec3 XYZ);
 
 /**
- * @brief Convert polar coordinate in format (r, Theta) to XY coordinate
+ * @brief 将极坐标(r, θ)转换为直角坐标(XY)
+ * @param[in] Polar 极坐标输入 (r: 距离, θ: 方位角[角度制])
+ * @return 直角坐标输出 (X: 水平分量, Y: 垂直分量)
+ * @note
+ * - 坐标系定义：
+ *   - 本初子午线方向：X轴正方向
+ *   - 角度方向：X轴逆时针旋转为正（数学标准）
  */
 vec2 _cdecl PolarToXY(vec2 Polar);
 
 /**
- * @brief Convert polar coordinate in format (Lon, Lat, Dist) to XYZ coordinate (Based on X-Z plane)
+ * @brief 将极坐标(Lon, Lat, Dist)转换为三维直角坐标(XYZ)
+ * @param[in] Polar 极坐标输入 (Lon: 经度[角度制], Lat: 纬度[角度制], Dist: 空间距离)
+ * @return 直角坐标输出 (X: 前方向分量, Y: 垂直分量, Z: 右方向分量)
+ * @note
+ * - 坐标系定义：
+ *   - 赤道平面：X-Z平面
+ *   - 春分点方向：Z轴负方向
+ *   - 经度方向：由西向东为正（从北极俯视逆时针）
  */
 vec3 _cdecl PolarToXYZ(vec3 Polar);
 
@@ -286,6 +314,8 @@ public:
  * @param n 勒让德多项式的次数
  * @return n次第一类勒让德多项式的系数，降幂排列，没有的次数填0
  * @example
+ *      输入n = 2
+ *      得到的结果为：(1.5, 0, -0.5)
  */
 std::vector<float64> LegendrePolynomialCoefficients(uint64 n);
 
@@ -489,6 +519,11 @@ public:
  *  此导函数一次性封装了三种算法，分别是二项式差分，黎曼-刘维尔导数和卡普托导数。其中二项
  *  式差分用于求整数阶的导数，剩下两种则将导数扩展到非整数阶。
  *
+ *  其中二项式差分求导的定义如下，用于求整数阶导数：
+ *      (α)                           n
+ *      f(x) = lim(h->0) ((1 / h) * ( Σ (pow(-1, j) * C(n, j) * f(x - j * h))))
+ *                                   j=1
+ *
  *  黎曼-刘维尔导数的定义为：
  *      (α)                          x                                    (n)
  *      f(x) = (1 / gamma(n - α)) * (∫ (f(t) / pow(x - t, α - n + 1) * dt))
@@ -506,7 +541,7 @@ public:
  *  仍然会得到截然不同的结果。相比之下，卡普托算法的优点是积分初值可以被保持下来，而黎曼-
  *  刘维尔算法则需要额外引入这个分数阶初值条件。
  *
- *  @warning 注：此方法目前正在优化中，精度较低且延迟极高，慎用。
+ * @warning 注：此方法目前正在优化中，精度较低且延迟极高，慎用。
  */
 class RiemannLiouvilleBinomialFDDerivativeFunction;
 
@@ -705,9 +740,9 @@ using DefaultIntegratingFunction = GaussKronrodQuadrature;
  * @brief 黎曼-刘维尔积分，可计算非整数阶积分
  *
  *  此广义不定积分的定义为：
- *                                  x
+ *     (α)                          x
  *      ∫ f(x)dx = (1 / gamma(α)) * ∫ (f(t) * pow(x - t, α - 1)) * dt
- *     (α)                          C
+ *                                  C
  *
  *  其中：
  *  α为不定积分的阶数。C为积分基数，决定积分得到的函数的初始条件，即F(C) = 0。
@@ -1024,7 +1059,7 @@ public:
     ValueArray operator()(float64 _Xx)const override;
 };
 
-class RungeKutta2ndOrderODEEngine : public RungeKuttaODEEngine
+typedef class RungeKutta2ndOrderODEEngine : public RungeKuttaODEEngine
 {
 public:
     using Mybase = RungeKuttaODEEngine;
@@ -1042,9 +1077,9 @@ public:
         PTable = (float64*)__RK23_P_Table;
         Mybase::Init(InitState, First, Last, InitStep);
     }
-};
+}BogackiShampineODEEngine;
 
-class RungeKutta4thOrderODEEngine : public RungeKuttaODEEngine
+typedef class RungeKutta4thOrderODEEngine : public RungeKuttaODEEngine
 {
 public:
     using Mybase = RungeKuttaODEEngine;
@@ -1062,7 +1097,7 @@ public:
         PTable = __RK45_P_Table;
         Mybase::Init(InitState, First, Last, InitStep);
     }
-};
+}DormandPrinceODEEngine, RungeKuttaDPODEEngine, DOPRIODEEngine;
 
 using DefaultODEEngine = RungeKutta4thOrderODEEngine;
 
@@ -1225,7 +1260,25 @@ static const vec2 __Whole_Line =
     {__Float64::FromBytes(NEG_INF_DOUBLE), __Float64::FromBytes(POS_INF_DOUBLE)};
 
 /**
- * @brief 布伦特反函数，译自pynverse，并转写为独立的类
+ * @brief 布伦特反函数，译自pynverse，并转写为独立的类。
+ *
+ *  此方法的原理就是通过求一个与f(x)-y相关的损失函数的极小值以确定反函数
+ *  的值。可选用如下函数作为损失函数：
+ *      L_1(x) = pow(f(x) - y, 2)
+ *      L_2(x) = abs(f(x) - y)
+ *
+ *  其中f(x)为原函数，y为反函数的参数。这里最好是使用L_1作为损失函数，因
+ *  为它是光滑的，易于求导，而L_2可能会出现部分点不可导的情况。损失函数的
+ *  极小值就是反函数值
+ *
+ * @example 求y = exp(x)在y = 10处的反函数值(为ln(10))
+ *  先定义损失函数：
+ *      L(x) = pow(exp(x) - 10, 2)
+ *
+ *  求导得：
+ *      ∇L(x) = 2 * (exp(x) - 10) * exp(x)
+ *
+ *  令∇L(x) = 0，得x = ln(10)，为所求反函数值。
  */
 class BrentInverseFunction : public InverseFunction
 {
@@ -1324,7 +1377,7 @@ public:
  *  入Faa di Bruno公式，得：
  *      (n)      n                                                          (n-k+1)
  *      g (x) =  Σ (((pow(-1, k) * k!) / pow(f(x), k + 1)) * B_n,k(f'(x) -> f     (x)))
- *              i=1
+ *              k=1
  *
  *  此公式即为1 / f(x)的n阶导函数的公式，其中后半部分的贝尔多项式可以使
  *  用以下递推关系构造动态规划以加速计算：(C(n, m)为组合数)

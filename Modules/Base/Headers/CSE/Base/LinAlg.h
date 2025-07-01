@@ -41,6 +41,6 @@
 #ifndef _CSE_MATH_GEOMETRY
 #define _CSE_MATH_GEOMETRY
 
-#include <CSE/Base/LinAlg/LinalgBasic.hh>
+#include <CSE/Base/LinAlg/LinalgBasic.inc>
 
 #endif

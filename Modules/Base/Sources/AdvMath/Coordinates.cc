@@ -5,7 +5,7 @@ _CSE_BEGIN
 
 vec2 _cdecl XYToPolar(vec2 XY)
 {
-    return vec2(sqrt(XY.x * XY.x + XY.y * XY.y), arctan(XY.y / XY.x));
+    return vec2(sqrt(XY.x * XY.x + XY.y * XY.y), Arctan2(XY.y, XY.x).ToDegrees());
 }
 
 vec3 _cdecl XYZToPolar(vec3 XYZ)
@@ -15,11 +15,12 @@ vec3 _cdecl XYZToPolar(vec3 XYZ)
     else if (XYZ.x <= 0 && XYZ.z >= 0) { Correction = 180; }
     else if (XYZ.x > 0 && XYZ.z >= 0) { Correction = -180; }
     else { Correction = 0; }
+    float64 Dist = sqrt(XYZ.x * XYZ.x + XYZ.y * XYZ.y + XYZ.z * XYZ.z);
     return vec3
     (
-        arctan(XYZ.x / XYZ.z) + Correction,
-        arcsin(XYZ.y / sqrt(XYZ.x * XYZ.x + XYZ.y * XYZ.y + XYZ.z * XYZ.z)),
-        sqrt(XYZ.x * XYZ.x + XYZ.y * XYZ.y + XYZ.z * XYZ.z)
+        arctan(XYZ.x / XYZ.z).ToDegrees() + Correction,
+        arcsin(XYZ.y / Dist).ToDegrees(),
+        Dist
     );
 }
 

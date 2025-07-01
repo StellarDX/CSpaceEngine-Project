@@ -434,10 +434,7 @@ ustring CSEDate::ToString(cstring _Fmt) const
 
 int CSEDate::DayOfWeek() const
 {
-    double JD = (double)ToJulianDay();
-    double d = fmod(JD + 1.5, 7);
-    if (d < 0) { d += 7.0; }
-    return lround(floor(d));
+    return GetDayOfWeek(years, months, days);
 }
 
 int64 CSEDate::ToJulianDay() const // Convert a Date class to julian day(without fraction).

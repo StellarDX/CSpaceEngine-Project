@@ -28,7 +28,7 @@ namespace consts{
 #define CSE_LN2       0.69314718055994530941723212145818l // ln(2)
 #define CSE_LN10      2.3025850929940456840179914546844l  // ln(10)
 #define CSE_PI        3.1415926535897932384626433832795l  // Pi
-#define CSE_2PI       6.283185307179586476925286766559l  // Pi * 2
+#define CSE_2PI       6.283185307179586476925286766559l   // Pi * 2
 #define CSE_PI_D2     1.5707963267948966192313216916398l  // Pi / 2
 #define CSE_PI_D4     0.78539816339744830961566084581988l // Pi / 4
 #define CSE_1D_PI     0.31830988618379067153776752674503l // 1 / Pi
@@ -41,19 +41,19 @@ namespace consts{
 // List2: Common physic constants
 // -------------------------------------------------------------------------
 //      Name            Value/Equation          Note
-#define GravConstant    6.67430E-11          // (±0.00015)2018 CODATA Value, reference from NIST
-#define SpeedOfLight    299792458            // Exact value defined by 1983 17th CGPM
+#define GravConstant    6.67430E-11          // 2022 CODATA Value, reference from NIST
+#define SpeedOfLight    299792458            // 2022 CODATA Value
 #define PPM2Percent     0.0001               // by definition, Parts-per million to percent
-#define GasConstant     _CONSTS Equation21   // 2018 CODATA Value
-#define AvogadroConst   6.02214076E+23       // SI redefinition of 2019
-#define BoltzmannConst  1.380649E-23         // SI by definition, J/K = m2⋅kg/(s2⋅K) in SI base units. Exactly 1.380649E-23
-#define PlanckConst     6.62607015E-34       // 2018 CODATA Value
+#define GasConstant     _CONSTS Equation21   // 2022 CODATA Value
+#define AvogadroConst   6.02214076E+23       // 2022 CODATA Value
+#define BoltzmannConst  1.380649E-23         // 2022 CODATA Value
+#define PlanckConst     6.62607015E-34       // 2022 CODATA Value
 #define StBConstant     _CONSTS Equation22   // by definition
 #define ElemCharge      1.602176634E-19      // the electric charge carried by a single proton
-#define VacPermeability 1.25663706212E-6     // SI redefinition of 2019, the magnetic permeability in a classical vacuum
+#define VacPermeability 1.25663706127E-6     // 2022 CODATA Value, the magnetic permeability in a classical vacuum
 #define VacPermittivity _CONSTS Equation23   // the value of the absolute dielectric permittivity of classical vacuum
-#define FineStructConst _CONSTS Equation24   // Measured in 2020
-#define AtomMassConst   1.66053906660E-27    // 2018 CODATA Value
+#define FineStructConst _CONSTS Equation24   // 2022 CODATA Value
+#define AtomMassConst   1.66053906892E-27    // 2022 CODATA Value
 #define StandardAtm     101325               // Standard atmosphere, on sea level
 #define StdSurfGravity  9.80665              // Standard Surface garvity of Earth
 // -------------------------------------------------------------------------
@@ -66,30 +66,35 @@ extern const double Equation24;
 // List3: Units of mass
 // Reference: https://ssd.jpl.nasa.gov/?planet_phys_par
 // -------------------------------------------------------------------------
-//      Name          Value                Note
-#define ElectronMass  9.1093837015E-31  // (±0.0000000028)2018 CODATA Value
-#define ProtonMass    1.67262192369E-27 // (±0.00000000051)2018 CODATA Value
-#define NeutronMass   1.67492749804E-27 // (±0.00000000095)2018 CODATA Value
-#define LunarMass     7.342E+22         //
-#define EarthMass     5.972168E+24      // (±0.00028)Estimated value from planetary ephemeris DE421
-#define JupiterMass   1.898125E+27      // (±0.000088)value from Jovian Satellite ephemeris JUP310
-#define SolarMass     1.98847E+30       // (±0.00007)given by solving Kepler's third law
+//      Name              Value                Note
+#define ElectronMass      9.1093837139E-31  // 2022 CODATA Value
+#define ProtonMass        1.67262192595E-27 // 2022 CODATA Value
+#define NeutronMass       1.67492750056E-27 // 2022 CODATA Value
+#define LunarMass         7.34579E+22       // DE440
+#define EarthMass         5.9721684E+24     // DE440
+#define JupiterMass       1.898125E+27      // value from Jovian Satellite ephemeris JUP310
+#define SolarMass         1.988475E+30      // IAU 2015 Best estimate value
+#define NorminalSolarMass 1.988416E+30      // Given by solving Kepler's third law
 
 
 // List4: Units of length
 // -------------------------------------------------------------------------
-//      Name          Value/Equation        Note
-#define LunarRadius   1738100            //
-#define EarthRadius   6378137            // equatorial radius provided by IUGG
-#define JupiterRadius 71492000           // IAU 2015 definition
-#define SolarRadius   695700000          // IAU 2015 definition
-#define AU            149597870700       // IAU 2012 definition
-#define LightYear     9460730472580800   // IAU 1976 System of Astronomical Constants
-#define Parsec        _CONSTS Equation41 // exact by the 2015 definition
+//      Name                Value/Equation        Note
+#define LunarRadius         1738100            //
+#define LunarPolarRadius    1736000            //
+#define EarthRadius         6378137            // Equatorial radius provided by IUGG
+#define EarthPolarRadius    6356752.31414      // Polar radius provided by GRS 80
+#define JupiterRadius       71492000           // IAU 2015 definition
+#define JupiterPolarRadius  66854000           // IAU 2015 definition
+#define SolarRadius         695660000          // Helioseismic estimates
+#define NorminalSolarRadius 695700000          // IAU 2015 definition
+#define AU                  149597870700       // IAU 2012 definition
+#define LightYear           9460730472580800   // IAU 1976 System of Astronomical Constants
+#define Parsec              _CONSTS Equation41 // exact by the 2015 definition
 // -------------------------------------------------------------------------
 extern const double Equation41;
 
-
+/*
 // List5: Base densities of compositions
 // -------------------------------------------------------------------------
 //      Name               Simulated Value    Real value    Note
@@ -138,14 +143,14 @@ extern const double Equation41;
 #define HydrogenGasDensity 0.08988         // 0.08988     |
 #define HydrogenLiqDensity 70.99           // 70.99       | At boiling point
 #define HydrogenSolDensity 76.3            // 76.3        | At melting point
-
+*/
 
 // List6: Units of Time
 // -------------------------------------------------------------------------
 //      Name          Value                Note
 #define SynodicDay    86400             // mean synodic day(Solar day) in seconds(Sunrise to Sunrise), is approx. 24 hours
-#define SiderealDay   86164.098903691   // IERS Value, Earth's rotation period relative to the precessing mean vernal equinox
-#define StellarDay    86164.09053083288 // IERS Value
+#define SiderealDay   86164.09053083288 // IERS Value, Earth's rotation period relative to the precessing mean vernal equinox
+#define StellarDay    86164.098903691   // IERS Value
 #define JulianYear    31557600          // Length of a Julian year, equals 365.25 days
 #define TropicalYear  31556925.18747072 // mean tropical year on January 1, 2000, equals 365.2421896698 days
 #define SiderealYear  31558149.7635456  // J2000.0 epoch, equals 365.256363004 days
@@ -158,7 +163,7 @@ extern const double Equation41;
 #define SolarLum      3.828E+26  // nominal solar luminosity defined by IAU
 #define SolarLumBol   3.0128E+28 // zero points of the absolute and apparent bolometric magnitude scales (Mbol_Sun = ~-4.74)
 
-
+/*
 // List8: Molar Masses (in g/mol)
 // Values computed by PubChem 2.1 (PubChem release 2021.05.07): https://pubchem.ncbi.nlm.nih.gov/
 // -------------------------------------------------------------------------
@@ -185,8 +190,8 @@ extern const double Equation41;
 #define CSEM_C2H6     30.07     // 30.0469501914
 #define CSEM_C3H8     44.10     // 44.062600255
 #define CSEM_C8H18    114.23    // 114.140850574
-
-
+*/
+/*
 // List9: Cosmology
 // Can't promise that these values are correct.
 // Because I don't know why I want to add these "meaningless" constants.
@@ -222,7 +227,7 @@ extern const double Equation85;
 extern const double Equation86;
 extern const double Equation87;
 extern const double Equation88;
-
+*/
 //#endif
 
 }}
