@@ -291,7 +291,7 @@ int SolveQuartic(InputArray Coeffs, OutputArray Roots, float64 Tolerence)
     return -1;
 }
 
-std::vector<complex64> DurandKernerSolvePoly::GetInitValuePower(float64 Power, complex64 IValue)
+std::vector<complex64> DurandKernerSolvePoly::GetExponentialInitValue(float64 Power, complex64 IValue)
 {
     std::vector<complex64> InitValue;
     for (size_t i = 0; i < Power; i++)
@@ -301,7 +301,7 @@ std::vector<complex64> DurandKernerSolvePoly::GetInitValuePower(float64 Power, c
     return InitValue;
 }
 
-std::vector<complex64> DurandKernerSolvePoly::GetInitValueCircle(InputArray Coeffs)
+std::vector<complex64> DurandKernerSolvePoly::GetCircularInitValue(InputArray Coeffs)
 {
     int N = Coeffs.size() - 1;
     float64 R = pow(abs(Coeffs.back()), 1.0 / N);
@@ -314,7 +314,7 @@ std::vector<complex64> DurandKernerSolvePoly::GetInitValueCircle(InputArray Coef
     return x0;
 }
 
-std::vector<complex64> DurandKernerSolvePoly::GetInitValueHomotopy(InputArray Coeffs, float64 a)
+std::vector<complex64> DurandKernerSolvePoly::GetHomotopicInitValue(InputArray Coeffs, float64 a)
 {
     // 使用同伦加速
     // 来源：江源.应用同伦方法加速DURAND-KERNER算法[D].中国科学技术大学,2011.
@@ -395,7 +395,7 @@ int DurandKernerSolvePoly::Run(InputArray _Coeffs, OutputArray _Roots)const
         }
         std::copy(InitValue.begin(), InitValue.end(), Roots.begin());
     }
-    else {Roots = GetInitValueCircle(Coeffs);}
+    else {Roots = GetCircularInitValue(Coeffs);}
 
     auto f = [&](complex64 x)->complex64
     {

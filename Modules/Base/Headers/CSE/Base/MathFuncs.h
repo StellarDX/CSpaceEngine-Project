@@ -626,9 +626,9 @@ public:
     float64                RelativeTolerence = 14;
     float64                MaxIter           = 3;
 
-    static std::vector<complex64> GetInitValuePower(float64 Power, complex64 IValue = 0.4 + 0.9i);
-    static std::vector<complex64> GetInitValueCircle(InputArray Coeffs);
-    static std::vector<complex64> GetInitValueHomotopy(InputArray Coeffs, float64 a = 0.5);
+    static std::vector<complex64> GetExponentialInitValue(float64 Power, complex64 IValue = 0.4 + 0.9i);
+    static std::vector<complex64> GetCircularInitValue(InputArray Coeffs);
+    static std::vector<complex64> GetHomotopicInitValue(InputArray Coeffs, float64 a = 0.5);
 
     int Run(InputArray Coeffs, OutputArray Roots)const override;
 };
