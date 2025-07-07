@@ -839,7 +839,7 @@ public:
         DerivativeOrder = DerivOrder;
     }
 
-    float64 Binomial(uint64 x)const;
+    float64 Binomial(float64 x)const;
     float64 RiemannLiouville(float64 x)const;
     float64 Caputo(float64 x)const;
 

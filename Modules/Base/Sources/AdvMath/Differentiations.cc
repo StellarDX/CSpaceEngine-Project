@@ -306,7 +306,7 @@ float64 RiemannLiouvilleBinomialFDDerivativeFunction::DerivativeInline(Function1
     return it.State == it.Finished ? it.Output : it.LastOutput;
 }
 
-float64 RiemannLiouvilleBinomialFDDerivativeFunction::Binomial(uint64 x)const
+float64 RiemannLiouvilleBinomialFDDerivativeFunction::Binomial(float64 x)const
 {
     if (x == 0) {return OriginalFunction(x);}
     return DerivativeInline(OriginalFunction, x);
