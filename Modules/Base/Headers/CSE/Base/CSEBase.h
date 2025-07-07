@@ -105,6 +105,13 @@ _STL_DISABLE_CLANG_WARNINGS
 #endif
 #endif
 
+#include "CSE/Base/System/SysDetector.h"
+
+#ifdef CSE_OS_LINUX
+#define __declspec(attrib) __attribute__((attrib))
+#define __cdecl __declspec(__cdecl__)
+#endif
+
 // Include Resources
 #include <CSE/Base/StelCXXRes/StelCXX-IEEE754-Dbl64.h>
 #include <CSE/Base/StelCXXRes/StelCXX-UniString.h>
