@@ -44,6 +44,7 @@ _ORBIT_BEGIN
 
 struct OrbitElems
 {
+    ustring   RefPlane        = _NoDataStr;
     float64   Epoch           = _NoDataDbl;
     float64   GravParam       = _NoDataDbl;
     float64   PericenterDist  = _NoDataDbl;
@@ -96,7 +97,7 @@ struct OrbitState
 };
 
 /****************************************************************************************\
-*                                    Satellite Tracker                                   *
+*                                         基本元素                                        *
 \****************************************************************************************/
 
 /**
@@ -113,7 +114,6 @@ protected:
     OrbitStateType CurrentState;
 
     OrbitElemType CheckParams(const OrbitElemType& InitElems);
-    bool KeplerCompute(OrbitElemType& InitElems);
 
 public:
     SatelliteTracker(const OrbitElemType& InitElems);
@@ -142,16 +142,26 @@ public:
     float64 MeanMotion()const;
     float64 Eccentricity()const;
     float64 SiderealOrbitalPeriod()const;
-    float64 MeanAnomaly()const;
-    float64 MeanLongitude()const;
-    float64 Inclination()const;
-    float64 LongitudeOfAscendingNode()const;
+    Angle MeanAnomaly()const;
+    Angle MeanLongitude()const;
+    Angle Inclination()const;
+    Angle LongitudeOfAscendingNode()const;
     CSEDateTime TimeOfPerihelion()const;
-    float64 ArgumentOfPerihelion()const;
-    float64 LongitudeOfPerihelion()const;
-    float64 EccentricAnomaly()const;
-    float64 TrueAnomaly()const;
+    Angle ArgumentOfPerihelion()const;
+    Angle LongitudeOfPerihelion()const;
+    Angle EccentricAnomaly()const;
+    Angle TrueAnomaly()const;
 };
+
+bool KeplerCompute(OrbitElems& InitElems);
+
+Angle GetTrueAnomalyFromMeanAnomaly(Angle MeanAnomaly, Angle* EccentricAnomaly);
+
+Angle GetMeanAnomalyFromTrueAnomaly(Angle TrueAnomaly, Angle* EccentricAnomaly);
+
+OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
+
+OrbitElems StateVectorsToKeplerianElements(OrbitState Elems);
 
 _ORBIT_END
 _CSE_END

@@ -65,24 +65,26 @@ SatelliteTracker::OrbitElemType SatelliteTracker::CheckParams(const OrbitElemTyp
 {
     OrbitElemType ReturnElems = InitElems;
     if (IS_NO_DATA_DBL(ReturnElems.Epoch)) {ReturnElems.Epoch = J2000;}
-    if (KeplerCompute(ReturnElems))
-    {throw std::logic_error("2 parameters of Pericenter distance, Period and Gravity Parameter is required");}
     if (IS_NO_DATA_DBL(ReturnElems.Eccentricity)) {ReturnElems.Eccentricity = 0;}
+    if (ReturnElems.Eccentricity < 1 && KeplerCompute(ReturnElems))
+    {
+        throw std::logic_error("2 parameters of Pericenter distance, Period and Gravity parameter is required");
+    }
     if (ReturnElems.Eccentricity >= 1)
     {
         //throw std::logic_error("Runaway objects tracking is not supported.");
         ReturnElems.Period = __Float64::FromBytes(POS_INF_DOUBLE);
+    }
+    if (ReturnElems.Eccentricity >= 1
+        && (IS_NO_DATA_DBL(ReturnElems.PericenterDist) || IS_NO_DATA_DBL(ReturnElems.GravParam)))
+    {
+        std::logic_error("Pericenter distance and Gravity parameter is required for runaway objects");
     }
     if (IS_NO_DATA_DBL(ReturnElems.Inclination)) {ReturnElems.Inclination = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.AscendingNode)) {ReturnElems.AscendingNode = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.ArgOfPericenter)) {ReturnElems.ArgOfPericenter = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.MeanAnomaly)) {ReturnElems.MeanAnomaly = 0;}
     return ReturnElems;
-}
-
-bool SatelliteTracker::KeplerCompute(OrbitElemType &InitElems)
-{
-
 }
 
 SatelliteTracker::SatelliteTracker(const OrbitElemType& InitElems)
