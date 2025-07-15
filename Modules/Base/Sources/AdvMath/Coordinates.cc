@@ -3,12 +3,12 @@
 
 _CSE_BEGIN
 
-vec2 _cdecl XYToPolar(vec2 XY)
+vec2 __cdecl XYToPolar(vec2 XY)
 {
     return vec2(sqrt(XY.x * XY.x + XY.y * XY.y), Arctan2(XY.y, XY.x).ToDegrees());
 }
 
-vec3 _cdecl XYZToPolar(vec3 XYZ)
+vec3 __cdecl XYZToPolar(vec3 XYZ)
 {
     float64 Correction = 0;
     if (XYZ.x <= 0 && XYZ.z < 0) { Correction = 0; }
@@ -24,12 +24,12 @@ vec3 _cdecl XYZToPolar(vec3 XYZ)
     );
 }
 
-vec2 _cdecl PolarToXY(vec2 Polar)
+vec2 __cdecl PolarToXY(vec2 Polar)
 {
     return vec2(Polar.x * cos(Polar.y), Polar.x * sin(Polar.y));
 }
 
-vec3 _cdecl PolarToXYZ(vec3 Polar)
+vec3 __cdecl PolarToXYZ(vec3 Polar)
 {
     return vec3
     (

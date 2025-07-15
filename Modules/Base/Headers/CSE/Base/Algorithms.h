@@ -26,7 +26,7 @@
 #define _CSE_MATH_ALGORITHMS
 
 #include "CSE/Base/CSEBase.h"
-#include "CSE/Base/gltypes.h"
+#include "CSE/Base/GLTypes.h"
 #include "CSE/Base/MathFuncs.h"
 #include <complex>
 #include <initializer_list>

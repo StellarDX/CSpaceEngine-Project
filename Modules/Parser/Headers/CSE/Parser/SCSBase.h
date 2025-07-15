@@ -167,7 +167,7 @@ struct ValueType
             throw ParseException("Type is not match.");
         }
 
-        size_t Capacity = max(Value.size(), _Nm);
+        size_t Capacity = max(uint64(Value.size()), _Nm);
         for (int i = 0; i < Capacity; ++i)
         {
             GetQualified(&(*Dst)[i], i);

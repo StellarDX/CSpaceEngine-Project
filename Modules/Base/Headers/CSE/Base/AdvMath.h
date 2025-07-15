@@ -151,7 +151,7 @@ _CSE_BEGIN
  *   - 本初子午线方向：X轴正方向
  *   - 角度方向：X轴逆时针旋转为正（数学标准）
  */
-vec2 _cdecl XYToPolar(vec2 XY);
+vec2 __cdecl XYToPolar(vec2 XY);
 
 /**
  * @brief 将三维直角坐标(XYZ)转换为极坐标(Lon, Lat, Dist)
@@ -165,7 +165,7 @@ vec2 _cdecl XYToPolar(vec2 XY);
  *   - 春分点方向：Z轴负方向
  *   - 经度方向：由西向东为正（从北极俯视逆时针）
  */
-vec3 _cdecl XYZToPolar(vec3 XYZ);
+vec3 __cdecl XYZToPolar(vec3 XYZ);
 
 /**
  * @brief 将极坐标(r, θ)转换为直角坐标(XY)
@@ -176,7 +176,7 @@ vec3 _cdecl XYZToPolar(vec3 XYZ);
  *   - 本初子午线方向：X轴正方向
  *   - 角度方向：X轴逆时针旋转为正（数学标准）
  */
-vec2 _cdecl PolarToXY(vec2 Polar);
+vec2 __cdecl PolarToXY(vec2 Polar);
 
 /**
  * @brief 将极坐标(Lon, Lat, Dist)转换为三维直角坐标(XYZ)
@@ -188,7 +188,7 @@ vec2 _cdecl PolarToXY(vec2 Polar);
  *   - 春分点方向：Z轴负方向
  *   - 经度方向：由西向东为正（从北极俯视逆时针）
  */
-vec3 _cdecl PolarToXYZ(vec3 Polar);
+vec3 __cdecl PolarToXYZ(vec3 Polar);
 
 
 _SCICXX_BEGIN
@@ -839,7 +839,7 @@ public:
         DerivativeOrder = DerivOrder;
     }
 
-    float64 Binomial(uint64 x)const;
+    float64 Binomial(float64 x)const;
     float64 RiemannLiouville(float64 x)const;
     float64 Caputo(float64 x)const;
 
@@ -991,7 +991,7 @@ public:
 
     struct DenseOutput : public Mybase::DenseOutput
     {
-        using Mybase   = Mybase::DenseOutput;
+        using _Mybase  = Mybase::DenseOutput;
         using QTblType = DynamicMatrix<float64>;
 
         uint64     DenseOutputOrder;
@@ -1001,7 +1001,7 @@ public:
         DenseOutput() {}
         DenseOutput(uint64 DenseOutputOrder, float64 First, float64 Last,
             ValueArray BaseValue, QTblType QTbl)
-            : DenseOutputOrder(DenseOutputOrder), Mybase(First, Last),
+            : DenseOutputOrder(DenseOutputOrder), _Mybase(First, Last),
             Base(BaseValue), QTable(QTbl) {}
 
         ValueArray operator()(float64 _Xx)const override;
