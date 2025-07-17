@@ -155,9 +155,118 @@ public:
 
 bool KeplerCompute(OrbitElems& InitElems);
 
-Angle GetTrueAnomalyFromMeanAnomaly(Angle MeanAnomaly, Angle* EccentricAnomaly);
+// ---------------------------------------- 开普勒方程 ---------------------------------------- //
 
-Angle GetMeanAnomalyFromTrueAnomaly(Angle TrueAnomaly, Angle* EccentricAnomaly);
+/*
+    丹霞：开普勒方程是航天动力学基础方程，也是开普勒定律的数学描述，其定义为M = E - e * sin(E)。它看似简单但
+    实则是一个超越方程，这意味着无法使用初等或者解析的方式精确求解这个方程的逆，所以实际计算的时候，数值算法还是
+    逃不了的_(:з」∠)_。当然这个问题也是一个困扰了学界200年之久的问题，直到像牛顿迭代这样的数值算法的出现，这
+    个问题才得以解决。牛顿迭代法的实现非常简单，仅需要函数的导函数和一个初值就可以快速收敛。不过问题同样出现在这
+    个初值的选择上，因为它是影响牛顿迭代速度的一个关键因子。学界对于这个初始值的算法可以说五花八门，例如2006年
+    美国海军天文台在文献[1]中就给出了一种三阶初值估计算法，但是由此算法得到的初值接牛顿迭代仍然可能出现收敛慢的
+    情况，故可以认为它是一种“不太稳定”的算法。2021年Richard J. Mathar在文献[2]中也提出了一种更好的初值确定
+    方法，而且实验的结果也算是比较好看的了。本研究最初尝试先使用幂级数展开到前几项以确定一个初始值然后再接牛顿迭
+    代，但效果依然不理想，直到看到了文献[3]。文献[3]中提到了三种算法，分别是增强型牛顿迭代，增强型Markley算法
+    和分段五次多项式拟合，并且在近抛物线轨道的近日点附近会自动切换到二分法以保证求解精度，并且除了增强型牛顿迭代
+    以外，另外两种算法都没有循环结构，所以速度也非常快。经后续实验，此方法在64位浮点下精度可达1-2个ULP，可以认
+    为是开普勒方程反函数的“正解”。此处的开普勒方程求解算法使用文献[3]中的实现。
+
+    参考文献：
+    [1] Murison M A .A Practical Method for Solving the Kepler Equation[J].  2006.
+        DOI:10.13140/2.1.5019.6808.
+    [2] Mathar R J .Improved First Estimates to the Solution of Kepler's Equation[J].  2021.
+        DOI:10.48550/arXiv.2108.03215.
+    [3] Tommasini D , Olivieri D N .Two fast and accurate routines for solving the elliptic 
+        Kepler equation for all values of the eccentricity and mean anomaly[J].天文学与天体物理, 
+        2022, 658:A196.DOI:10.1051/0004-6361/202141423.
+*/
+
+class __Inverse_Keplerian_Equation
+{
+protected:
+    float64 Eccentricity;
+public:
+    virtual Angle operator()(Angle MeanAnomaly) = 0;
+};
+
+/**
+ * @brief 增强型开普勒方程求解工具
+ */
+class __Enhanced_Keplerian_Equation_Solver : public __Inverse_Keplerian_Equation
+{
+public:
+    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+
+protected:
+    float64 AbsoluteTolerence = 14.522878745280337562704972096745; // 3E-15
+    float64 RelativeTolerence = 15.657577319177793764036061134032; // 2.2E-16
+
+    constexpr static const float64 EBoundary = 0.99;
+    constexpr static const float64 MBoundary = 0.0045;
+
+    virtual float64 Run(float64 MRad, float64 AbsTol, float64 RelTol) = 0;
+    virtual float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol);
+
+public:
+    Angle operator()(Angle MeanAnomaly)final;
+};
+
+// ENRKE
+class __Newton_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+{
+public:
+    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+
+protected:
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)override;
+
+public:
+    __Newton_Keplerian_Equation(float64 e = 0);
+};
+
+// ENMAKE
+class __Markley_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+{
+public:
+    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+
+protected:
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)override;
+
+public:
+    __Markley_Keplerian_Equation(float64 e = 0);
+};
+
+class __Piecewise_Quintic_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+{
+public:
+    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+
+protected:
+    std::vector<int64>             BlockBoundaries;
+    std::vector<Angle>             Breakpoints;
+    SciCxx::DynamicMatrix<float64> Coefficients;
+
+    static void GetCoefficients1(float64 Eccentricity, float64 Tolerence,
+        std::vector<Angle>* Grid/*, uint64* n*/);
+    static void GetCoefficients2(float64 Eccentricity,
+        const std::vector<Angle>& Grid, //uint64 n,
+        std::vector<int64>* kvec, std::vector<Angle>* bp,
+        SciCxx::DynamicMatrix<float64>* coeffs);
+
+    uint64 FindInterval(float64 MRad);
+    float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol);
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol);
+
+public:
+    __Piecewise_Quintic_Keplerian_Equation(float64 e = 0);
+
+    static void GetCoefficients(float64 Eccentricity, float64 Tolerence,
+        /*uint64* n,*/ std::vector<int64>* kvec, std::vector<Angle>* bp,
+        SciCxx::DynamicMatrix<float64>* coeffs);
+};
+
+// ---------------------------------------------------------------------------------------------
 
 OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
 

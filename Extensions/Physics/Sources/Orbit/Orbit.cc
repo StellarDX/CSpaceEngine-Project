@@ -30,7 +30,7 @@ bool KeplerCompute(OrbitElems& InitElems)
         if (!IS_NO_DATA_DBL(InitElems.Period) && !IS_NO_DATA_DBL(a))
         {
             InitElems.GravParam = (4.0 * CSE_PI * CSE_PI * a * a * a) /
-                                  (InitElems.Period * InitElems.Period);
+                (InitElems.Period * InitElems.Period);
         }
     }
 
