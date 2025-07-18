@@ -188,12 +188,8 @@ void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients2
         float64 sj = sin(Ej);
         float64 cj1 = cos(Ej);
         float64 cj2 = cj1 * cj1;
-        float64 cj3 = cj2 * cj1;
-        float64 cj4 = cj2 * cj2;
         float64 dj1 = 1. / (1. - e1 * cj1);
         float64 dj2 = dj1 * dj1;
-        float64 dj3 = dj2 * dj1;
-        float64 dj4 = dj2 * dj2;
         float64 dej1 = sj* dj1;
         float64 dej2 = dej1 * dej1;
         float64 dej3 = dej2 * dej1;

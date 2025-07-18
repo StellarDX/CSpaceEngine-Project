@@ -33,6 +33,12 @@ if(MSVC)
   set(CMAKE_USE_RELATIVE_PATHS ON CACHE INTERNAL "" FORCE)
 endif()
 
+if(MSVC)
+    add_compile_options(/wd4190)  # MSVC 禁用警告 4190
+else()
+    add_compile_options(-Wno-return-type-c-linkage)  # GCC/Clang
+endif()
+
 # ----------------------------------------------------------------------------
 # Process subdirectories
 # ----------------------------------------------------------------------------

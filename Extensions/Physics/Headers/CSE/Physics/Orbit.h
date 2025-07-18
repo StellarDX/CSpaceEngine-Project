@@ -110,8 +110,8 @@ public:
     using OrbitStateType = OrbitState;
 
 protected:
-    OrbitStateType InitialState;
-    OrbitStateType CurrentState;
+    OrbitElemType InitialState;
+    OrbitElemType CurrentState;
 
     OrbitElemType CheckParams(const OrbitElemType& InitElems);
 
@@ -181,6 +181,25 @@ bool KeplerCompute(OrbitElems& InitElems);
         2022, 658:A196.DOI:10.1051/0004-6361/202141423.
 */
 
+/**
+ * @brief 开普勒方程
+ * @param EccentricAnomaly 偏近点角
+ * @param Eccentricity 离心率
+ * @return 平近点角
+ */
+Angle EllipticalKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity);
+
+/**
+ * @brief 双曲开普勒方程
+ * @param EccentricAnomaly 偏近点角
+ * @param Eccentricity 离心率
+ * @return 平近点角
+ */
+Angle HyperbolicKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity);
+
+/**
+ * @brief 开普勒方程的反函数
+ */
 class __Inverse_Keplerian_Equation
 {
 protected:
@@ -237,6 +256,7 @@ public:
     __Markley_Keplerian_Equation(float64 e = 0);
 };
 
+// ENP5KE
 class __Piecewise_Quintic_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
 {
 public:
@@ -267,6 +287,8 @@ public:
 };
 
 // ---------------------------------------------------------------------------------------------
+
+
 
 OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
 
