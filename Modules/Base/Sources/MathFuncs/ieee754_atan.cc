@@ -264,7 +264,7 @@ Angle __cdecl __IEEE754_ATAN128F_C64F(__Float64 x)
     if (k <= 0x3c800000) /* |x| <= 2**-55.  */
     {
         /* Raise inexact.  */
-        if (1e300L + x > 0.0) { return x.x; }
+        if (1e300L + x > 0.0) { return Angle::FromRadians(x.x); }
     }
 
     if (k >= 0x46c00000) /* |x| >= 2**109.  */
