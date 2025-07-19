@@ -25,18 +25,12 @@
 #include "CSE/Base/MathFuncs.h"
 #include "CSE/Base/ConstLists.h"
 #include "CSE/Base/Algorithms.h"
+#include <cfloat>
 
 _CSE_BEGIN
 
-float64 __cdecl ln(float64 _X) { return __IEEE754_LN64F(_X); };
-
-complex64 __cdecl lnc(complex64 _X, int64 K_OFFSET)
-{
-    // Convert to polar form (r, tet)
-    float64 r = abs(_X);
-    float64 tet = atan2(_X.imag(), _X.real());
-    return ln(r) + 1i * float64(tet + 2. * CSE_2PI * K_OFFSET);
-}
+float64 __cdecl ln(float64 _X) { return __IEEE854_LN128F_C64F(_X); };
+complex64 __cdecl lnc(complex64 _X, int64 _K) {return __GLIBCT_LN64C(_X, _K);}
 
 _EXTERN_C
 
@@ -72,7 +66,7 @@ _EXTERN_C
  *
  */
 
-const double __Lnf64_table[]
+const double __Lnf64_table[512]
 {
     0x1.734f0c3e0de9fp+0, -0x1.7cc7f79e69000p-2,
     0x1.713786a2ce91fp+0, -0x1.76feec20d0000p-2,
@@ -425,5 +419,953 @@ __Float64 __cdecl __IEEE754_LN64F(__Float64 _X)
     return hi + lo + r * r * (NMC[0] + r * (NMC[1] + r * (NMC[2] + r * (NMC[3] + r * (NMC[4])))));
 }
 
+/*							logll.c
+ *
+ * Natural logarithm for 128-bit long double precision.
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * long double x, y, logl();
+ *
+ * y = logl( x );
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * Returns the base e (2.718...) logarithm of x.
+ *
+ * The argument is separated into its exponent and fractional
+ * parts.  Use of a lookup table increases the speed of the routine.
+ * The program uses logarithms tabulated at intervals of 1/128 to
+ * cover the domain from approximately 0.7 to 1.4.
+ *
+ * On the interval [-1/128, +1/128] the logarithm of 1+x is approximated by
+ *     log(1+x) = x - 0.5 x^2 + x^3 P(x) .
+ *
+ *
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE   0.875, 1.125   100000      1.2e-34    4.1e-35
+ *    IEEE   0.125, 8       100000      1.2e-34    4.1e-35
+ *
+ *
+ * WARNING:
+ *
+ * This program uses integer operations on bit fields of floating-point
+ * numbers.  It does not work with data structures other than the
+ * structure assumed.
+ *
+ */
+
+/* Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, see
+    <https://www.gnu.org/licenses/>.
+*/
+
+// Lookup table of ln(t) - (t-1)
+// t = 0.5 + (k+26)/128)
+// k = 0, ..., 91
+const double __Ln128f_table[92]
+{
+    -5.5345593589352099112142921677820359632418E-2L,
+    -5.2108257402767124761784665198737642086148E-2L,
+    -4.8991686870576856279407775480686721935120E-2L,
+    -4.5993270766361228596215288742353061431071E-2L,
+    -4.3110481649613269682442058976885699556950E-2L,
+    -4.0340872319076331310838085093194799765520E-2L,
+    -3.7682072451780927439219005993827431503510E-2L,
+    -3.5131785416234343803903228503274262719586E-2L,
+    -3.2687785249045246292687241862699949178831E-2L,
+    -3.0347913785027239068190798397055267411813E-2L,
+    -2.8110077931525797884641940838507561326298E-2L,
+    -2.5972247078357715036426583294246819637618E-2L,
+    -2.3932450635346084858612873953407168217307E-2L,
+    -2.1988775689981395152022535153795155900240E-2L,
+    -2.0139364778244501615441044267387667496733E-2L,
+    -1.8382413762093794819267536615342902718324E-2L,
+    -1.6716169807550022358923589720001638093023E-2L,
+    -1.5138929457710992616226033183958974965355E-2L,
+    -1.3649036795397472900424896523305726435029E-2L,
+    -1.2244881690473465543308397998034325468152E-2L,
+    -1.0924898127200937840689817557742469105693E-2L,
+    -9.6875626072830301572839422532631079809328E-3L,
+    -8.5313926245226231463436209313499745894157E-3L,
+    -7.4549452072765973384933565912143044991706E-3L,
+    -6.4568155251217050991200599386801665681310E-3L,
+    -5.5356355563671005131126851708522185605193E-3L,
+    -4.6900728132525199028885749289712348829878E-3L,
+    -3.9188291218610470766469347968659624282519E-3L,
+    -3.2206394539524058873423550293617843896540E-3L,
+    -2.5942708080877805657374888909297113032132E-3L,
+    -2.0385211375711716729239156839929281289086E-3L,
+    -1.5522183228760777967376942769773768850872E-3L,
+    -1.1342191863606077520036253234446621373191E-3L,
+    -7.8340854719967065861624024730268350459991E-4L,
+    -4.9869831458030115699628274852562992756174E-4L,
+    -2.7902661731604211834685052867305795169688E-4L,
+    -1.2335696813916860754951146082826952093496E-4L,
+    -3.0677461025892873184042490943581654591817E-5L,
+    +0.0000000000000000000000000000000000000000E+0L,
+    -3.0359557945051052537099938863236321874198E-5L,
+    -1.2081346403474584914595395755316412213151E-4L,
+    -2.7044071846562177120083903771008342059094E-4L,
+    -4.7834133324631162897179240322783590830326E-4L,
+    -7.4363569786340080624467487620270965403695E-4L,
+    -1.0654639687057968333207323853366578860679E-3L,
+    -1.4429854811877171341298062134712230604279E-3L,
+    -1.8753781835651574193938679595797367137975E-3L,
+    -2.3618380914922506054347222273705859653658E-3L,
+    -2.9015787624124743013946600163375853631299E-3L,
+    -3.4938307889254087318399313316921940859043E-3L,
+    -4.1378413103128673800485306215154712148146E-3L,
+    -4.8328735414488877044289435125365629849599E-3L,
+    -5.5782063183564351739381962360253116934243E-3L,
+    -6.3731336597098858051938306767880719015261E-3L,
+    -7.2169643436165454612058905294782949315193E-3L,
+    -8.1090214990427641365934846191367315083867E-3L,
+    -9.0486422112807274112838713105168375482480E-3L,
+    -1.0035177140880864314674126398350812606841E-2L,
+    -1.1067990155502102718064936259435676477423E-2L,
+    -1.2146457974158024928196575103115488672416E-2L,
+    -1.3269969823361415906628825374158424754308E-2L,
+    -1.4437927104692837124388550722759686270765E-2L,
+    -1.5649743073340777659901053944852735064621E-2L,
+    -1.6904842527181702880599758489058031645317E-2L,
+    -1.8202661505988007336096407340750378994209E-2L,
+    -1.9542647000370545390701192438691126552961E-2L,
+    -2.0924256670080119637427928803038530924742E-2L,
+    -2.2346958571309108496179613803760727786257E-2L,
+    -2.3810230892650362330447187267648486279460E-2L,
+    -2.5313561699385640380910474255652501521033E-2L,
+    -2.6856448685790244233704909690165496625399E-2L,
+    -2.8438398935154170008519274953860128449036E-2L,
+    -3.0058928687233090922411781058956589863039E-2L,
+    -3.1717563112854831855692484086486099896614E-2L,
+    -3.3413836095418743219397234253475252001090E-2L,
+    -3.5147290019036555862676702093393332533702E-2L,
+    -3.6917475563073933027920505457688955423688E-2L,
+    -3.8723951502862058660874073462456610731178E-2L,
+    -4.0566284516358241168330505467000838017425E-2L,
+    -4.2444048996543693813649967076598766917965E-2L,
+    -4.4356826869355401653098777649745233339196E-2L,
+    -4.6304207416957323121106944474331029996141E-2L,
+    -4.8285787106164123613318093945035804818364E-2L,
+    -5.0301169421838218987124461766244507342648E-2L,
+    -5.2349964705088137924875459464622098310997E-2L,
+    -5.4431789996103111613753440311680967840214E-2L,
+    -5.6546268881465384189752786409400404404794E-2L,
+    -5.8693031345788023909329239565012647817664E-2L,
+    -6.0871713627532018185577188079210189048340E-2L,
+    -6.3081958078862169742820420185833800925568E-2L,
+    -6.5323413029406789694910800219643791556918E-2L,
+    -6.7595732653791419081537811574227049288168E-2L
+};
+
+__Float64 __cdecl __IEEE854_LN128F_C64F(__Float64 _X)
+{
+    __Float64 x = _X;
+    // ln(2) = ln2a + ln2b with extended precision.
+    static const __Float64
+        ln2a = 6.93145751953125e-1L,
+        ln2b = 1.4286068203094172321214581765680755001344E-6L;
+
+    static const __Float64
+        ldbl_epsilon = 0x1p-106L;
+
+    __Float64 z, y, w, t;
+    unsigned int m;
+    int k, e;
+    __Float64 xhi;
+    uint32_t hx, lx;
+
+    // split into 2 pieces
+    xhi = x;
+    hx = x.parts.msw;
+    lx = x.parts.lsw;
+    m = hx;
+
+    // Check for IEEE special cases.
+    k = m & 0x7fffffff;
+    // ln(0) = -infinity.
+    if ((k | lx) == 0) {return __Float64::FromBytes(NEG_INF_DOUBLE);}
+    // ln ( x < 0 ) = NaN
+    if (m & 0x80000000) {return __Float64::FromBytes(BIG_NAN_DOUBLE);}
+    // ln (infinity or NaN)
+    if (k >= 0x7ff00000) {return x + x;}
+
+    // On this interval the table is not used due to cancellation error.
+    if ((x <= 1.0078125L) && (x >= 0.9921875L))
+    {
+        if (x == 1.0L) {return 0.0L;}
+        z = x - 1.0L;
+        k = 64;
+        t = 1.0L;
+        e = 0;
+    }
+    else
+    {
+        // Extract exponent and reduce domain to 0.703125 <= u < 1.40625
+        unsigned int w0;
+        e = (int)(m >> 20) - (int)0x3fe;
+        if (e == -1022)
+        {
+            x *= 0x1p106L;
+            xhi = x;
+            hx = x.parts.msw;
+            lx = x.parts.lsw;
+            m = hx;
+            e = (int)(m >> 20) - (int)0x3fe - 106;
+        }
+        m &= 0xfffff;
+        w0 = m | 0x3fe00000;
+        m |= 0x100000;
+        // Find lookup table index k from high order bits of the significand.
+        if (m < 0x168000)
+        {
+            k = (m - 0xff000) >> 13;
+            // t is the argument 0.5 + (k+26)/128 of the nearest item to u in the lookup table.
+            xhi.parts.msw = 0x3ff00000 + (k << 13);
+            xhi.parts.lsw = 0;
+            t = xhi;
+            w0 += 0x100000;
+            e -= 1;
+            k += 64;
+        }
+        else
+        {
+            k = (m - 0xfe000) >> 14;
+            xhi.parts.msw =  0x3fe00000 + (k << 14);
+            xhi.parts.lsw = 0;
+            t = xhi;
+        }
+        x = ::scalbn(x, ((int)((w0 - hx) * 2)) >> 21);
+        // ln(u) = ln(t * u/t) = ln(t) + ln(u/t)
+        // ln(t) is tabulated in the lookup table.
+        // Express ln(u/t) = ln(1+z),  where z = u/t - 1 = (u-t)/t.
+        // cf. Cody & Waite.
+        z = (x - t) / t;
+    }
+
+    /* Series expansion of log(1+z).  */
+    w = z * z;
+    /* Avoid spurious underflows.  */
+    if (abs(z) <= ldbl_epsilon.x) {y = 0.0L;}
+    else
+    {
+        // ln(1+x) = x - .5 x^2 + x^3 l(x) -.0078125 <= x <= +.0078125 peak relative error 1.2e-37
+        static const __Float64
+            l3 =   3.333333333333333333333333333333336096926E-1L,
+            l4 =  -2.499999999999999999999999999486853077002E-1L,
+            l5 =   1.999999999999999999999999998515277861905E-1L,
+            l6 =  -1.666666666666666666666798448356171665678E-1L,
+            l7 =   1.428571428571428571428808945895490721564E-1L,
+            l8 =  -1.249999999999999987884655626377588149000E-1L,
+            l9 =   1.111111111111111093947834982832456459186E-1L,
+            l10 = -1.000000000000532974938900317952530453248E-1L,
+            l11 =  9.090909090915566247008015301349979892689E-2L,
+            l12 = -8.333333211818065121250921925397567745734E-2L,
+            l13 =  7.692307559897661630807048686258659316091E-2L,
+            l14 = -7.144242754190814657241902218399056829264E-2L,
+            l15 =  6.668057591071739754844678883223432347481E-2L;
+
+        y = ((((((((((((l15.x * z
+                        + l14.x) * z
+                       + l13.x) * z
+                      + l12.x) * z
+                     + l11.x) * z
+                    + l10.x) * z
+                   + l9.x) * z
+                  + l8.x) * z
+                 + l7.x) * z
+                + l6.x) * z
+               + l5.x) * z
+              + l4.x) * z
+             + l3.x) * z * w;
+        y -= 0.5 * w;
+    }
+
+    y += e * ln2b.x;  /* Base 2 exponent offset times ln(2).  */
+    y += z;
+    y += __Ln128f_table[k - 26]; /* log(t) - (t-1) */
+    y += (t - 1.0L);
+    y += e * ln2a.x;
+    return y;
+}
+
+/*							log1pl.c
+ *
+ *      Relative error logarithm
+ *	Natural logarithm of 1+x, 128-bit long double precision
+ *
+ *
+ *
+ * SYNOPSIS:
+ *
+ * long double x, y, log1pl();
+ *
+ * y = log1pl( x );
+ *
+ *
+ *
+ * DESCRIPTION:
+ *
+ * Returns the base e (2.718...) logarithm of 1+x.
+ *
+ * The argument 1+x is separated into its exponent and fractional
+ * parts.  If the exponent is between -1 and +1, the logarithm
+ * of the fraction is approximated by
+ *
+ *     log(1+x) = x - 0.5 x^2 + x^3 P(x)/Q(x).
+ *
+ * Otherwise, setting  z = 2(w-1)/(w+1),
+ *
+ *     log(w) = z + z^3 P(z)/Q(z).
+ *
+ *
+ *
+ * ACCURACY:
+ *
+ *                      Relative error:
+ * arithmetic   domain     # trials      peak         rms
+ *    IEEE      -1, 8       100000      1.9e-34     4.3e-35
+ */
+
+/* Copyright 2001 by Stephen L. Moshier
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, see
+    <https://www.gnu.org/licenses/>.
+*/
+
+__Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
+{
+    // C1 + C2 = ln 2
+    static const __Float64 C1 = 6.93145751953125E-1L;
+    static const __Float64 C2 = 1.428606820309417232121458176568075500134E-6L;
+
+    static const __Float64 sqrth = 0.7071067811865475244008443621048490392848L;
+    // ln (2^16384 * (1 - 2^-113))
+    static const __Float64 zero = 0.0L;
+
+    __Float64 xm1 = _X;
+    __Float64 x, y, z, r, s;
+    __Float64 xhi;
+    int32_t hx, lx;
+    int e;
+
+    // Test for NaN or infinity input.
+    xhi = xm1;
+    hx = xhi.parts.msw;
+    lx = xhi.parts.lsw;
+    if ((hx & 0x7fffffff) >= 0x7ff00000) {return xm1 + xm1 * xm1;}
+
+    // ln(1 + (+-0)) = +-0.
+    if (((hx & 0x7fffffff) | lx) == 0) {return xm1;}
+
+    if (xm1 >= 0x1p107L) {x = xm1;}
+    else {x = xm1 + 1.0L;}
+
+    /* ln(1 + (-1)) = ln(0) = -inf */
+    if (x <= 0.0L)
+    {
+        if (x == 0.0L) {return __Float64::FromBytes(NEG_INF_DOUBLE);}
+        else {return __Float64::FromBytes(BIG_NAN_DOUBLE);}
+    }
+
+    // Separate mantissa from exponent.
+    // Use frexp used so that denormal numbers will be handled properly.
+    x = ::frexp(x, &e);
+
+    // Logarithm using ln(x) = z + z^3 * P(z^2) / Q(z^2),
+    // where z = 2 * (x - 1) / (x + 1).
+    if ((e > 2) || (e < -2))
+    {
+        if (x.x < sqrth.x)
+        {			/* 2( 2x-1 )/( 2x+1 ) */
+            e -= 1;
+            z = x - 0.5L;
+            y = 0.5L * z + 0.5L;
+        }
+        else
+        {			/*  2 (x-1)/(x+1)   */
+            z = x - 0.5L;
+            z -= 0.5L;
+            y = 0.5L * x + 0.5L;
+        }
+
+        /* Coefficients for log(x) = z + z^3 P(z^2)/Q(z^2),
+         * where z = 2(x-1)/(x+1)
+         * 1/sqrt(2) <= x < sqrt(2)
+         * Theoretical peak relative error = 1.1e-35,
+         * relative peak error spread 1.1e-9
+         */
+        static const __Float64
+            R5 = -8.828896441624934385266096344596648080902E-1L,
+            R4 = 8.057002716646055371965756206836056074715E1L,
+            R3 = -2.024301798136027039250415126250455056397E3L,
+            R2 = 2.048819892795278657810231591630928516206E4L,
+            R1 = -8.977257995689735303686582344659576526998E4L,
+            R0 = 1.418134209872192732479751274970992665513E5L,
+            /* S6 = 1.000000000000000000000000000000000000000E0L, */
+            S5 = -1.186359407982897997337150403816839480438E2L,
+            S4 = 3.998526750980007367835804959888064681098E3L,
+            S3 = -5.748542087379434595104154610899551484314E4L,
+            S2 = 4.001557694070773974936904547424676279307E5L,
+            S1 = -1.332535117259762928288745111081235577029E6L,
+            S0 = 1.701761051846631278975701529965589676574E6L;
+
+        x = z / y;
+        z = x * x;
+        r = ((((R5.x * z
+                + R4.x) * z
+               + R3.x) * z
+              + R2.x) * z
+             + R1.x) * z
+            + R0.x;
+        s = (((((z
+                 + S5.x) * z
+                + S4.x) * z
+               + S3.x) * z
+              + S2.x) * z
+             + S1.x) * z
+            + S0.x;
+        z = x * (z * r / s);
+        z = z + e * C2.x;
+        z = z + x;
+        z = z + e * C1.x;
+        return z;
+    }
+
+    // Logarithm using log(1+x) = x - .5x^2 + x^3 P(x)/Q(x).
+    if (x.x < sqrth.x)
+    {
+        e -= 1;
+        if (e != 0) {x = 2.0L * x - 1.0L;}	/*  2x - 1  */
+        else {x = xm1;}
+    }
+    else
+    {
+        if (e != 0) {x = x - 1.0L;}
+        else {x = xm1;}
+    }
+
+    /* Coefficients for log(1+x) = x - x^2 / 2 + x^3 P(x)/Q(x)
+     * 1/sqrt(2) <= 1+x < sqrt(2)
+     * Theoretical peak relative error = 5.3e-37,
+     * relative peak error spread = 2.3e-14
+     */
+    static const __Float64
+        P12 = 1.538612243596254322971797716843006400388E-6L,
+        P11 = 4.998469661968096229986658302195402690910E-1L,
+        P10 = 2.321125933898420063925789532045674660756E1L,
+        P9 = 4.114517881637811823002128927449878962058E2L,
+        P8 = 3.824952356185897735160588078446136783779E3L,
+        P7 = 2.128857716871515081352991964243375186031E4L,
+        P6 = 7.594356839258970405033155585486712125861E4L,
+        P5 = 1.797628303815655343403735250238293741397E5L,
+        P4 = 2.854829159639697837788887080758954924001E5L,
+        P3 = 3.007007295140399532324943111654767187848E5L,
+        P2 = 2.014652742082537582487669938141683759923E5L,
+        P1 = 7.771154681358524243729929227226708890930E4L,
+        P0 = 1.313572404063446165910279910527789794488E4L,
+        /* Q12 = 1.000000000000000000000000000000000000000E0L, */
+        Q11 = 4.839208193348159620282142911143429644326E1L,
+        Q10 = 9.104928120962988414618126155557301584078E2L,
+        Q9 = 9.147150349299596453976674231612674085381E3L,
+        Q8 = 5.605842085972455027590989944010492125825E4L,
+        Q7 = 2.248234257620569139969141618556349415120E5L,
+        Q6 = 6.132189329546557743179177159925690841200E5L,
+        Q5 = 1.158019977462989115839826904108208787040E6L,
+        Q4 = 1.514882452993549494932585972882995548426E6L,
+        Q3 = 1.347518538384329112529391120390701166528E6L,
+        Q2 = 7.777690340007566932935753241556479363645E5L,
+        Q1 = 2.626900195321832660448791748036714883242E5L,
+        Q0 = 3.940717212190338497730839731583397586124E4L;
+
+    z = x * x;
+    r = (((((((((((P12.x * x
+                   + P11.x) * x
+                  + P10.x) * x
+                 + P9.x) * x
+                + P8.x) * x
+               + P7.x) * x
+              + P6.x) * x
+             + P5.x) * x
+            + P4.x) * x
+           + P3.x) * x
+          + P2.x) * x
+         + P1.x) * x
+        + P0.x;
+    s = (((((((((((x
+                   + Q11.x) * x
+                  + Q10.x) * x
+                 + Q9.x) * x
+                + Q8.x) * x
+               + Q7.x) * x
+              + Q6.x) * x
+             + Q5.x) * x
+            + Q4.x) * x
+           + Q3.x) * x
+          + Q2.x) * x
+         + Q1.x) * x
+        + Q0.x;
+    y = x * (z * r / s);
+    y = y + e * C2.x;
+    z = y - 0.5L * z;
+    z = z + x;
+    z = z + e * C1.x;
+    return z;
+}
+
+complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
+{
+    float64 XReal = _X.real();
+    float64 XImag = _X.imag();
+    int RClass = std::fpclassify(XReal);
+    int IClass = std::fpclassify(XImag);
+    float64 YReal, YImag;
+
+    if (RClass == FP_ZERO && IClass == FP_ZERO)
+    {
+        // Real and imaginary part are 0.0.
+        YImag = std::signbit(XReal) ? CSE_PI : 0;
+        YImag = ::copysign(YImag, XImag);
+        // Yes, the following line raises an exception.
+        YReal = __Float64::FromBytes(NEG_INF_DOUBLE);
+    }
+    else if (RClass != FP_NAN && IClass != FP_NAN)
+    {
+        // Neither real nor imaginary part is NaN.
+        float64 AbsReal = abs(XReal);
+        float64 AbsImag = abs(XImag);
+        int Scale = 0;
+
+        if (AbsReal < AbsImag)
+        {
+            std::swap(AbsReal, AbsImag);
+        }
+
+        if (AbsReal > DBL_MAX / 2.)
+        {
+            Scale = -1;
+            AbsReal = ::scalbn(AbsReal, Scale);
+            AbsImag = (AbsImag >= DBL_MIN * 2 ? ::scalbn(AbsImag, Scale) : 0);
+        }
+        else if (AbsReal < DBL_MIN && AbsImag < DBL_MIN)
+        {
+            Scale = DBL_MANT_DIG;
+            AbsReal = ::scalbn(AbsReal, Scale);
+            AbsImag = ::scalbn(AbsImag, Scale);
+        }
+
+        if (AbsReal == 1 && Scale == 0)
+        {
+            YReal = __IEEE854_LN1PX128F_C64F(AbsImag * AbsImag) / 2.;
+        }
+        else if (AbsReal > 1 && AbsReal < 2 && AbsImag < 1 && Scale == 0)
+        {
+            float64 d2m1 = (AbsReal - 1) * (AbsReal + 1);
+            if (AbsImag >= DOUBLE_EPSILON)
+            {
+                d2m1 += AbsImag * AbsImag;
+            }
+            YReal = __IEEE854_LN1PX128F_C64F(d2m1) / 2;
+        }
+        else if (AbsReal < 1 && AbsReal >= 0.5
+            && AbsImag < DOUBLE_EPSILON / 2 && Scale == 0)
+        {
+            float64 d2m1 = (AbsReal - 1) * (AbsReal + 1);
+            YReal = __IEEE854_LN1PX128F_C64F(d2m1) / 2;
+        }
+        else if (AbsReal < 1 && AbsReal >= 0.5 && Scale == 0
+            && AbsReal * AbsReal + AbsImag * AbsImag >= 0.5)
+        {
+            static auto __DEKKER_ADD64F = []
+                (double *hi, double *lo, double x, double y)
+            {
+                *hi = x + y;
+                *lo = (x - *hi) + y;
+            };
+
+            static auto __DEKKER_MULTIPLY64F = []
+                (float64* hi, float64* lo, float64 x, float64 y)
+            {
+                *hi = x * y;
+                float64 x1 = x * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
+                float64 y1 = y * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
+                x1 = (x - x1) + x1;
+                y1 = (y - y1) + y1;
+                float64 x2 = x - x1;
+                float64 y2 = y - y1;
+                *lo = (((x1 * y1 - *hi) + x1 * y2) + x2 * y1) + x2 * y2;
+            };
+
+            static auto __GLIBC_X2Y2M164F = [](float64 x, float64 y)
+            {
+                double vals[5];
+                __DEKKER_MULTIPLY64F(&vals[1], &vals[0], x, x);
+                __DEKKER_MULTIPLY64F(&vals[3], &vals[2], y, y);
+                vals[4] = -1.0;
+
+                static auto compare = [](float64 p, float64 q)
+                {
+                    return abs(p) < abs(q);
+                };
+                std::sort(std::begin(vals), std::end(vals), compare);
+
+                // Add up the values so that each element of VALS has absolute value
+                //at most equal to the last set bit of the next nonzero
+                // element.
+                for (size_t i = 0; i <= 3; i++)
+                {
+                    __DEKKER_ADD64F(&vals[i + 1], &vals[i], vals[i + 1], vals[i]);
+                    std::sort(std::begin(vals) + i + 1, std::end(vals), compare);
+                }
+                // Now any error from this addition will be small.
+                return vals[4] + vals[3] + vals[2] + vals[1] + vals[0];
+            };
+
+            float64 d2m1 = __GLIBC_X2Y2M164F(AbsReal, AbsImag);
+            YReal = __IEEE854_LN1PX128F_C64F(d2m1) / 2;
+        }
+        else
+        {
+            float64 d = ::hypot(AbsReal, AbsImag);
+            YReal = __IEEE854_LN128F_C64F(d) - Scale * CSE_LN2;
+        }
+
+        YImag = Arctan2(XImag, XReal).ToRadians();
+    }
+    else
+    {
+        YImag = __Float64::FromBytes(BIG_NAN_DOUBLE);
+        if (RClass == FP_INFINITE || IClass == FP_INFINITE)
+        {
+            /* Real or imaginary part is infinite.  */
+            YReal = __Float64::FromBytes(POS_INF_DOUBLE);
+        }
+        else {YReal = __Float64::FromBytes(BIG_NAN_DOUBLE);}
+    }
+
+    return complex64(YReal, YImag + _K * CSE_2PI);
+}
+
 _END_EXTERN_C
 _CSE_END
+
+#if 0 // ln test program generated by Deepseek
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <iomanip>
+#include <random>
+
+#include <CSE/Base.h>
+
+using namespace cse;
+
+// 测试用例结构体
+struct TestCase
+{
+    double x;
+    double expected;  // std::log的结果
+    double actual;    // __IEEE854_LN128F_C64F的结果
+    double abs_error;
+    double rel_error;
+};
+
+// 生成测试用例
+std::vector<TestCase> generate_test_cases()
+{
+    std::vector<TestCase> cases;
+
+    // 特殊值
+    cases.push_back({0.0, NAN, NAN, NAN, NAN});  // 会被特殊处理
+    cases.push_back({-1.0, NAN, NAN, NAN, NAN});
+    cases.push_back({1.0, 0.0, 0.0, 0.0, 0.0});
+    cases.push_back({INFINITY, INFINITY, INFINITY, 0.0, 0.0});
+    cases.push_back({NAN, NAN, NAN, NAN, NAN});
+
+    // 接近1的值
+    for (double x = 0.99; x <= 1.01; x += 0.001)
+    {
+        cases.push_back({x, std::log(x), NAN, NAN, NAN});
+    }
+
+    // 一般值
+    const double test_values[] =
+    {
+        1e-100, 1e-20, 0.5, 2.0, 10.0, 100.0, 1e20, 1e100,
+        0.9921874, 0.9921875, 1.0078125, 1.0078126,
+        2.2250738585072014e-308, 1.7976931348623157e308
+    };
+
+    for (double x : test_values)
+    {
+        cases.push_back({x, std::log(x), NAN, NAN, NAN});
+    }
+
+    // 随机值
+    std::mt19937_64 rng(42);
+    std::uniform_real_distribution<double> dist(1e-308, 1e308);
+    for (int i = 0; i < 500; ++i)
+    {
+        double x = dist(rng);
+        cases.push_back({x, std::log(x), NAN, NAN, NAN});
+    }
+    std::exponential_distribution<double> dist2(1E-12);
+    for (int i = 0; i < 500; ++i)
+    {
+        double x = dist2(rng);
+        cases.push_back({x, std::log(x), NAN, NAN, NAN});
+    }
+
+    return cases;
+}
+
+// 运行测试并计算误差
+void run_tests(std::vector<TestCase>& cases)
+{
+    for (auto& test : cases)
+    {
+        if (std::isnan(test.x) || std::isinf(test.x) || test.x < 0)
+        {
+            continue;  // 跳过无效输入
+        }
+
+        test.actual = cse::__IEEE854_LN128F_C64F(test.x);
+
+        if (std::isnan(test.expected) || std::isnan(test.actual) ||
+            std::isinf(test.expected) || std::isinf(test.actual))
+        {
+            continue;  // 跳过无法计算误差的情况
+        }
+
+        test.abs_error = std::abs(test.actual - test.expected);
+        test.rel_error = test.abs_error / std::abs(test.expected);
+    }
+}
+
+// 输出结果到CSV文件
+void write_to_csv(const std::vector<TestCase>& cases, const std::string& filename)
+{
+    std::ofstream out(filename);
+
+    // 写入表头
+    out << "x,std::log(x),__IEEE854_LN128F_C64F(x),Absolute Error,Relative Error\n";
+
+    // 设置科学计数法和高精度
+    out << std::scientific << std::setprecision(15);
+
+    for (const auto& test : cases)
+    {
+        out << test.x << ",";
+
+        if (std::isnan(test.expected))
+        {
+            out << "NaN,";
+        }
+        else if (std::isinf(test.expected))
+        {
+            out << (test.expected > 0 ? "Inf" : "-Inf") << ",";
+        }
+        else
+        {
+            out << test.expected << ",";
+        }
+
+        if (std::isnan(test.actual))
+        {
+            out << "NaN,";
+        }
+        else if (std::isinf(test.actual))
+        {
+            out << (test.actual > 0 ? "Inf" : "-Inf") << ",";
+        }
+        else
+        {
+            out << test.actual << ",";
+        }
+
+        if (std::isnan(test.abs_error))
+        {
+            out << "NaN,";
+        }
+        else
+        {
+            out << test.abs_error << ",";
+        }
+
+        if (std::isnan(test.rel_error))
+        {
+            out << "NaN";
+        }
+        else
+        {
+            out << test.rel_error;
+        }
+
+        out << "\n";
+    }
+}
+
+int main()
+{
+    // 生成测试用例
+    auto test_cases = generate_test_cases();
+    // 运行测试
+    run_tests(test_cases);
+    // 输出结果到CSV文件
+    write_to_csv(test_cases, "ln_test_report.csv");
+    std::cout << "测试完成，结果已保存到 ln_test_report.csv" << std::endl;
+}
+#endif
+
+#if 0 // ln1px test program generated by Deepseek
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <limits>
+#include <iomanip>
+#include <fstream>
+#include <string>
+#include <cstring>
+#include <algorithm>
+#include <cstdint>
+
+#include <CSE/Base.h>
+
+using namespace cse;
+
+std::vector<double> generate_test_cases()
+{
+    std::vector<double> test_cases;
+
+    // 特殊值
+    test_cases.push_back(0.0);
+    test_cases.push_back(-0.0);
+    test_cases.push_back(std::numeric_limits<double>::infinity());
+    test_cases.push_back(-std::numeric_limits<double>::infinity());
+    test_cases.push_back(std::numeric_limits<double>::quiet_NaN());
+
+    // 接近零的值
+    for (int i = 1; i <= 10; ++i) {
+        double x = std::ldexp(1.0, -i);
+        test_cases.push_back(x);
+        test_cases.push_back(-x);
+    }
+
+    // 正常范围内的值
+    for (int i = -10; i <= 10; ++i) {
+        double x = i * 0.1;
+        test_cases.push_back(x);
+    }
+
+    // 边界值
+    test_cases.push_back(-1.0);
+    test_cases.push_back(-1.0 + std::numeric_limits<double>::epsilon());
+    test_cases.push_back(-1.0 - std::numeric_limits<double>::epsilon());
+    test_cases.push_back(1.0);
+    test_cases.push_back(1.0 + std::numeric_limits<double>::epsilon());
+    test_cases.push_back(1.0 - std::numeric_limits<double>::epsilon());
+
+    // 极大值和极小值
+    test_cases.push_back(std::ldexp(1.0, 100));
+    test_cases.push_back(std::ldexp(1.0, -100));
+    test_cases.push_back(std::numeric_limits<double>::max());
+    test_cases.push_back(std::numeric_limits<double>::min());
+    test_cases.push_back(std::numeric_limits<double>::denorm_min());
+
+    // 随机值
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(-10.0, 10.0);
+    for (int i = 0; i < 1000; ++i)
+    {
+        test_cases.push_back(dis(gen));
+    }
+
+    return test_cases;
+}
+
+int main()
+{
+    auto test_cases = generate_test_cases();
+
+    std::ofstream out("lnxp1_test_report.csv");
+
+    // 写入表头
+    out << "Input Value,Custom log1p Result,Std log1p Result,"
+        << "Absolute Error,Relative Error,ULP Difference\n";
+
+    out << std::setprecision(17);
+
+    for (double x : test_cases)
+    {
+        __Float64 custom_x(x);
+        __Float64 custom_result = __IEEE854_LN1PX128F_C64F(custom_x);
+        double std_result = std::log1p(x);
+
+        // 计算误差
+        double abs_error = std::numeric_limits<double>::quiet_NaN();
+        double rel_error = std::numeric_limits<double>::quiet_NaN();
+        double ulp_diff = std::numeric_limits<double>::quiet_NaN();
+
+        if (!std::isnan(static_cast<double>(custom_result)))
+        {
+            if (!std::isnan(std_result))
+            {
+                abs_error = std::abs(static_cast<double>(custom_result) - std::abs(std_result));
+                if (std_result != 0.0)
+                {
+                    rel_error = abs_error / std::abs(std_result);
+                }
+
+                // 计算ULP差异（简化版）
+                int64_t custom_bits = *reinterpret_cast<int64_t*>(&custom_result.x);
+                int64_t std_bits = *reinterpret_cast<int64_t*>(&std_result);
+                ulp_diff = static_cast<double>(custom_bits - std_bits);
+            }
+        }
+
+        out << x << ","
+            << static_cast<double>(custom_result) << ","
+            << std_result << ","
+            << abs_error << ","
+            << rel_error << ","
+            << ulp_diff << "\n";
+    }
+
+    out.close();
+    std::cout << "Results exported to lnxp1_test_report.csv\n";
+}
+#endif

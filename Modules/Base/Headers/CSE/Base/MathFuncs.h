@@ -1,11 +1,22 @@
 /*
+    注：本文件及相关源文件中的数学函数来自多个数学库，如glibc（以LGPL2.1许可发布）、IBM 
+    Accurate Mathematical Library（以GPL2.0或LGPL2.1许可发布？），Cephes 
+    Mathematical Library（一个商业产品）（现在是开源的，但许可证仍不明确，其netlib官
+    网上显示的是MIT许可证，包含该库的其他一些项目显示它是根据BSD许可证发布的。本数学库使
+    用的相关函数函数为glibc的版本，使用LGPL2.1许可证发布。），或者其他一些开源项目。无
+    论哪种情况，它们的版权都归作者所有。您在这里看到的内容或相关源文件可以自由使用，但不附
+    带任何支持或保证。
+
     NOTICE: Math functions in this file and related source files is taken
     from serval math libraries, like glibc's math functions (licensed under
-    LGPL-2.1 license), or IBM Accurate Mathematical Library (licensed under
-    GPL-2.0 or LGPL-2.1? license) or other open-sourse project. In either
-    event, it is copyrighted by the authors. What you see either here or
-    related source files maybe used freely but it comes with no support or
-    guarantee.
+    LGPL-2.1 license), IBM Accurate Mathematical Library (licensed under
+    GPL-2.0 or LGPL-2.1? license), or from the Cephes Mathematical Library,
+    a commercial product(Now is open sourced but license is un-cleared? or
+    MIT license shows on the netlib website? or some projects includes this
+    library show that it is released under BSD license?). or other open-
+    sourse project. In either event, it is copyrighted by the authors. What
+    you see either here or related source files maybe used freely but it
+    comes with no support or guarantee.
 */
 
 #pragma once
@@ -51,10 +62,11 @@ return _Res;\
 *                                          E X P                                         *
 \****************************************************************************************/
 
-// Original function by FSF
+// Original functions by FSF
 _EXTERN_C
 extern const uint64 __Exp64f_table[];
 __Float64 __cdecl __IEEE754_EXP64F(__Float64 _X);
+complex64 __cdecl __GLIBCT_EXP64C(complex64 _X);
 _END_EXTERN_C
 
 /**
@@ -77,9 +89,13 @@ fvec<N> __cdecl exp(fvec<N> _X)
 
 // Original function by FSF and Stephen L. Moshier
 _EXTERN_C
-extern const double __Ln64f_table[]; // For Double
+extern const double __Ln64f_table[512]; // For Double
+extern const double __Ln128f_table[92]; // For Quaduple
 __Float64 __cdecl __IEEE754_LOG128F_C64F(__Float64 _X); // quaduple precision function, but can be used for double precision.
 __Float64 __cdecl __IEEE754_LN64F(__Float64 _X); // natural logarithm for double precision
+__Float64 __cdecl __IEEE854_LN128F_C64F(__Float64 _X); // natural logarithm for quaduple precision, but can be used for double precision.
+__Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X); // ln(1+x) quaduple precision function, but can be used for double precision.
+complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K);
 _END_EXTERN_C
 
 /**
@@ -97,8 +113,8 @@ float64 __cdecl ln(float64 _X);
 float64 __cdecl log(float64 _X);
 
 __declspec(deprecated("Binary logarithm \"lb\" function is unused in CSE."))
-complex64 __cdecl lbc(complex64 _X, int64 K_OFFSET = 0); // Unused
-complex64 __cdecl lnc(complex64 _X, int64 K_OFFSET = 0);
+complex64 __cdecl lbc(complex64 _X, int64 _K = 0); // Unused
+complex64 __cdecl lnc(complex64 _X, int64 _K = 0);
 complex64 __cdecl logc(complex64 _X, int64 K_OFFSET = 0);
 complex64 __cdecl logc(complex64 _X, complex64 _Base, int64 K_OFFSET = 0);
 

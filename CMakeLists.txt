@@ -39,6 +39,10 @@ else()
     add_compile_options(-Wno-return-type-c-linkage)  # GCC/Clang
 endif()
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    add_compile_options(-Wno-ignored-attributes)
+endif()
+
 # ----------------------------------------------------------------------------
 # Process subdirectories
 # ----------------------------------------------------------------------------

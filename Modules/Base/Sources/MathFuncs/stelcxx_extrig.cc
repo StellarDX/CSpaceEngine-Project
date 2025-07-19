@@ -62,15 +62,115 @@ int64 __cdecl __Quadrant(float64 _X)
 
 int64 __cdecl Quadrant(Angle _X) {return __Quadrant(_X.ToDegrees());}
 
+/* arctan2(y, x)
+ * Method :
+ *	1. Reduce y to positive by atan2l(y,x)=-atan2l(-y,x).
+ *	2. Reduce x to positive by (if x and y are unexceptional):
+ *		ARG (x+iy) = arctan(y/x)	   ... if x > 0,
+ *		ARG (x+iy) = pi - arctan[y/(-x)]   ... if x < 0,
+ *
+ * Special cases:
+ *
+ *	ATAN2((anything), NaN ) is NaN;
+ *	ATAN2(NAN , (anything) ) is NaN;
+ *	ATAN2(+-0, +(anything but NaN)) is +-0  ;
+ *	ATAN2(+-0, -(anything but NaN)) is +-pi ;
+ *	ATAN2(+-(anything but 0 and NaN), 0) is +-pi/2;
+ *	ATAN2(+-(anything but INF and NaN), +INF) is +-0 ;
+ *	ATAN2(+-(anything but INF and NaN), -INF) is +-pi;
+ *	ATAN2(+-INF,+INF ) is +-pi/4 ;
+ *	ATAN2(+-INF,-INF ) is +-3pi/4;
+ *	ATAN2(+-INF, (anything but,0,NaN, and INF)) is +-pi/2;
+ *
+ * Constants:
+ * The hexadecimal values are the intended ones for the following
+ * constants. The decimal values may be used, provided that the
+ * compiler will convert from decimal to binary accurately enough
+ * to produce the hexadecimal values shown.
+ */
 Angle __cdecl Arctan2(float64 _Y, float64 _X)
 {
-    // By defination
-    if (_X > 0) {return arctan(_Y / _X);}
-    if (_X < 0 && _Y >= 0) {return arctan(_Y / _X) + Angle::FromDegrees(180);}
-    if (_X < 0 && _Y < 0) {return arctan(_Y / _X) - Angle::FromDegrees(180);}
-    if (_X == 0 && _Y > 0) {return Angle::FromDegrees(90);}
-    if (_X == 0 && _Y < 0) {return Angle::FromDegrees(-90);}
-    else {return Angle::FromDegrees(__Float64::FromBytes(BIG_NAN_DOUBLE));}
+    // Use Sun Microsystem's implementation, and convert to Degrees
+
+    if (isnan(_Y) || isnan(_X)) {return __Float64::FromBytes(BIG_NAN_DOUBLE).x;}
+    if (_X == 1) {return arctan(_Y);}
+
+    int sign_x = std::signbit(_X) ? -1 : 1;
+    int sign_y = std::signbit(_Y) ? -1 : 1;
+    int m = (sign_x < 0 ? 2 : 0) + (sign_y < 0 ? 1 : 0);
+
+    if (_X == 1) {return arctan(_Y);}
+
+    if (_Y == 0)
+    {
+        switch(m)
+        {
+            case 0:
+            case 1: return Angle::FromDegrees(_Y);	/* atan(+-0,+anything)=+-0 */
+            case 2: return Angle::FromDegrees(180); /* atan(+0,-anything) = pi */
+            case 3: return Angle::FromDegrees(-180);/* atan(-0,-anything) =-pi */
+        }
+    }
+
+    if (_X == 0)
+    {
+        return (sign_y < 0) ? -90 : 90;
+    }
+
+    if (isinf(_X))
+    {
+        if (isinf(_Y))
+        {
+            switch(m)
+            {
+                case 0: return Angle::FromDegrees(45);   /* atan(+INF,+INF) */
+                case 1: return Angle::FromDegrees(-45);  /* atan(-INF,+INF) */
+                case 2: return Angle::FromDegrees(135);  /*atan(+INF,-INF)*/
+                case 3: return Angle::FromDegrees(-135); /*atan(-INF,-INF)*/
+            }
+        }
+        else
+        {
+            switch(m)
+            {
+                case 0: return Angle::FromDegrees(0);          /* atan(+...,+INF) */
+                case 1: return Angle::FromDegrees
+                    (__Float64::FromBytes(NEG_ZERO_DOUBLE).x); /* atan(-...,+INF) */
+                case 2: return Angle::FromDegrees(180);        /* atan(+...,-INF) */
+                case 3: return Angle::FromDegrees(-180);       /* atan(-...,-INF) */
+            }
+        }
+    }
+
+    if (isinf(_Y))
+    {
+        return Angle::FromDegrees((sign_y < 0) ? -90 : 90);
+    }
+
+    float64 z, ratio = abs(_Y / _X);
+    if (ratio > 1.0e120)
+    {
+        /* |y/x| > 2^120 */
+        z = 90;
+    }
+    else if (sign_x < 0 && ratio < 1.0e-120)
+    {
+        /* |y/x| < 2^-120 */
+        z = 0;
+    }
+    else
+    {
+        z = arctan(ratio).ToDegrees(); /* safe to do y/x */
+    }
+
+    switch (m)
+    {
+        case 0: return Angle::FromDegrees(z);       /* atan(+,+) */
+        case 1: return Angle::FromDegrees(-z);      /* atan(-,+) */
+        case 2: return Angle::FromDegrees(180 - z); /* atan(+,-) */
+        case 3: return Angle::FromDegrees(z - 180); /* atan(-,-) */
+    }
+    return Angle::FromDegrees(z);
 }
 
 ///////////////////////////////////// EXPAND ////////////////////////////////////
