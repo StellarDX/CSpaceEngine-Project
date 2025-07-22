@@ -7,35 +7,17 @@
 #include "CSE/Base/Algorithms.h"
 
 #include <algorithm>
+#include <cfloat>
 
 _CSE_BEGIN
 
-float64 __cdecl sqrt(float64 _X)
-{
-    return __IBM_SQRT64F(_X);
-}
-
-float64 __cdecl inversesqrt(float64 _X)
-{
-    return 1. / __IBM_SQRT64F(_X);
-}
-
-std::array<complex64, 2> __cdecl sqrtc(complex64 _X)
-{
-    complex64 _Res;
-    float64 Sign = _CSE sgn(_X.imag());
-    if (Sign == 0)
-    {
-        if (_X.real() > 0) { return { sqrt(_X.real()), -sqrt(_X.real()) }; }
-        if (_X.real() < 0) { return { 1i * sqrt(-_X.real()), 1i * -sqrt(-_X.real()) }; }
-    }
-    _Res = _CSE sqrt((abs(_X) + _X.real()) / 2.) + 1i * Sign * _CSE sqrt((abs(_X) - _X.real()) / 2.);
-    return { _Res, -_Res };
-}
-
+float64 __cdecl sqrt(float64 _X) { return __IBM_SQRT64F(_X); }
+float64 __cdecl inversesqrt(float64 _X) { return 1. / __IBM_SQRT64F(_X); }
+std::array<complex64, 2> __cdecl sqrtc(complex64 _X) { return __GLIBCT_SQRT64C(_X);}
 std::array<complex64, 2> __cdecl inversesqrtc(complex64 _X)
 {
-    return {1. / _CSE sqrtc(_X)[0], 1. / _CSE sqrtc(_X)[1]};
+    auto sqc = __GLIBCT_SQRT64C(_X);
+    return {1. / sqc[0], 1. / sqc[1]};
 }
 
 _EXTERN_C
@@ -186,5 +168,374 @@ __Float64 __cdecl __IBM_SQRT64F(__Float64 _X)
     }
 }
 
+std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
+{
+    float64 XReal = _X.real();
+    float64 XImag = _X.imag();
+    int RClass = std::fpclassify(XReal);
+    int IClass = std::fpclassify(XImag);
+    float64 YReal0, YImag0;
+    float64 YReal1, YImag1;
+
+    if (RClass <= FP_INFINITE || IClass <= FP_INFINITE)
+    {
+        if (IClass == FP_INFINITE)
+        {
+            YReal0 = __Float64::FromBytes(POS_INF_DOUBLE);
+            YImag0 = XImag;
+            YReal1 = __Float64::FromBytes(NEG_INF_DOUBLE);
+            YImag1 = -XImag;
+        }
+        else if (RClass == FP_INFINITE)
+        {
+            if (XReal < 0)
+            {
+                YReal0 = (IClass == FP_NAN) ?
+                    __Float64::FromBytes(BIG_NAN_DOUBLE) : __Float64(0);
+                YImag0 = ::copysign(
+                    __Float64::FromBytes(POS_INF_DOUBLE), XImag);
+                YReal1 = -YReal0;
+                YImag1 = ::copysign(
+                    __Float64::FromBytes(POS_INF_DOUBLE), -XImag);
+            }
+            else
+            {
+                YReal0 = XReal;
+                YImag0 = (IClass == FP_NAN
+                    ? __Float64::FromBytes(BIG_NAN_DOUBLE).x :
+                        ::copysign(0, XImag));
+                YReal1 = -XReal;
+                YImag1 = (IClass == FP_NAN
+                    ? __Float64::FromBytes(BIG_NAN_DOUBLE).x :
+                    ::copysign(0, -XImag));
+            }
+        }
+        else
+        {
+            YReal0 = __Float64::FromBytes(BIG_NAN_DOUBLE);
+            YImag0 = __Float64::FromBytes(BIG_NAN_DOUBLE);
+            YReal1 = __Float64::FromBytes(BIG_NAN_DOUBLE);
+            YImag1 = __Float64::FromBytes(BIG_NAN_DOUBLE);
+        }
+    }
+    else
+    {
+        if (IClass == FP_ZERO)
+        {
+            if (XReal < 0)
+            {
+                YReal0 = 0;
+                YImag0 = ::copysign(__IBM_SQRT64F(-XReal), XImag);
+                YReal1 = 0;
+                YImag1 = ::copysign(__IBM_SQRT64F(-XReal), -XImag);
+            }
+            else
+            {
+                YReal0 = abs(__IBM_SQRT64F(XReal));
+                YImag0 = ::copysign(0, XImag);
+                YReal1 = -abs(__IBM_SQRT64F(XReal));
+                YImag1 = ::copysign(0, -XImag);
+            }
+        }
+        else if (RClass == FP_ZERO)
+        {
+            float64 r;
+            if (abs(XImag) >= 2 * DBL_MIN)
+            {
+                r = __IBM_SQRT64F(0.5 * abs(XImag));
+            }
+            else
+            {
+                r = 0.5 * __IBM_SQRT64F(2 * abs(XImag));
+            }
+
+            YReal0 = r;
+            YImag0 = ::copysign(r, XImag);
+            YReal1 = -r;
+            YImag1 = ::copysign(r, -XImag);
+        }
+        else
+        {
+            float64 d, r, s;
+            int Scale = 0;
+
+            if (abs(XReal) > DBL_MAX / 4)
+            {
+                Scale = 1;
+                XReal = ::scalbn(XReal, -2 * Scale);
+                XImag = ::scalbn(XImag, -2 * Scale);
+            }
+            else if (abs(XImag) > DBL_MAX / 4)
+            {
+                Scale = 1;
+                if (abs(XReal) >= 4 * DBL_MIN)
+                {
+                    XReal = ::scalbn(XReal, -2 * Scale);
+                }
+                else {XReal = 0;}
+                XImag = ::scalbn(XImag, -2 * Scale);
+            }
+            else if (abs(XReal) < 2 * DBL_MIN
+                && abs(XImag) < 2 * DBL_MIN)
+            {
+                Scale = -((DBL_MANT_DIG + 1) / 2);
+                XReal = ::scalbn(XReal, -2 * Scale);
+                XImag = ::scalbn(XImag, -2 * Scale);
+            }
+
+            d = ::hypot(XReal, XImag);
+
+            // Use the identity   2  Re res  Im res = Im x
+            // to avoid cancellation error in  d +/- Re x.
+            if (XReal > 0)
+            {
+                r = __IBM_SQRT64F(0.5 * (d + XReal));
+                if (Scale == 1 && abs(XImag) < 1)
+                {
+                    // Avoid possible intermediate underflow.
+                    s = XImag / r;
+                    r = ::scalbn(r, Scale);
+                    Scale = 0;
+                }
+                else {s = 0.5 * (XImag / r);}
+            }
+            else
+            {
+                s = sqrt(0.5 * (d - XReal));
+                if (Scale == 1 && abs(XImag) < 1)
+                {
+                    // Avoid possible intermediate underflow.
+                    r = abs(XImag / s);
+                    s = ::scalbn(s, Scale);
+                    Scale = 0;
+                }
+                else {r = abs(0.5 * (XImag / s));}
+            }
+
+            if (Scale)
+            {
+                r = ::scalbn(r, Scale);
+                s = ::scalbn(s, Scale);
+            }
+
+            YReal0 = r;
+            YImag0 = ::copysign(s, XImag);
+            YReal1 = -r;
+            YImag1 = ::copysign(s, -XImag);
+        }
+    }
+
+    return {complex64(YReal0, YImag0), complex64(YReal1, YImag1)};
+}
+
 _END_EXTERN_C
 _CSE_END
+
+#if 0 // sqrt test program generated by Deepseek
+#include <iostream>
+#include <cmath>
+#include <iomanip>
+#include <fstream>
+#include <limits>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+#include <CSE/Base.h>
+
+using namespace cse;
+
+// 测试用例结构体
+struct TestCase
+{
+    double input;
+    std::string description;
+};
+
+// 生成测试用例
+std::vector<TestCase> generate_test_cases()
+{
+    return {
+        // 常规正数
+        {0.0001, "非常小的正数"},
+        {0.5, "小于1的正数"},
+        {1.0, "1.0"},
+        {2.0, "2.0 (需要精确计算)"},
+        {4.0, "完全平方数"},
+        {10.0, "中等大小正数"},
+        {12345.6789, "大正数"},
+        {1e-10, "极小的正数"},
+        {1e10, "极大的正数"},
+
+        // 边界值
+        {std::nextafter(0.0, 1.0), "大于0的最小正数"},
+        {std::nextafter(1.0, 0.0), "小于1的最大数"},
+        {std::nextafter(1.0, 2.0), "大于1的最小数"},
+
+        // 特殊值
+        {0.0, "正零"},
+        {-0.0, "负零"},
+        {std::numeric_limits<double>::infinity(), "正无穷大"},
+        {-std::numeric_limits<double>::infinity(), "负无穷大"},
+        {std::numeric_limits<double>::quiet_NaN(), "NaN"},
+
+        // 需要精确计算的临界值
+        {0.25, "0.5的平方"},
+        {0.0625, "0.25的平方"},
+        {1.0000000000000002, "略大于1的数"},
+        {0.9999999999999999, "略小于1的数"},
+
+        // 极大和极小值
+        {std::numeric_limits<double>::min(), "最小正正规数"},
+        {std::numeric_limits<double>::denorm_min(), "最小正非正规数"},
+        {std::numeric_limits<double>::max(), "最大有限数"}
+    };
+}
+
+// 计算相对误差
+double relative_error(double exact, double approx)
+{
+    if (exact == 0.0) return approx == 0.0 ? 0.0 : std::numeric_limits<double>::infinity();
+    return std::abs((approx - exact) / exact);
+}
+
+int main()
+{
+    auto test_cases = generate_test_cases();
+
+    // 打开CSV文件 (Excel可以打开)
+    std::ofstream out("sqrt_test_report.csv");
+
+    // 写入表头
+    out << "Input,Description,IBM_SQRT64F Result,std::pow Result,"
+        << "Relative Error (IBM),Relative Error (std::pow),"
+        << "ULP Difference (IBM),ULP Difference (std::pow)\n";
+
+    // 设置高精度输出
+    out << std::scientific << std::setprecision(16);
+
+    for (const auto& test : test_cases)
+    {
+        double x = test.input;
+        double ibm_result = __IBM_SQRT64F(x);
+        double std_result = std::pow(x, 0.5);
+
+        // 计算精确值 (使用更高精度的计算或已知数学事实)
+        double exact_value = std::sqrt(x); // 假设std::sqrt是最精确的
+
+        // 计算相对误差
+        double rel_err_ibm = relative_error(exact_value, ibm_result);
+        double rel_err_std = relative_error(exact_value, std_result);
+
+        // 计算ULP差异 (简化版)
+        auto ulp_diff = [](double exact, double approx)
+        {
+            if (!std::isfinite(exact) || !std::isfinite(approx)) return 0.0;
+            if (exact == approx) return 0.0;
+
+            // 将double按位解释为int64
+            int64_t exact_bits, approx_bits;
+            memcpy(&exact_bits, &exact, sizeof(double));
+            memcpy(&approx_bits, &approx, sizeof(double));
+
+            // 考虑符号位
+            if ((exact_bits >> 63) != (approx_bits >> 63))
+            {
+                return std::numeric_limits<double>::quiet_NaN();
+            }
+
+            return static_cast<double>(std::abs(exact_bits - approx_bits));
+        };
+
+        double ulp_diff_ibm = ulp_diff(exact_value, ibm_result);
+        double ulp_diff_std = ulp_diff(exact_value, std_result);
+
+        // 写入结果
+        out << x << ","
+            << "\"" << test.description << "\","
+            << ibm_result << ","
+            << std_result << ","
+            << rel_err_ibm << ","
+            << rel_err_std << ","
+            << ulp_diff_ibm << ","
+            << ulp_diff_std << "\n";
+    }
+
+    out.close();
+    std::cout << "测试结果已导出到 sqrt_test_report.csv" << std::endl;
+}
+#endif
+
+#if 0 // Complex sqrt test program generated by Deepseek
+#include <iostream>
+#include <complex>
+#include <array>
+#include <cmath>
+#include <limits>
+#include <iomanip>
+#include <cfloat>
+
+#include <CSE/Base.h>
+
+using namespace cse;
+
+// 辅助函数：打印复数
+void print_complex(const std::string& name, const complex64& c)
+{
+    std::cout << name << ": " << std::scientific << std::setprecision(15)
+    << "(" << c.real() << ", " << c.imag() << "i)" << '\n';
+}
+
+// 测试函数
+void test_sqrt(const complex64& z)
+{
+    std::cout << "\n=== Testing with: ";
+    print_complex("Input", z);
+
+    // 调用被测函数
+    auto results = __GLIBCT_SQRT64C(z);
+    print_complex("Result 1", results[0]);
+    print_complex("Result 2", results[1]);
+
+    // 计算标准库结果
+    complex64 std_result = sqrt(z);
+    print_complex("std::sqrt", std_result);
+
+    // 计算误差
+    double error1 = abs(results[0] - std_result);
+    double error2 = abs(results[1] - std_result);
+
+    std::cout << "Errors: " << error1 << " and " << error2 << '\n';
+}
+
+int main()
+{
+    // 常规测试用例
+    test_sqrt({1.0, 0.0});      // 正实数
+    test_sqrt({-1.0, 0.0});     // 负实数
+    test_sqrt({0.0, 1.0});      // 纯虚数
+    test_sqrt({0.0, -1.0});     // 负纯虚数
+    test_sqrt({1.0, 1.0});      // 一般复数
+    test_sqrt({-1.0, -1.0});    // 一般复数
+    test_sqrt({1.0e-300, 1.0e-300}); // 极小值
+    test_sqrt({1.0e300, 1.0e300});   // 极大值
+
+    // 特殊值测试用例
+    test_sqrt({std::numeric_limits<double>::infinity(), 0.0}); // 正无穷
+    test_sqrt({-std::numeric_limits<double>::infinity(), 0.0}); // 负无穷
+    test_sqrt({0.0, std::numeric_limits<double>::infinity()}); // 纯虚无穷
+    test_sqrt({std::numeric_limits<double>::quiet_NaN(), 0.0}); // NaN
+    test_sqrt({0.0, std::numeric_limits<double>::quiet_NaN()}); // 纯虚NaN
+    test_sqrt({std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()}); // 双无穷
+
+    // 边界条件测试
+    test_sqrt({DBL_MIN, 0.0});
+    test_sqrt({-DBL_MIN, 0.0});
+    test_sqrt({0.0, DBL_MIN});
+    test_sqrt({0.0, -DBL_MIN});
+    test_sqrt({DBL_MAX, 0.0});
+    test_sqrt({-DBL_MAX, 0.0});
+    test_sqrt({0.0, DBL_MAX});
+    test_sqrt({0.0, -DBL_MAX});
+}
+#endif

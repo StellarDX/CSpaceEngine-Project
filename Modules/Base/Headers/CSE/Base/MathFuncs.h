@@ -92,7 +92,11 @@ _EXTERN_C
 extern const double __Ln64f_table[512]; // For Double
 extern const double __Ln128f_table[92]; // For Quaduple
 __Float64 __cdecl __IEEE754_LOG128F_C64F(__Float64 _X); // quaduple precision function, but can be used for double precision.
-__Float64 __cdecl __IEEE754_LN64F(__Float64 _X); // natural logarithm for double precision
+float64 __GLIBC_X2Y2M164F_MS(float64 x, float64 y, bool m1 = 1); // Modified and Simplified x^2 + y^2 (-1)
+float64 __GLIBC_X2Y2M164F_ME(float64 x1, float64 x2, float64 y1, float64 y2, bool m1 = 1); // Extended to x1 * x2 + y1 * y2 (-1)
+complex64 __cdecl __GLIBCT_LOG64C(complex64 _X, int64 _K);
+__declspec(deprecated("__IEEE754_LN64F now is deprecated bit it is more safe for double precision."))
+__Float64 __cdecl __IEEE754_LN64F(__Float64 _X); // natural logarithm for double precision (Now is deprecated but it is more safe.)
 __Float64 __cdecl __IEEE854_LN128F_C64F(__Float64 _X); // natural logarithm for quaduple precision, but can be used for double precision.
 __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X); // ln(1+x) quaduple precision function, but can be used for double precision.
 complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K);
@@ -115,8 +119,8 @@ float64 __cdecl log(float64 _X);
 __declspec(deprecated("Binary logarithm \"lb\" function is unused in CSE."))
 complex64 __cdecl lbc(complex64 _X, int64 _K = 0); // Unused
 complex64 __cdecl lnc(complex64 _X, int64 _K = 0);
-complex64 __cdecl logc(complex64 _X, int64 K_OFFSET = 0);
-complex64 __cdecl logc(complex64 _X, complex64 _Base, int64 K_OFFSET = 0);
+complex64 __cdecl logc(complex64 _X, int64 _K = 0);
+complex64 __cdecl logc(complex64 _X, complex64 _Base, int64 _K1 = 0, int64 _K2 = 0);
 
 template<std::size_t N>
 __declspec(deprecated("Binary logarithm \"lb\" function is unused in CSE."))
@@ -160,8 +164,10 @@ __Float64 __cdecl __IEEE754_POW64F(__Float64 _X, __Float64 _Power);
 // Square root Implemention by IBM
 extern const double __IBM_inroot_table[128];
 __Float64 __cdecl __IBM_SQRT64F(__Float64 _X);
-// Cube root Implemention by FSF
+std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X);
+// Cube root Implemention by FSF (Quaduple precision from GLibC/Cephes math library)
 __Float64 __cdecl __IEEE754_CBRT64F(__Float64 _X);
+__Float64 __cdecl __IEEE754_CBRT128F_C64F(__Float64 _X);
 _END_EXTERN_C
 
 /**
@@ -170,7 +176,7 @@ _END_EXTERN_C
  * @param _Power - Specify the power to which to raise x.
  */
 float64 __cdecl pow(float64 _X, float64 _Power);
-complex64 __cdecl powc(complex64 _X, complex64 _Power, int64 K_OFFSET = 0);
+complex64 __cdecl powc(complex64 _X, complex64 _Power, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl pow(fvec<N> _X, float64 _Power)
@@ -234,12 +240,12 @@ fvec<N> __cdecl cbrt(fvec<N> _X)
 }
 
 /**
- * @brief Returns the nth-root of x, i.e. the value n√x.
+ * @brief Returns the nth-root of x, i.e. the value n√x. (Unsafe)
  * @param _X - Specify the value to find root.
  * @param _Expo - Specify the value of exponential of root.
  */
 float64 __cdecl yroot(float64 _X, float64 _Expo);
-std::vector<complex64> __cdecl yrootc(complex64 _X, complex64 _Expo, int64 K_OFFSET = 0);
+complex64 __cdecl yrootc(complex64 _X, complex64 _Expo, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl yroot(fvec<N> _X, float64 _Expo)

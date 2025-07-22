@@ -421,15 +421,15 @@ __Float64 __cdecl __IEEE754_LN64F(__Float64 _X)
 
 /*							logll.c
  *
- * Natural logarithm for 128-bit long double precision.
+ * Natural logarithm for 128-bit quaduple precision.
  *
  *
  *
  * SYNOPSIS:
  *
- * long double x, y, logl();
+ * quaduple x, y, logl();
  *
- * y = logl( x );
+ * y = ln( x );
  *
  *
  *
@@ -463,7 +463,8 @@ __Float64 __cdecl __IEEE754_LN64F(__Float64 _X)
  *
  */
 
-/* Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov>
+/*
+    Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -713,13 +714,13 @@ __Float64 __cdecl __IEEE854_LN128F_C64F(__Float64 _X)
 /*							log1pl.c
  *
  *      Relative error logarithm
- *	Natural logarithm of 1+x, 128-bit long double precision
+ *	Natural logarithm of 1+x, 128-bit quaduple precision
  *
  *
  *
  * SYNOPSIS:
  *
- * long double x, y, log1pl();
+ * quaduple x, y, log1pl();
  *
  * y = log1pl( x );
  *
@@ -822,7 +823,8 @@ __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
             y = 0.5L * x + 0.5L;
         }
 
-        /* Coefficients for log(x) = z + z^3 P(z^2)/Q(z^2),
+        /*
+         * Coefficients for log(x) = z + z^3 P(z^2)/Q(z^2),
          * where z = 2(x-1)/(x+1)
          * 1/sqrt(2) <= x < sqrt(2)
          * Theoretical peak relative error = 1.1e-35,
@@ -835,7 +837,7 @@ __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
             R2 = 2.048819892795278657810231591630928516206E4L,
             R1 = -8.977257995689735303686582344659576526998E4L,
             R0 = 1.418134209872192732479751274970992665513E5L,
-            /* S6 = 1.000000000000000000000000000000000000000E0L, */
+            //S6 = 1.000000000000000000000000000000000000000E0L,
             S5 = -1.186359407982897997337150403816839480438E2L,
             S4 = 3.998526750980007367835804959888064681098E3L,
             S3 = -5.748542087379434595104154610899551484314E4L,
@@ -878,7 +880,8 @@ __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
         else {x = xm1;}
     }
 
-    /* Coefficients for log(1+x) = x - x^2 / 2 + x^3 P(x)/Q(x)
+    /*
+     * Coefficients for log(1+x) = x - x^2 / 2 + x^3 P(x)/Q(x)
      * 1/sqrt(2) <= 1+x < sqrt(2)
      * Theoretical peak relative error = 5.3e-37,
      * relative peak error spread = 2.3e-14
@@ -897,7 +900,7 @@ __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
         P2 = 2.014652742082537582487669938141683759923E5L,
         P1 = 7.771154681358524243729929227226708890930E4L,
         P0 = 1.313572404063446165910279910527789794488E4L,
-        /* Q12 = 1.000000000000000000000000000000000000000E0L, */
+        //Q12 = 1.000000000000000000000000000000000000000E0L,
         Q11 = 4.839208193348159620282142911143429644326E1L,
         Q10 = 9.104928120962988414618126155557301584078E2L,
         Q9 = 9.147150349299596453976674231612674085381E3L,
@@ -945,6 +948,56 @@ __Float64 __cdecl __IEEE854_LN1PX128F_C64F(__Float64 _X)
     z = z + e * C1.x;
     return z;
 }
+
+float64 __GLIBC_X2Y2M164F_MS(float64 x, float64 y, bool m1)
+{
+    return __GLIBC_X2Y2M164F_ME(x, x, y, y, m1);
+}
+
+float64 __GLIBC_X2Y2M164F_ME(float64 x1, float64 x2, float64 y1, float64 y2, bool m1)
+{
+    static auto __DEKKER_ADD64F = []
+        (double *hi, double *lo, double x, double y)
+    {
+        *hi = x + y;
+        *lo = (x - *hi) + y;
+    };
+
+    static auto __DEKKER_MULTIPLY64F = []
+        (float64* hi, float64* lo, float64 x, float64 y)
+    {
+        *hi = x * y;
+        float64 x1 = x * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
+        float64 y1 = y * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
+        x1 = (x - x1) + x1;
+        y1 = (y - y1) + y1;
+        float64 x2 = x - x1;
+        float64 y2 = y - y1;
+        *lo = (((x1 * y1 - *hi) + x1 * y2) + x2 * y1) + x2 * y2;
+    };
+
+    double vals[5];
+    __DEKKER_MULTIPLY64F(&vals[1], &vals[0], x1, x2);
+    __DEKKER_MULTIPLY64F(&vals[3], &vals[2], y1, y2);
+    vals[4] = m1 ? -1.0 : 0.0;
+
+    static auto compare = [](float64 p, float64 q)
+    {
+        return abs(p) < abs(q);
+    };
+    std::sort(std::begin(vals), std::end(vals), compare);
+
+    // Add up the values so that each element of VALS has absolute value
+    //at most equal to the last set bit of the next nonzero
+    // element.
+    for (size_t i = 0; i <= 3; i++)
+    {
+        __DEKKER_ADD64F(&vals[i + 1], &vals[i], vals[i + 1], vals[i]);
+        std::sort(std::begin(vals) + i + 1, std::end(vals), compare);
+    }
+    // Now any error from this addition will be small.
+    return vals[4] + vals[3] + vals[2] + vals[1] + vals[0];
+};
 
 complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
 {
@@ -1009,52 +1062,7 @@ complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
         else if (AbsReal < 1 && AbsReal >= 0.5 && Scale == 0
             && AbsReal * AbsReal + AbsImag * AbsImag >= 0.5)
         {
-            static auto __DEKKER_ADD64F = []
-                (double *hi, double *lo, double x, double y)
-            {
-                *hi = x + y;
-                *lo = (x - *hi) + y;
-            };
-
-            static auto __DEKKER_MULTIPLY64F = []
-                (float64* hi, float64* lo, float64 x, float64 y)
-            {
-                *hi = x * y;
-                float64 x1 = x * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
-                float64 y1 = y * ((1 << (DBL_MANT_DIG + 1) / 2) + 1);
-                x1 = (x - x1) + x1;
-                y1 = (y - y1) + y1;
-                float64 x2 = x - x1;
-                float64 y2 = y - y1;
-                *lo = (((x1 * y1 - *hi) + x1 * y2) + x2 * y1) + x2 * y2;
-            };
-
-            static auto __GLIBC_X2Y2M164F = [](float64 x, float64 y)
-            {
-                double vals[5];
-                __DEKKER_MULTIPLY64F(&vals[1], &vals[0], x, x);
-                __DEKKER_MULTIPLY64F(&vals[3], &vals[2], y, y);
-                vals[4] = -1.0;
-
-                static auto compare = [](float64 p, float64 q)
-                {
-                    return abs(p) < abs(q);
-                };
-                std::sort(std::begin(vals), std::end(vals), compare);
-
-                // Add up the values so that each element of VALS has absolute value
-                //at most equal to the last set bit of the next nonzero
-                // element.
-                for (size_t i = 0; i <= 3; i++)
-                {
-                    __DEKKER_ADD64F(&vals[i + 1], &vals[i], vals[i + 1], vals[i]);
-                    std::sort(std::begin(vals) + i + 1, std::end(vals), compare);
-                }
-                // Now any error from this addition will be small.
-                return vals[4] + vals[3] + vals[2] + vals[1] + vals[0];
-            };
-
-            float64 d2m1 = __GLIBC_X2Y2M164F(AbsReal, AbsImag);
+            float64 d2m1 = __GLIBC_X2Y2M164F_MS(AbsReal, AbsImag, 1);
             YReal = __IEEE854_LN1PX128F_C64F(d2m1) / 2;
         }
         else
