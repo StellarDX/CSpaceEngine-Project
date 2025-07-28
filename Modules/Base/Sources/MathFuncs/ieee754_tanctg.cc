@@ -171,7 +171,9 @@ __Float64 __cdecl __IEEE754_PADE_TANCTG(__Float64 _X, bool _Inv)
 
     if (_X >= TANCTG_BOUNDARY)
     {
-        w = 1.0 - 2.0 * (H1.x * x - ((w * w) / (w + 1.0) - r));
+        __Float64 v = _Inv ? -1.0 : 1.0;
+        w = v - 2.0 * (H1.x * x - ((w * w) / (w + v) - r));
+        w = _Inv ? -w.x : w.x;
         return (sign < 0) ? -w.x : w.x;
     }
 
