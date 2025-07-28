@@ -407,13 +407,13 @@ __Float64 __cdecl __CV_SIN128F_C64F(__Float64 _X)
     else if (tx > 225 && tx <= 315)
     {
         __CV_CHEBYSHEV_SINCOS(270 - tx, nullptr, &sinx);
-        sinx *= -1;
+        sinx = -sinx;
     }
     // sin(x) = -sin(360 - x)
     else
     {
         __CV_CHEBYSHEV_SINCOS(360 - tx, &sinx, nullptr);
-        sinx *= -1;
+        sinx = -sinx;
     }
     return neg * sinx;
 }
@@ -452,13 +452,13 @@ __Float64 __cdecl __CV_COS128F_C64F(__Float64 _X)
     else if (tx > 135 && tx <= 225)
     {
         __CV_CHEBYSHEV_SINCOS(180 - tx, nullptr, &cosx);
-        cosx *= -1;
+        cosx = -cosx;
     }
     // cos(x) = -sin(270 - x)
     else if (tx > 225 && tx <= 315)
     {
         __CV_CHEBYSHEV_SINCOS(270 - tx, &cosx, nullptr);
-        cosx *= -1;
+        cosx = -cosx;
     }
     // sin(x) = -sin(360 - x)
     else
