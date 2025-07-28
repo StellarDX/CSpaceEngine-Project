@@ -254,8 +254,10 @@ Angle __cdecl __IEEE754_ATAN128F_C64F(__Float64 x)
     if (k >= 0x7ff00000)
     {
         /* NaN. */
-        if (((k - 0x7ff00000) | lx) != 0) { return __Float64::FromBytes(BIG_NAN_DOUBLE).x; }
-
+        if (((k - 0x7ff00000) | lx) != 0)
+        {
+            return __Float64::FromBytes(BIG_NAN_DOUBLE).x;
+        }
         /* Infinity. */
         if (sign) { return -__ArctanF128_table[83].x; }
         else { return __ArctanF128_table[83].x; }
@@ -311,8 +313,7 @@ Angle __cdecl __IEEE754_ATAN128F_C64F(__Float64 x)
     u = t * u * p / q + t;
 
     /* arctan x = arctan u  +  arctan t */
-    auto __ConvertUnit = [](float64 x) {return Angle::FromRadians(x);};
-    u = __ArctanF128_table[k].x + __ConvertUnit(u);
+    u = __ArctanF128_table[k].x + Angle::FromRadians(u);
     if (sign) { return (-u.x); }
     else { return u.x; }
 }

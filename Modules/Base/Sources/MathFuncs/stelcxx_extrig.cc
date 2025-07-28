@@ -7,37 +7,22 @@
 
 _CSE_BEGIN
 
-// Sin, cos and tan defines
+// 正弦，余弦，正切和余切
 #ifndef TRIGONOMETRY_USE_RADIANS
-float64 __cdecl sin(Angle _X) {return __CV_SIN_DEGREES(_X.ToDegrees());}
-float64 __cdecl cos(Angle _X) {return __CV_COS_DEGREES(_X.ToDegrees());}
-float64 __cdecl tan(Angle _X) {return __CV_TAN_DEGREES(_X.ToDegrees());}
+float64 __cdecl sin(Angle _X) {return __CV_SIN128F_C64F(_X.ToDegrees());}
+float64 __cdecl cos(Angle _X) {return __CV_COS128F_C64F(_X.ToDegrees());}
+float64 __cdecl tan(Angle _X) {return __IEEE754_TAN128F_C64F(_X.ToDegrees());}
+float64 __cdecl ctg(Angle _X) {return __IEEE754_CTG128F_C64F(_X.ToDegrees());}
 #else
 float64 __cdecl sin(Angle _X) {return __IBM_SIN64F(_X.ToRadians());}
 float64 __cdecl cos(Angle _X) {return __IBM_COS64F(_X.ToRadians());}
 float64 __cdecl tan(Angle _X) {return __IBM_TAN64F(_X.ToRadians());}
+float64 __cdecl ctg(Angle _X) {return 1. / tan(x);}
 #endif
 
-// Cotangent and secants
-
-float64 __cdecl ctg(float64 _X)
-{
-    return 1. / _CSE tan(_X);
-}
-
-float64 __cdecl sec(float64 _X)
-{
-    return 1. / _CSE cos(_X);
-}
-
-float64 __cdecl csc(float64 _X)
-{
-    return 1. / _CSE sin(_X);
-}
-
-float64 __cdecl ctg(Angle _X) {return ctg(_X.ToDegrees());}
-float64 __cdecl sec(Angle _X) {return sec(_X.ToDegrees());}
-float64 __cdecl csc(Angle _X) {return csc(_X.ToDegrees());}
+// 正割和余割函数目前没去设计更高精度的算法。
+float64 __cdecl sec(Angle _X) {return 1. / cos(_X);}
+float64 __cdecl csc(Angle _X) {return 1. / sin(_X);}
 
 int64 __cdecl __Quadrant(float64 _X)
 {

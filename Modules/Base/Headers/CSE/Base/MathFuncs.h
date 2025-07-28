@@ -311,11 +311,13 @@ struct Angle
     operator float64() {return Data;}
 };
 
-// Trigonometric functions for Degrees Implemented by OpenCV
-extern const float64 __CV_SinCos_Tab[];
-float64 __cdecl __CV_SIN_DEGREES(float64 _X);
-float64 __cdecl __CV_COS_DEGREES(float64 _X);
-float64 __cdecl __CV_TAN_DEGREES(float64 _X);
+// Sine/Cosine based on Degrees Implemented by OpenCV and StellarDX
+extern const float64 __SinCos128F_Table[132];
+__Float64 __cdecl __CV_SIN128F_C64F(__Float64 _X);
+__Float64 __cdecl __CV_COS128F_C64F(__Float64 _X);
+// Tangent/Cotangent based on Degrees Implemented by Stephen L. Moshier and StellarDX
+__Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X);
+__Float64 __cdecl __IEEE754_CTG128F_C64F(__Float64 _X);
 
 _EXTERN_C
 // Trigonometric functions for Radians Implemented by IBM
