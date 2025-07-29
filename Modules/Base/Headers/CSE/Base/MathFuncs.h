@@ -66,6 +66,7 @@ return _Res;\
 _EXTERN_C
 extern const uint64 __Exp64f_table[];
 __Float64 __cdecl __IEEE754_EXP64F(__Float64 _X);
+__Float64 __cdecl __IEEE854_EXPXM1128F_C64F(__Float64 _X);
 complex64 __cdecl __GLIBCT_EXP64C(complex64 _X);
 _END_EXTERN_C
 
@@ -316,14 +317,15 @@ extern const float64 __SinCos128F_Table[132];
 __Float64 __cdecl __CV_SIN128F_C64F(__Float64 _X);
 __Float64 __cdecl __CV_COS128F_C64F(__Float64 _X);
 // Tangent/Cotangent based on Degrees Implemented by Stephen L. Moshier and StellarDX
-__Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X);
-__Float64 __cdecl __IEEE754_CTG128F_C64F(__Float64 _X);
+__Float64 __cdecl __IEEE854_TAN128F_C64F(__Float64 _X);
+__Float64 __cdecl __IEEE854_CTG128F_C64F(__Float64 _X);
 
 _EXTERN_C
 // Trigonometric functions for Radians Implemented by IBM
 extern const union __IBM_Table_Type440 __IBM_sincostab;
 extern const __Float64 __IBM_TANF64_XFGTBL[186][4];
 __Float64 __cdecl __IBM_SIN64F(__Float64 x);
+complex64 __cdecl __GLIBCT_SIN64C(complex64 _X);
 __Float64 __cdecl __IBM_COS64F(__Float64 x);
 __Float64 __cdecl __IBM_TAN64F(__Float64 x);
 _END_EXTERN_C

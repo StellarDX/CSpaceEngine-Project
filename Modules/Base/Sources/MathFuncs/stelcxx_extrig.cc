@@ -11,8 +11,8 @@ _CSE_BEGIN
 #ifndef TRIGONOMETRY_USE_RADIANS
 float64 __cdecl sin(Angle _X) {return __CV_SIN128F_C64F(_X.ToDegrees());}
 float64 __cdecl cos(Angle _X) {return __CV_COS128F_C64F(_X.ToDegrees());}
-float64 __cdecl tan(Angle _X) {return __IEEE754_TAN128F_C64F(_X.ToDegrees());}
-float64 __cdecl ctg(Angle _X) {return __IEEE754_CTG128F_C64F(_X.ToDegrees());}
+float64 __cdecl tan(Angle _X) {return __IEEE854_TAN128F_C64F(_X.ToDegrees());}
+float64 __cdecl ctg(Angle _X) {return __IEEE854_CTG128F_C64F(_X.ToDegrees());}
 #else
 float64 __cdecl sin(Angle _X) {return __IBM_SIN64F(_X.ToRadians());}
 float64 __cdecl cos(Angle _X) {return __IBM_COS64F(_X.ToRadians());}

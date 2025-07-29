@@ -47,7 +47,7 @@
 
 _CSE_BEGIN
 
-__Float64 __cdecl __IEEE754_PADE_TANCTG(__Float64 _X, bool _Inv)
+__Float64 __cdecl __IEEE854_PADE_TANCTG(__Float64 _X, bool _Inv)
 {
     if (abs(_X) > 45)
     {
@@ -195,7 +195,7 @@ __Float64 __cdecl __IEEE754_PADE_TANCTG(__Float64 _X, bool _Inv)
     return w; // 返回tan(x)
 }
 
-__Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X)
+__Float64 __cdecl __IEEE854_TAN128F_C64F(__Float64 _X)
 {
     __Float64 absx = abs(_X);
     int neg = std::signbit(_X) ? -1 : 1;
@@ -203,7 +203,7 @@ __Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X)
     // |x| ~< 45
     if (absx.x <= 45)
     {
-        return __IEEE754_PADE_TANCTG(_X, 0);
+        return __IEEE854_PADE_TANCTG(_X, 0);
     }
 
     /* tan(Inf or NaN) = NaN */
@@ -217,12 +217,12 @@ __Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X)
     // tan(x)
     if (tx <= 45)
     {
-        return neg * __IEEE754_PADE_TANCTG(tx, 0);
+        return neg * __IEEE854_PADE_TANCTG(tx, 0);
     }
     // tan(x) = ctg(90 - x)
     else if (tx > 45 && tx < 90)
     {
-        return neg * __IEEE754_PADE_TANCTG(90 - tx, 1);
+        return neg * __IEEE854_PADE_TANCTG(90 - tx, 1);
     }
     // tan(90) = NaN
     else if (tx == 90)
@@ -232,16 +232,16 @@ __Float64 __cdecl __IEEE754_TAN128F_C64F(__Float64 _X)
     // tan(x) = -ctg(x - 90)
     else if (tx > 90 && tx < 135)
     {
-        return neg * -__IEEE754_PADE_TANCTG(tx - 90, 1);
+        return neg * -__IEEE854_PADE_TANCTG(tx - 90, 1);
     }
     // tan(x) = -tan(180 - x)
     else
     {
-        return neg * -__IEEE754_PADE_TANCTG(180 - tx, 0);
+        return neg * -__IEEE854_PADE_TANCTG(180 - tx, 0);
     }
 }
 
-__Float64 __cdecl __IEEE754_CTG128F_C64F(__Float64 _X)
+__Float64 __cdecl __IEEE854_CTG128F_C64F(__Float64 _X)
 {
     __Float64 absx = abs(_X);
     int neg = std::signbit(_X) ? -1 : 1;
@@ -255,7 +255,7 @@ __Float64 __cdecl __IEEE754_CTG128F_C64F(__Float64 _X)
     // |x| ~< 45
     if (absx.x <= 45)
     {
-        return __IEEE754_PADE_TANCTG(_X, 1);
+        return __IEEE854_PADE_TANCTG(_X, 1);
     }
 
     /* ctg(Inf or NaN) = NaN */
@@ -274,22 +274,22 @@ __Float64 __cdecl __IEEE754_CTG128F_C64F(__Float64 _X)
     // ctg(x)
     else if (tx > 0 && tx <= 45)
     {
-        return neg * __IEEE754_PADE_TANCTG(tx, 1);
+        return neg * __IEEE854_PADE_TANCTG(tx, 1);
     }
     // ctg(x) = tan(90 - x)
     else if (tx > 45 && tx <= 90)
     {
-        return neg * __IEEE754_PADE_TANCTG(90 - tx, 0);
+        return neg * __IEEE854_PADE_TANCTG(90 - tx, 0);
     }
     // ctg(x) = -tan(x - 90)
     else if (tx > 90 && tx <= 135)
     {
-        return neg * -__IEEE754_PADE_TANCTG(tx - 90, 0);
+        return neg * -__IEEE854_PADE_TANCTG(tx - 90, 0);
     }
     // ctg(x) = -ctg(180 - x)
     else if (tx > 135 && tx < 180)
     {
-        return neg * -__IEEE754_PADE_TANCTG(180 - tx, 1);
+        return neg * -__IEEE854_PADE_TANCTG(180 - tx, 1);
     }
     // ctg(180) = NaN
     else
@@ -335,7 +335,7 @@ int main()
     double small_angles[] = {0.0, 1e-10, 1e-8, 1e-6, 1e-4, 1e-2, 0.1, 0.5, 1.0};
     for (double x : small_angles)
     {
-        double custom = __IEEE754_TAN128F_C64F(x);
+        double custom = __IEEE854_TAN128F_C64F(x);
         double stdlib = tan(x * M_PI / 180.0); // 转换为弧度
         compare_results(x, "tan", custom, stdlib);
     }
@@ -344,7 +344,7 @@ int main()
     double boundary_angles[] = {38.5, 38.6, 38.7, 44.9, 45.0};
     for (double x : boundary_angles)
     {
-        double custom = __IEEE754_TAN128F_C64F(x);
+        double custom = __IEEE854_TAN128F_C64F(x);
         double stdlib = tan(x * M_PI / 180.0);
         compare_results(x, "tan", custom, stdlib);
     }
@@ -353,7 +353,7 @@ int main()
     double large_angles[] = {89.0, 89.9, 90.0, 90.1, 91.0, 135.0, 179.0, 180.0};
     for (double x : large_angles)
     {
-        double custom = __IEEE754_TAN128F_C64F(x);
+        double custom = __IEEE854_TAN128F_C64F(x);
         double stdlib = tan(x * M_PI / 180.0);
         compare_results(x, "tan", custom, stdlib);
     }
@@ -362,7 +362,7 @@ int main()
     double neg_angles[] = {-0.1, -1.0, -30.0, -45.0, -89.0, -90.0};
     for (double x : neg_angles)
     {
-        double custom = __IEEE754_TAN128F_C64F(x);
+        double custom = __IEEE854_TAN128F_C64F(x);
         double stdlib = tan(x * M_PI / 180.0);
         compare_results(x, "tan", custom, stdlib);
     }
@@ -376,7 +376,7 @@ int main()
     };
     for (double x : special_values)
     {
-        double custom = __IEEE754_TAN128F_C64F(x);
+        double custom = __IEEE854_TAN128F_C64F(x);
         double stdlib = tan(x * M_PI / 180.0);
         std::cout << "tan(" << x << "):" << '\n';
         std::cout << "  Custom: " << custom << '\n';
@@ -390,7 +390,7 @@ int main()
     for (double x : small_angles)
     {
         if (x == 0.0) continue; // ctg(0)是NaN
-        double custom = __IEEE754_CTG128F_C64F(x);
+        double custom = __IEEE854_CTG128F_C64F(x);
         double stdlib = 1.0 / tan(x * M_PI / 180.0);
         compare_results(x, "ctg", custom, stdlib);
     }
@@ -398,7 +398,7 @@ int main()
     // 边界附近测试
     for (double x : boundary_angles)
     {
-        double custom = __IEEE754_CTG128F_C64F(x);
+        double custom = __IEEE854_CTG128F_C64F(x);
         double stdlib = 1.0 / tan(x * M_PI / 180.0);
         compare_results(x, "ctg", custom, stdlib);
     }
@@ -407,7 +407,7 @@ int main()
     for (double x : large_angles)
     {
         if (x == 0.0 || x == 180.0) continue; // 这些情况是NaN
-        double custom = __IEEE754_CTG128F_C64F(x);
+        double custom = __IEEE854_CTG128F_C64F(x);
         double stdlib = 1.0 / tan(x * M_PI / 180.0);
         compare_results(x, "ctg", custom, stdlib);
     }
@@ -416,7 +416,7 @@ int main()
     for (double x : neg_angles)
     {
         if (x == 0.0) continue;
-        double custom = __IEEE754_CTG128F_C64F(x);
+        double custom = __IEEE854_CTG128F_C64F(x);
         double stdlib = 1.0 / tan(x * M_PI / 180.0);
         compare_results(x, "ctg", custom, stdlib);
     }
@@ -424,7 +424,7 @@ int main()
     // 特殊值测试
     for (double x : special_values)
     {
-        double custom = __IEEE754_CTG128F_C64F(x);
+        double custom = __IEEE854_CTG128F_C64F(x);
         double stdlib = 1.0 / tan(x * M_PI / 180.0);
         std::cout << "ctg(" << x << "):" << '\n';
         std::cout << "  Custom: " << custom << '\n';
