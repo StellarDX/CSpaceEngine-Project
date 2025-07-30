@@ -669,6 +669,67 @@ public:
  */
 uint64 SolvePoly(InputArray Coeffs, OutputArray Roots, const SolvePolyRoutine& Routine = DurandKernerSolvePoly());
 
+
+
+/****************************************************************************************\
+*                                       HYPERBOLIC                                       *
+\****************************************************************************************/
+
+float64 __cdecl sinh(float64 _X);
+complex64 __cdecl sinhc(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl sinh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE sinh(_X[i]))
+}
+
+float64 __cdecl cosh(float64 _X);
+complex64 __cdecl coshc(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl cosh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE cosh(_X[i]))
+}
+
+float64 __cdecl tanh(float64 _X);
+complex64 __cdecl tanhc(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl tanh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE tanh(_X[i]))
+}
+
+float64 __cdecl coth(float64 _X);
+complex64 __cdecl coth(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl coth(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE coth(_X[i]))
+}
+
+float64 __cdecl sech(float64 _X);
+complex64 __cdecl sechc(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl sech(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE sech(_X[i]))
+}
+
+float64 __cdecl csch(float64 _X);
+complex64 __cdecl cschc(complex64 _X); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl csch(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE csch(_X[i]))
+}
+
+
 _CSE_END
 
 #if defined _MSC_VER

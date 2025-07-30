@@ -163,7 +163,7 @@ Angle __cdecl Arctan2(float64 _Y, float64 _X)
 // Chord and Arcs
 float64 __cdecl crd(float64 _X, float64 _Radius)
 {
-    return 2. * _Radius * _CSE sin(float64(_X / 2.));
+    return 2. * _Radius * sin(float64(_X / 2.));
 }
 
 float64 __cdecl arc(float64 _X, float64 _Radius)
@@ -174,22 +174,22 @@ float64 __cdecl arc(float64 _X, float64 _Radius)
 // Versines
 float64 __cdecl siv(float64 _X)
 {
-    return 1. - _CSE cos(_X);
+    return 1. - cos(_X);
 }
 
 float64 __cdecl cvs(float64 _X)
 {
-    return 1. - _CSE sin(_X);
+    return 1. - sin(_X);
 }
 
 float64 __cdecl vcs(float64 _X)
 {
-    return 1. + _CSE cos(_X);
+    return 1. + cos(_X);
 }
 
 float64 __cdecl cvc(float64 _X)
 {
-    return 1. + _CSE sin(_X);
+    return 1. + sin(_X);
 }
 
 float64 __cdecl hvs(float64 _X)
@@ -308,42 +308,42 @@ Angle __cdecl arcexc(float64 _X)
 
 complex64 __cdecl sinc(complex64 _X)
 {
-    return (_CSE expc(1i * _X) - _CSE expc(-1i * _X)) / 2.i;
+    return (expc(1i * _X) - expc(-1i * _X)) / 2.i;
 }
 
 complex64 __cdecl cosc(complex64 _X)
 {
-    return (_CSE expc(1i * _X) + _CSE expc(-1i * _X)) / 2.;
+    return (expc(1i * _X) + expc(-1i * _X)) / 2.;
 }
 
 complex64 __cdecl tanc(complex64 _X)
 {
-    return _CSE sinc(_X) / _CSE cosc(_X);
+    return sinc(_X) / cosc(_X);
 }
 
 complex64 __cdecl ctgc(complex64 _X)
 {
-    return complex64(1.) / _CSE tanc(_X);
+    return complex64(1.) / tanc(_X);
 }
 
 complex64 __cdecl secc(complex64 _X)
 {
-    return complex64(1.) / _CSE cosc(_X);
+    return complex64(1.) / cosc(_X);
 }
 
 complex64 __cdecl cscc(complex64 _X)
 {
-    return complex64(1.) / _CSE sinc(_X);
+    return complex64(1.) / sinc(_X);
 }
 
 complex64 __cdecl arcsinc(complex64 _X, int _SqrtIdx, int64 K_OFFSET)
 {
-    return -1i * lnc(_CSE sqrtc(1. - _X * _X)[_SqrtIdx] + 1i * _X, K_OFFSET);
+    return -1i * lnc(sqrtc(1. - _X * _X)[_SqrtIdx] + 1i * _X, K_OFFSET);
 }
 
 complex64 __cdecl arccosc(complex64 _X, int _SqrtIdx, int64 K_OFFSET)
 {
-    return -1i * lnc(1i * _CSE sqrtc(1. - _X * _X)[_SqrtIdx] + _X, K_OFFSET);
+    return -1i * lnc(1i * sqrtc(1. - _X * _X)[_SqrtIdx] + _X, K_OFFSET);
 }
 
 complex64 __cdecl arctanc(complex64 _X, int64 K_OFFSET)
@@ -358,12 +358,12 @@ complex64 __cdecl arcctgc(complex64 _X, int64 K_OFFSET)
 
 complex64 __cdecl arcsecc(complex64 _X, int _SqrtIdx, int64 K_OFFSET)
 {
-    return -1i * lnc(1i * _CSE sqrtc(1. - 1. / (_X * _X))[_SqrtIdx] + 1. / _X, K_OFFSET);
+    return -1i * lnc(1i * sqrtc(1. - 1. / (_X * _X))[_SqrtIdx] + 1. / _X, K_OFFSET);
 }
 
 complex64 __cdecl arccscc(complex64 _X, int _SqrtIdx, int64 K_OFFSET)
 {
-    return -1i * lnc(_CSE sqrtc(1. - 1. / (_X * _X))[_SqrtIdx] + 1.i / _X, K_OFFSET);
+    return -1i * lnc(sqrtc(1. - 1. / (_X * _X))[_SqrtIdx] + 1.i / _X, K_OFFSET);
 }
 
 _CSE_END
