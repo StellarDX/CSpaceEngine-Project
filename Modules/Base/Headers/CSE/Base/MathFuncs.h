@@ -328,6 +328,7 @@ __Float64 __cdecl __IBM_SIN64F(__Float64 x);
 complex64 __cdecl __GLIBCT_SIN64C(complex64 _X);
 __Float64 __cdecl __IBM_COS64F(__Float64 x);
 __Float64 __cdecl __IBM_TAN64F(__Float64 x);
+complex64 __cdecl __GLIBCT_TAN64C(complex64 _X);
 _END_EXTERN_C
 
 /**

@@ -308,17 +308,19 @@ Angle __cdecl arcexc(float64 _X)
 
 complex64 __cdecl sinc(complex64 _X)
 {
-    return (expc(1i * _X) - expc(-1i * _X)) / 2.i;
+    return __GLIBCT_SIN64C(_X);
 }
 
+complex64 __cdecl __GLIBCT_COSH64C(complex64 _X);
 complex64 __cdecl cosc(complex64 _X)
 {
-    return (expc(1i * _X) + expc(-1i * _X)) / 2.;
+    // cos(a+bi) = cosh(−b+ai)
+    return __GLIBCT_COSH64C({-_X.imag(), _X.real()});
 }
 
 complex64 __cdecl tanc(complex64 _X)
 {
-    return sinc(_X) / cosc(_X);
+    return __GLIBCT_TAN64C(_X);
 }
 
 complex64 __cdecl ctgc(complex64 _X)

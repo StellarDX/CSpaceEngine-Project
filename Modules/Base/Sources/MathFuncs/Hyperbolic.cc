@@ -9,6 +9,8 @@
 #include "CSE/Base/CSEBase.h"
 #include "CSE/Base/MathFuncs.h"
 #include "CSE/Base/Algorithms.h"
+#include "CSE/Base/ConstLists.h"
+#include <cfloat>
 
 _CSE_BEGIN
 
@@ -175,6 +177,127 @@ float64 __cdecl cosh(float64 _X)
     }
 
     return __Float64::FromBytes(POS_INF_DOUBLE);
+}
+
+complex64 __cdecl __GLIBCT_COSH64C(complex64 _X)
+{
+    float64 XReal = _X.real(), XImag = _X.imag();
+    int RClass = std::fpclassify(XReal);
+    int IClass = std::fpclassify(XImag);
+
+    if (RClass >= FP_ZERO)
+    {
+        // Real part is finite.
+        if (IClass >= FP_ZERO)
+        {
+            // Imaginary part is finite.
+            const int t = int((DBL_MAX_EXP - 1) * CSE_LN2);
+            float64 sinix, cosix;
+
+            if (abs(XImag) > DBL_MIN)
+            {
+                sinix = __IBM_SIN64F(XImag);
+                cosix = __IBM_COS64F(XImag);
+            }
+            else
+            {
+                sinix = XImag;
+                cosix = 1;
+            }
+
+            if (abs(XReal) > t)
+            {
+                float64 exp_t = __IEEE754_EXP64F(t);
+                float64 rx = abs(XReal);
+                if (std::signbit(XReal)) {sinix = -sinix;}
+                rx -= t;
+                sinix *= exp_t / 2;
+                cosix *= exp_t / 2;
+
+                if (rx > t)
+                {
+                    rx -= t;
+                    sinix *= exp_t;
+                    cosix *= exp_t;
+                }
+
+                if (rx > t)
+                {
+                    // Overflow (original real part of x > 3t).
+                    return {DBL_MAX * cosix, DBL_MAX * sinix};
+                }
+                else
+                {
+                    float64 exp_val = __IEEE754_EXP64F(rx);
+                    return {exp_val * cosix, exp_val * sinix};
+                }
+            }
+            else
+            {
+                return {cosh(XReal) * cosix, sinh(XReal) * sinix};
+            }
+        }
+        else
+        {
+            return
+            {
+                XReal == 0 ? 0 : __Float64::FromBytes(BIG_NAN_DOUBLE).x,
+                XImag - XImag
+            };
+        }
+    }
+    else if (RClass == FP_INFINITE)
+    {
+        // Real part is infinite.
+        if (IClass > FP_ZERO)
+        {
+            // Imaginary part is finite.
+            float64 sinix, cosix;
+
+            if (abs(XImag) > DBL_MIN)
+            {
+                sinix = __IBM_SIN64F(XImag);
+                cosix = __IBM_COS64F(XImag);
+            }
+            else
+            {
+                sinix = XImag;
+                cosix = 1;
+            }
+
+            return
+            {
+                ::copysign(__Float64::FromBytes(POS_INF_DOUBLE), cosix),
+                (::copysign(__Float64::FromBytes(POS_INF_DOUBLE), sinix) *
+                    ::copysign(1, XReal))
+            };
+        }
+        else if (IClass == FP_ZERO)
+        {
+            // Imaginary part is 0.0.
+            return
+            {
+                __Float64::FromBytes(POS_INF_DOUBLE),
+                XImag * ::copysign(1, XReal)
+            };
+        }
+        else
+        {
+            return
+            {
+                __Float64::FromBytes(POS_INF_DOUBLE),
+                XImag - XImag
+            };
+        }
+    }
+    else
+    {
+        return
+        {
+            __Float64::FromBytes(BIG_NAN_DOUBLE),
+            XImag == 0 ? XImag : __Float64::FromBytes(BIG_NAN_DOUBLE).x
+        };
+    }
 }
 
 float64 __cdecl sech(float64 _X)
