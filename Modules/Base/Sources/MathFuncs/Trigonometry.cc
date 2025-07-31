@@ -17,7 +17,7 @@ float64 __cdecl ctg(Angle _X) {return __IEEE854_CTG128F_C64F(_X.ToDegrees());}
 float64 __cdecl sin(Angle _X) {return __IBM_SIN64F(_X.ToRadians());}
 float64 __cdecl cos(Angle _X) {return __IBM_COS64F(_X.ToRadians());}
 float64 __cdecl tan(Angle _X) {return __IBM_TAN64F(_X.ToRadians());}
-float64 __cdecl ctg(Angle _X) {return 1. / tan(x);}
+float64 __cdecl ctg(Angle _X) {return 1. / tan(_X);}
 #endif
 
 // 正割和余割函数目前没去设计更高精度的算法。
