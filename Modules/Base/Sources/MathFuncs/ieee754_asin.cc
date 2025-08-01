@@ -68,7 +68,7 @@ __Float64 __cdecl __IEEE854_ASIN128F_C64F(__Float64 _X)
 
     flag = 0;
     a = abs(x);
-    if (a == 1.0L) {return 90;}	// |x|>= 1
+    if (a == 1.0L) {return ::copysign(90, x);}	// |x|>= 1
     else if (a > 1.0L)
     {
         return __Float64::FromBytes(BIG_NAN_DOUBLE);
