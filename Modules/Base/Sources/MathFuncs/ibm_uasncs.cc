@@ -2641,7 +2641,7 @@ static const float64 t24 = 16777216.0, t27 = 134217728.0;
 
 /* asin with max ULP of ~0.516 based on random sampling.  */
 
-Angle __cdecl __IBM_ASIN64F(__Float64 x)
+__Float64 __cdecl __IBM_ASIN64F(__Float64 x)
 {
     double x2, xx, res1, p, t, res, r, cor, cc, y, c, z;
     __Float64 u, v;
@@ -2746,7 +2746,7 @@ Angle __cdecl __IBM_ASIN64F(__Float64 x)
 
 /* acos with max ULP of ~0.523 based on random sampling.  */
 
-Angle __cdecl __IBM_ACOS64F(__Float64 x)
+__Float64 __cdecl __IBM_ACOS64F(__Float64 x)
 {
     double x2, xx, res1, p, t, res, r, cor, cc, y, c, z;
     __Float64 u, v;
