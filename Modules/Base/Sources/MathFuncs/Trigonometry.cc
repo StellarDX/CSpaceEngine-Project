@@ -227,7 +227,7 @@ float64 __cdecl exc(float64 _X)
 
 #ifndef TRIGONOMETRY_USE_RADIANS
 Angle __cdecl arcsin(float64 _X) { return Angle::FromDegrees(__IEEE854_ASIN128F_C64F(_X).x); }
-Angle __cdecl arccos(float64 _X) { return arctan(sqrt(1. - _X * _X) / _X) + (_X < 0 ? 180 : 0); }
+Angle __cdecl arccos(float64 _X) { return Angle::FromDegrees(__IEEE854_ACOS128F_C64F(_X).x); }
 #else
 Angle __cdecl arcsin(float64 _X) { return Angle::FromRadians(__IBM_ASIN64F(_X).x); }
 Angle __cdecl arccos(float64 _X) { return Angle::FromRadians(__IBM_ACOS64F(_X).x); }

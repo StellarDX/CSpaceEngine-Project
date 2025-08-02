@@ -432,6 +432,7 @@ Angle __cdecl Arctan2(float64 _Y, float64 _X);
 _EXTERN_C
 // Inverse Trigonometric functions for degrees and Radians Implemented by IBM and Stephen L. Moshier
 __Float64 __cdecl __IEEE854_ASIN128F_C64F(__Float64 _X);
+__Float64 __cdecl __IEEE854_ACOS128F_C64F(__Float64 _X);
 extern const union __IBM_Table_Type2568 __IBM_asncs_table;
 extern const __Float64 __ArctanF128_table_deg[];
 extern const __Float64 __ArctanF128_table_rad[];
