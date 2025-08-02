@@ -437,6 +437,7 @@ extern const union __IBM_Table_Type2568 __IBM_asncs_table;
 extern const __Float64 __ArctanF128_table_deg[];
 extern const __Float64 __ArctanF128_table_rad[];
 __Float64 __cdecl __IBM_ASIN64F(__Float64 x);
+complex64 __cdecl __GLIBCT_ASIN64C(complex64 x);
 __Float64 __cdecl __IBM_ACOS64F(__Float64 x);
 Angle __cdecl __IEEE754_ATAN128F_C64F(__Float64 x, bool SwitchUnit = 0);
 _END_EXTERN_C
@@ -446,7 +447,7 @@ _END_EXTERN_C
  * The range of values returned by asin is [-90, 90].
  */
 Angle __cdecl arcsin(float64 _X);
-complex64 __cdecl arcsinc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
+complex64 __cdecl arcsinc(complex64 _X, int _N = 0, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arcsin(fvec<N> _X)
@@ -459,7 +460,7 @@ fvec<N> __cdecl arcsin(fvec<N> _X)
  * The range of values returned by acos is [0, 180].
  */
 Angle __cdecl arccos(float64 _X);
-complex64 __cdecl arccosc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
+complex64 __cdecl arccosc(complex64 _X, int _N = 0, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arccos(fvec<N> _X)
@@ -472,7 +473,7 @@ fvec<N> __cdecl arccos(fvec<N> _X)
  * The value returned in this case is in the range [-90, 90].
  */
 Angle __cdecl arctan(float64 _X);
-complex64 __cdecl arctanc(complex64 _X, int64 K_OFFSET = 0);
+complex64 __cdecl arctanc(complex64 _X, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arctan(fvec<N> _X)
@@ -481,7 +482,7 @@ fvec<N> __cdecl arctan(fvec<N> _X)
 }
 
 Angle __cdecl arcctg(float64 _X);
-complex64 __cdecl arcctgc(complex64 _X, int64 K_OFFSET = 0);
+complex64 __cdecl arcctgc(complex64 _X, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arcctg(fvec<N> _X)
@@ -490,7 +491,7 @@ fvec<N> __cdecl arcctg(fvec<N> _X)
 }
 
 Angle __cdecl arcsec(float64 _X);
-complex64 __cdecl arcsecc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
+complex64 __cdecl arcsecc(complex64 _X, int _N = 0, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arcsec(fvec<N> _X)
@@ -499,7 +500,7 @@ fvec<N> __cdecl arcsec(fvec<N> _X)
 }
 
 Angle __cdecl arccsc(float64 _X);
-complex64 __cdecl arccscc(complex64 _X, int _SqrtIdx = 0, int64 K_OFFSET = 0);
+complex64 __cdecl arccscc(complex64 _X, int _N = 0, int64 _K = 0);
 
 template<std::size_t N>
 fvec<N> __cdecl arccsc(fvec<N> _X)
@@ -732,6 +733,61 @@ fvec<N> __cdecl csch(fvec<N> _X)
     __stelcxx_array_math_function_body(f, i, _CSE csch(_X[i]))
 }
 
+///////////////////////////////////// INVERSE ////////////////////////////////////
+
+float64 __cdecl arsinh(float64 _X);
+complex64 __cdecl arsinhc(complex64 _X, int _N = 0, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl arsinh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE arsinh(_X[i]))
+}
+
+float64 __cdecl arcosh(float64 _X);
+complex64 __cdecl arcoshc(complex64 _X, int _N = 0, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl arcosh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE arcosh(_X[i]))
+}
+
+float64 __cdecl artanh(float64 _X);
+complex64 __cdecl artanhc(complex64 _X, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl artanh(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE artanh(_X[i]))
+}
+
+float64 __cdecl arcoth(float64 _X);
+complex64 __cdecl arcothc(complex64 _X, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl arcoth(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE arcoth(_X[i]))
+}
+
+float64 __cdecl arsech(float64 _X);
+complex64 __cdecl arsechc(complex64 _X, int _N = 0, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl arsech(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE arsech(_X[i]))
+}
+
+float64 __cdecl arcsch(float64 _X);
+complex64 __cdecl arcschc(complex64 _X, int _N = 0, int64 _K = 0); // TODO
+
+template<std::size_t N>
+fvec<N> __cdecl arcsch(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(f, i, _CSE arcsch(_X[i]))
+}
 
 _CSE_END
 
