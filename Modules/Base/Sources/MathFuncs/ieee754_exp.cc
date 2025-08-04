@@ -283,7 +283,7 @@ __Float64 __cdecl __IEEE754_EXP64F(__Float64 _X)
     }
 }
 
-/*							expm1l.c
+/*							exp(x) - 1
  *
  *	Exponential function, minus 1
  *      128-bit quaduple precision
@@ -292,7 +292,7 @@ __Float64 __cdecl __IEEE754_EXP64F(__Float64 _X)
  *
  * SYNOPSIS:
  *
- * quaduple x, y, expm1l();
+ * quaduple x, y, expxm1();
  *
  * y = exp( x ) - 1;
  *
@@ -380,7 +380,7 @@ __Float64 __cdecl __IEEE854_EXPXM1128F_C64F(__Float64 _X)
     x -= px * C1.x;
     x -= px * C2.x;
 
-    // Pade 8/8 Approximate exp(remainder ln 2).
+    // Remez Approximate exp(remainder ln 2).
     __Float64
         P0 = 2.943520915569954073888921213330863757240E8L,
         P1 = -5.722847283900608941516165725053359168840E7L,
@@ -398,7 +398,7 @@ __Float64 __cdecl __IEEE854_EXPXM1128F_C64F(__Float64 _X)
         Q5 = -9.615511549171441430850103489315371768998E4L,
         Q6 = 3.697714952261803935521187272204485251835E3L,
         Q7 = -8.802340681794263968892934703309274564037E1L;
-    // Q8 = 1.000000000000000000000000000000000000000E0
+        // Q8 = 1.000000000000000000000000000000000000000E0
     px = (((((((P7 * x
         + P6) * x
         + P5) * x + P4) * x + P3) * x + P2) * x + P1) * x + P0) * x;
