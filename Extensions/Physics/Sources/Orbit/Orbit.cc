@@ -68,13 +68,16 @@ bool KeplerCompute(OrbitElems& InitElems)
 
 Angle EllipticalKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity)
 {
+    float64 EARadians = EccentricAnomaly.ToRadians();
     return Angle::FromRadians
-        (EccentricAnomaly.ToRadians() - Eccentricity * sin(EccentricAnomaly)).ToDegrees();
+        (EARadians - Eccentricity * sin(EccentricAnomaly)).ToDegrees();
 }
 
 Angle HyperbolicKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity)
 {
-    return 0;
+    float64 EARadians = EccentricAnomaly.ToRadians();
+    return Angle::FromRadians
+        (Eccentricity * sinh(EARadians) - EARadians).ToDegrees();
 }
 
 _ORBIT_END

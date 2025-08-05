@@ -171,6 +171,13 @@ bool KeplerCompute(OrbitElems& InitElems);
     以外，另外两种算法都没有循环结构，所以速度也非常快。经后续实验，此方法在64位浮点下精度可达1-2个ULP，可以认
     为是开普勒方程反函数的“正解”。此处的开普勒方程求解算法使用文献[3]中的实现。
 
+    对于双曲线轨道的开普勒方程，Virginia Raposo-Pulido和Jesus Pelaez给出了一种四倍精度的HKE–SDG算法[4]，
+    此算法使用多项式拟合接牛顿迭代实现，经实验仅需3次迭代就能在4倍精度下到达大约1-2个ulp的精度。另外2024年3月
+    初，广东工业大学的吴柏生老师等人在SCI发表了一种新的快速求解算法，这里称它为“吴柏生算法”。吴柏生算法的原理大
+    致是分段帕德逼近接一次施罗德迭代，仅需要评估不超过三个超越函数，所以它的速度可能是很快的。不过由于吴柏生算法
+    并未开源，故目前无法验证其准确性。所以本文仍然使用HKE–SDG算法计算双曲开普勒方程。（HKE–SDG算法使用GPLv3
+    协议开源）
+
     参考文献：
     [1] Murison M A .A Practical Method for Solving the Kepler Equation[J].  2006.
         DOI:10.13140/2.1.5019.6808.
@@ -179,6 +186,11 @@ bool KeplerCompute(OrbitElems& InitElems);
     [3] Tommasini D , Olivieri D N .Two fast and accurate routines for solving the elliptic 
         Kepler equation for all values of the eccentricity and mean anomaly[J].天文学与天体物理, 
         2022, 658:A196.DOI:10.1051/0004-6361/202141423.
+    [4] Raposo-Pulido V ,J. Peláez.An efficient code to solve the Kepler equation. Hyperbolic
+        case[J].Astronomy and Astrophysics, 2018, 619.DOI:10.1051/0004-6361/201833563.
+    [5] Wu B , Zhou Y , Lim C W ,et al.A new method for solving the hyperbolic Kepler
+        equation[J].Applied Mathematical Modelling, 2024, 127(000):7.
+        DOI:10.1016/j.apm.2023.12.017.
 */
 
 /**
@@ -284,6 +296,29 @@ public:
     static void GetCoefficients(float64 Eccentricity, float64 Tolerence,
         /*uint64* n,*/ std::vector<int64>* kvec, std::vector<Angle>* bp,
         SciCxx::DynamicMatrix<float64>* coeffs);
+};
+
+// HKE-SDG
+/*
+    Copyright (C) 2018 by the UNIVERSIDAD POLITECNICA DE MADRID (UPM)
+    AUthors: Virginia Raposo-Pulido and Jesus Pelaez
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+class __Space_Dynamics_Group_Keplerian_Equation : public __Inverse_Keplerian_Equation
+{
+
 };
 
 // ---------------------------------------------------------------------------------------------
