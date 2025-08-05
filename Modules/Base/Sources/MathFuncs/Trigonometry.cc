@@ -228,11 +228,12 @@ float64 __cdecl exc(float64 _X)
 #ifndef TRIGONOMETRY_USE_RADIANS
 Angle __cdecl arcsin(float64 _X) { return Angle::FromDegrees(__IEEE854_ASIN128F_C64F(_X).x); }
 Angle __cdecl arccos(float64 _X) { return Angle::FromDegrees(__IEEE854_ACOS128F_C64F(_X).x); }
+Angle __cdecl arctan(float64 _X) { return Angle::FromDegrees(__IEEE754_ATAN128F_C64F(_X, 0).x); }
 #else
 Angle __cdecl arcsin(float64 _X) { return Angle::FromRadians(__IBM_ASIN64F(_X).x); }
 Angle __cdecl arccos(float64 _X) { return Angle::FromRadians(__IBM_ACOS64F(_X).x); }
+Angle __cdecl arctan(float64 _X) { return Angle::FromRadians(__IEEE754_ATAN128F_C64F(_X, 1).x); }
 #endif
-Angle __cdecl arctan(float64 _X) { return __IEEE754_ATAN128F_C64F(_X); }
 
 Angle __cdecl arcctg(float64 _X)
 {

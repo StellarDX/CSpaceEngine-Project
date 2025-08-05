@@ -3,10 +3,10 @@
 */
 
 /*
-   Cephes Math Library Release 2.2:  January, 1991
-   Copyright 1984, 1991 by Stephen L. Moshier
-   Adapted for glibc November, 2001
-   Adapted for CSpaceEngine, 2023 (From glibc)
+    Cephes Math Library Release 2.2:  January, 1991
+    Copyright 1984, 1991 by Stephen L. Moshier
+    Adapted for glibc November, 2001
+    Adapted for CSpaceEngine, 2023 (From glibc)
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -88,7 +88,7 @@ __Float64 __cdecl __IEEE754_LOG128F_C64F(__Float64 _X)
     if (x == 1.0L) { return 0.0L; }
 
     int e;
-    x = frexp(x, &e);
+    x = ::frexp(x, &e);
 
     __Float64
         L102A = 0.3125L,
@@ -109,7 +109,8 @@ __Float64 __cdecl __IEEE754_LOG128F_C64F(__Float64 _X)
         {
             y = y * x + (*p).x;
             p -= 1;
-        } while (--n > 0);
+        }
+        while (--n > 0);
         return y;
     };
 
@@ -123,7 +124,8 @@ __Float64 __cdecl __IEEE754_LOG128F_C64F(__Float64 _X)
         {
             y = y * x + (*p).x;
             p -= 1;
-        } while (--n > 0);
+        }
+        while (--n > 0);
         return y;
     };
 

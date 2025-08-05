@@ -439,7 +439,7 @@ extern const __Float64 __ArctanF128_table_rad[];
 __Float64 __cdecl __IBM_ASIN64F(__Float64 x);
 complex64 __cdecl __GLIBCT_ASIN64C(complex64 x);
 __Float64 __cdecl __IBM_ACOS64F(__Float64 x);
-Angle __cdecl __IEEE754_ATAN128F_C64F(__Float64 x, bool SwitchUnit = 0);
+__Float64 __cdecl __IEEE754_ATAN128F_C64F(__Float64 x, bool SwitchUnit = 0);
 _END_EXTERN_C
 
 /**

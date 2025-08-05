@@ -91,7 +91,7 @@ __Float64 __cdecl __IEEE754_CBRT64F(__Float64 _X)
     return ::ldexp(x > 0.0 ? ym.x : -ym.x, xe / 3);
 }
 
-/*							cbrtl.c
+/*							cbrt(x)
  *
  *	Cube root, quaduple precision
  *
@@ -99,9 +99,9 @@ __Float64 __cdecl __IEEE754_CBRT64F(__Float64 _X)
  *
  * SYNOPSIS:
  *
- * quaduple x, y, cbrtl();
+ * quaduple x, y, cbrt();
  *
- * y = cbrtl( x );
+ * y = cbrt( x );
  *
  *
  *
