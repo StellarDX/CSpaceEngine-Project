@@ -171,12 +171,12 @@ bool KeplerCompute(OrbitElems& InitElems);
     以外，另外两种算法都没有循环结构，所以速度也非常快。经后续实验，此方法在64位浮点下精度可达1-2个ULP，可以认
     为是开普勒方程反函数的“正解”。此处的开普勒方程求解算法使用文献[3]中的实现。
 
-    对于双曲线轨道的开普勒方程，Virginia Raposo-Pulido和Jesus Pelaez给出了一种四倍精度的HKE–SDG算法[4]，
-    此算法使用多项式拟合接牛顿迭代实现，经实验仅需3次迭代就能在4倍精度下到达大约1-2个ulp的精度。另外2024年3月
-    初，广东工业大学的吴柏生老师等人在SCI发表了一种新的快速求解算法，这里称它为“吴柏生算法”。吴柏生算法的原理大
-    致是分段帕德逼近接一次施罗德迭代，仅需要评估不超过三个超越函数，所以它的速度可能是很快的。不过由于吴柏生算法
-    并未开源，故目前无法验证其准确性。所以本文仍然使用HKE–SDG算法计算双曲开普勒方程。（HKE–SDG算法使用GPLv3
-    协议开源）
+    对于双曲线轨道的开普勒方程，其定义为M = e * sinh(E) - E，Virginia Raposo-Pulido和Jesus Pelaez给出
+    了一种四倍精度的HKE–SDG算法[4]，此算法使用多项式拟合接牛顿迭代实现，经实验仅需3次迭代就能在4倍精度下到达大
+    约1-2个ulp的精度。另外2024年3月初，广东工业大学的吴柏生老师等人在SCI发表了一种新的快速求解算法，这里称它为
+    “吴柏生算法”[5]。吴柏生算法的原理大致是分段帕德逼近接一次施罗德迭代，仅需要评估不超过三个超越函数，所以它的
+    速度可能是很快的。不过由于吴柏生算法并未开源，故目前无法验证其准确性。所以本文仍然使用HKE–SDG算法计算双曲开
+    普勒方程。
 
     参考文献：
     [1] Murison M A .A Practical Method for Solving the Kepler Equation[J].  2006.
@@ -217,7 +217,7 @@ class __Inverse_Keplerian_Equation
 protected:
     float64 Eccentricity;
 public:
-    virtual Angle operator()(Angle MeanAnomaly) = 0;
+    virtual Angle operator()(Angle MeanAnomaly)const = 0;
 };
 
 /**
@@ -235,11 +235,11 @@ protected:
     constexpr static const float64 EBoundary = 0.99;
     constexpr static const float64 MBoundary = 0.0045;
 
-    virtual float64 Run(float64 MRad, float64 AbsTol, float64 RelTol) = 0;
-    virtual float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol);
+    virtual float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const = 0;
+    virtual float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const;
 
 public:
-    Angle operator()(Angle MeanAnomaly)final;
+    Angle operator()(Angle MeanAnomaly)const final;
 };
 
 // ENRKE
@@ -249,7 +249,7 @@ public:
     using Mybase = __Enhanced_Keplerian_Equation_Solver;
 
 protected:
-    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)override;
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
 
 public:
     __Newton_Keplerian_Equation(float64 e = 0);
@@ -262,7 +262,7 @@ public:
     using Mybase = __Enhanced_Keplerian_Equation_Solver;
 
 protected:
-    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)override;
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
 
 public:
     __Markley_Keplerian_Equation(float64 e = 0);
@@ -286,9 +286,9 @@ protected:
         std::vector<int64>* kvec, std::vector<Angle>* bp,
         SciCxx::DynamicMatrix<float64>* coeffs);
 
-    uint64 FindInterval(float64 MRad);
-    float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol);
-    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol);
+    uint64 FindInterval(float64 MRad)const;
+    float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const override;
+    float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
 
 public:
     __Piecewise_Quintic_Keplerian_Equation(float64 e = 0);
@@ -299,26 +299,42 @@ public:
 };
 
 // HKE-SDG
-/*
-    Copyright (C) 2018 by the UNIVERSIDAD POLITECNICA DE MADRID (UPM)
-    AUthors: Virginia Raposo-Pulido and Jesus Pelaez
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-class __Space_Dynamics_Group_Keplerian_Equation : public __Inverse_Keplerian_Equation
+class __SDGH_Equacion_de_Keplerh : public __Inverse_Keplerian_Equation
 {
+public:
+    using Mybase     = __Inverse_Keplerian_Equation;
+    using STableType = float64;
+    using PTableType = std::function<float64(float64, float64)>;
 
+    constexpr static const uint64 SegmentTableSize  = 51;
+    constexpr static const uint64 SegmentTableBound = 26;
+    constexpr static const uint64 PolynomTableSize  = 50;
+    constexpr static const uint64 PolynomTableBound = 26;
+
+    static const STableType SegmentCoeffsTable[SegmentTableSize];
+    static const PTableType TablaPolinomios[PolynomTableSize];
+
+protected:
+    float64 AbsoluteTolerence = 15.65;
+    float64 RelativeTolerence = 15.65;
+    float64 MaxIterations     = 1.69897;
+
+    float64 SegmentTable[SegmentTableSize];
+
+    float64 SingularCornerInitEstimator(float64 MRad)const;
+    float64 SingularCornerInitEstimatorDOS(float64 MRad)const;
+    float64 SingularCornerInitEstimatorTRES(float64 MRad)const;
+
+    float64 NewtonInitValue(Angle MeanAnomaly)const;
+    Angle Run(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const;
+public:
+    __SDGH_Equacion_de_Keplerh(float64 e);
+
+    Angle operator()(Angle MeanAnomaly)const override;
+    Angle operator()(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const;
+
+    static void GetSegments(float64 Eccentricity, float64* SegTable);
+    static vec4 VectorizedHKE(float64 Eccentricity, float64 MRad, float64 Init);
 };
 
 // ---------------------------------------------------------------------------------------------
