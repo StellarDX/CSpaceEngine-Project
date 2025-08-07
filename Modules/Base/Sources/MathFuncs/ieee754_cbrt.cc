@@ -159,7 +159,7 @@ __Float64 __cdecl __IEEE754_CBRT128F_C64F(__Float64 _X)
     int e, rem, sign;
     __Float64 z;
 
-    if (!std::isfinite(x)) {return x + x;}
+    if (!std::isfinite(x.x)) {return x + x;}
     if (x == 0) {return x;}
 
     if (x > 0)

@@ -668,7 +668,7 @@ __Float64 __cdecl __IEEE854_LN128F_C64F(__Float64 _X)
     /* Series expansion of log(1+z).  */
     w = z * z;
     /* Avoid spurious underflows.  */
-    if (abs(z) <= ldbl_epsilon.x) {y = 0.0L;}
+    if (abs(z.x) <= ldbl_epsilon.x) {y = 0.0L;}
     else
     {
         // ln(1+x) = x - .5 x^2 + x^3 l(x) -.0078125 <= x <= +.0078125 peak relative error 1.2e-37

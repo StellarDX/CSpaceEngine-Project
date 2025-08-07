@@ -61,7 +61,7 @@ __Float64 __cdecl __IEEE854_ACOS128F_C64F(__Float64 _X)
 
     if (isnan(x)) {return __Float64::FromBytes(BIG_NAN_DOUBLE);}
 
-    a = abs(x);
+    a = abs(x.x);
     if (a == 1.0L)
     {
         if (x > 0.0L) {return 0.0;}	// arccos(1) = 0

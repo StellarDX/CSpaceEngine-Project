@@ -49,7 +49,7 @@ _CSE_BEGIN
 
 __Float64 __cdecl __IEEE854_PADE_TANCTG(__Float64 _X, bool _Inv)
 {
-    if (abs(_X) > 45)
+    if (abs(_X.x) > 45)
     {
         throw std::logic_error("argument out of range.");
     }
@@ -66,7 +66,7 @@ __Float64 __cdecl __IEEE854_PADE_TANCTG(__Float64 _X, bool _Inv)
     {
         if ((int)x == 0) // generate inexact
         {
-            if ((ix | lx) == 0 && _Inv) {return 1. / abs(x);}
+            if ((ix | lx) == 0 && _Inv) {return 1. / abs(x.x);}
             else if (_Inv) {return 1. / x;}
             else {return x;}
         }
@@ -83,7 +83,7 @@ __Float64 __cdecl __IEEE854_PADE_TANCTG(__Float64 _X, bool _Inv)
     static const auto TANCTG_BOUNDARY = 38.6;
     if (_X >= TANCTG_BOUNDARY)
     {
-        if (std::signbit(x))
+        if (std::signbit(x.x))
         {
             x = -x;
             sign = -1;
@@ -197,8 +197,8 @@ __Float64 __cdecl __IEEE854_PADE_TANCTG(__Float64 _X, bool _Inv)
 
 __Float64 __cdecl __IEEE854_TAN128F_C64F(__Float64 _X)
 {
-    __Float64 absx = abs(_X);
-    int neg = std::signbit(_X) ? -1 : 1;
+    __Float64 absx = abs(_X.x);
+    int neg = std::signbit(_X.x) ? -1 : 1;
 
     // |x| ~< 45
     if (absx.x <= 45)
@@ -243,8 +243,8 @@ __Float64 __cdecl __IEEE854_TAN128F_C64F(__Float64 _X)
 
 __Float64 __cdecl __IEEE854_CTG128F_C64F(__Float64 _X)
 {
-    __Float64 absx = abs(_X);
-    int neg = std::signbit(_X) ? -1 : 1;
+    __Float64 absx = abs(_X.x);
+    int neg = std::signbit(_X.x) ? -1 : 1;
 
     // ctg(0) = NaN
     if (_X == 0)

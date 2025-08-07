@@ -269,7 +269,7 @@ void __cdecl __CV_CHEBYSHEV_SINCOS(__Float64 _X, __Float64* _SIN, __Float64* _CO
     tix = ((uint64_t)ix) >> 32;
 
     uint64 N = ((SINCOS_TABSIZE / 4) - 1) * 8;
-    __Float64 absx = abs(x);
+    __Float64 absx = abs(x.x);
 
     if (absx > 45)
     {
@@ -369,9 +369,9 @@ void __cdecl __CV_CHEBYSHEV_SINCOS(__Float64 _X, __Float64* _SIN, __Float64* _CO
 
 __Float64 __cdecl __CV_SIN128F_C64F(__Float64 _X)
 {
-    __Float64 absx = abs(_X);
+    __Float64 absx = abs(_X.x);
     __Float64 sinx;
-    int neg = std::signbit(_X) ? -1 : 1;
+    int neg = std::signbit(_X.x) ? -1 : 1;
 
     /* |x| ~< 45 */
     if (absx.x <= 45)
@@ -420,7 +420,7 @@ __Float64 __cdecl __CV_SIN128F_C64F(__Float64 _X)
 
 __Float64 __cdecl __CV_COS128F_C64F(__Float64 _X)
 {
-    __Float64 absx = abs(_X);
+    __Float64 absx = abs(_X.x);
     __Float64 cosx;
 
     /* |x| ~< 45 */

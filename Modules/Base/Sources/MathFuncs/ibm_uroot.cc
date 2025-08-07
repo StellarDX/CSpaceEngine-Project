@@ -231,9 +231,9 @@ std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
             }
             else
             {
-                YReal0 = abs(__IBM_SQRT64F(XReal));
+                YReal0 = abs(__IBM_SQRT64F(XReal).x);
                 YImag0 = ::copysign(0, XImag);
-                YReal1 = -abs(__IBM_SQRT64F(XReal));
+                YReal1 = -abs(__IBM_SQRT64F(XReal).x);
                 YImag1 = ::copysign(0, -XImag);
             }
         }
