@@ -298,7 +298,9 @@ public:
         SciCxx::DynamicMatrix<float64>* coeffs);
 };
 
-// HKE-SDG
+/**
+ * @brief 双曲开普勒方程求解工具
+ */
 class __SDGH_Equacion_de_Keplerh : public __Inverse_Keplerian_Equation
 {
 public:
@@ -327,6 +329,7 @@ protected:
 
     float64 NewtonInitValue(Angle MeanAnomaly)const;
     Angle Run(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const;
+
 public:
     __SDGH_Equacion_de_Keplerh(float64 e);
 
