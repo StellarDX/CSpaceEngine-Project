@@ -21,8 +21,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-const __SDGH_Equacion_de_Keplerh::STableType
-    __SDGH_Equacion_de_Keplerh::SegmentCoeffsTable[]
+const __SDGH_Equacion_Inversa_de_Keplerh::STableType
+    __SDGH_Equacion_Inversa_de_Keplerh::SegmentCoeffsTable[]
 {
     //ends of the 25 intervals associated with the 25 polynomials P
     0.000000000000000000000000000000000000L,
@@ -80,8 +80,8 @@ const __SDGH_Equacion_de_Keplerh::STableType
     67.1411665509322802497701958639658740L
 };
 
-const __SDGH_Equacion_de_Keplerh::PTableType
-    __SDGH_Equacion_de_Keplerh::TablaPolinomios[]
+const __SDGH_Equacion_Inversa_de_Keplerh::PTableType
+    __SDGH_Equacion_Inversa_de_Keplerh::TablaPolinomios[]
 {
     // This table contains the 25 polynomials PPHi(e, M) that provide the seed (S = sinh(H))
     // of the modified Newton-Rapson method that solves the hyperbolic Kepler equation.

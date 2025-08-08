@@ -4,9 +4,31 @@
 _CSE_BEGIN
 _ORBIT_BEGIN
 
+_KE_BEGIN
+
 ///////////////////////////////////// BASE ////////////////////////////////////
 
-float64 __Enhanced_Keplerian_Equation_Solver::BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const
+inline __Elliptical_Inverse_Keplerian_Equation::__Elliptical_Inverse_Keplerian_Equation(float64 e)
+{
+    if (e >= 1)
+    {
+        throw std::logic_error("This function is only adapt for elliptical orbits.");
+    }
+    Eccentricity = e;
+}
+
+__Hyperbolic_Inverse_Keplerian_Equation::__Hyperbolic_Inverse_Keplerian_Equation(float64 e)
+{
+    if (e <= 1)
+    {
+        throw std::logic_error("This function is only adapt for hyperbolic orbits.");
+    }
+    Eccentricity = e;
+}
+
+///////////////////////////////////// ENKE ////////////////////////////////////
+
+float64 __Enhanced_Inverse_Keplerian_Equation_Solver::BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     // Using Bisection
     float64 fa = 2.7 * MRad;
@@ -28,7 +50,7 @@ float64 __Enhanced_Keplerian_Equation_Solver::BoundaryHandler(float64 MRad, floa
     return f;
 }
 
-Angle __Enhanced_Keplerian_Equation_Solver::operator()(Angle MeanAnomaly)const
+Angle __Enhanced_Inverse_Keplerian_Equation_Solver::operator()(Angle MeanAnomaly)const
 {
     if (!Eccentricity) {return MeanAnomaly;}
     float64 RealAbsTol = pow(10, -AbsoluteTolerence);
@@ -61,16 +83,7 @@ Angle __Enhanced_Keplerian_Equation_Solver::operator()(Angle MeanAnomaly)const
 
 //////////////////////////////////// ENRKE ////////////////////////////////////
 
-__Newton_Keplerian_Equation::__Newton_Keplerian_Equation(float64 e)
-{
-    if (e >= 1)
-    {
-        throw std::logic_error("ENRKE is only adapt for elliptical orbits.");
-    }
-    Eccentricity = e;
-}
-
-float64 __Newton_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
+float64 __Newton_Inverse_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     float64 Delns = (2. * AbsTol) / (Eccentricity + RelTol);
     float64 Small = 0.999999; // std::nextafter(1., 0.);
@@ -95,16 +108,7 @@ float64 __Newton_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 R
 
 //////////////////////////////////// ENMAKE ///////////////////////////////////
 
-__Markley_Keplerian_Equation::__Markley_Keplerian_Equation(float64 e)
-{
-    if (e >= 1)
-    {
-        throw std::logic_error("ENMAKE is only adapt for elliptical orbits.");
-    }
-    Eccentricity = e;
-}
-
-float64 __Markley_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
+float64 __Markley_Inverse_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     float64 alf = ((3. * CSE_PI * CSE_PI) +
         (1.6 * CSE_PI) * (CSE_PI - MRad) /
@@ -130,18 +134,14 @@ float64 __Markley_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 
 
 //////////////////////////////////// ENP5KE ///////////////////////////////////
 
-__Piecewise_Quintic_Keplerian_Equation::__Piecewise_Quintic_Keplerian_Equation(float64 e)
+__Piecewise_Inverse_Quintic_Keplerian_Equation::__Piecewise_Inverse_Quintic_Keplerian_Equation(float64 e)
+    : __Piecewise_Inverse_Quintic_Keplerian_Equation::Mybase(e)
 {
-    if (e >= 1)
-    {
-        throw std::logic_error("ENMAKE is only adapt for elliptical orbits.");
-    }
-    Eccentricity = e;
     GetCoefficients(Eccentricity, pow(10, -AbsoluteTolerence),
         &BlockBoundaries, &Breakpoints, &Coefficients);
 }
 
-void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients(float64 Eccentricity, float64 Tolerence, std::vector<int64> *kvec, std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
+void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients(float64 Eccentricity, float64 Tolerence, std::vector<int64> *kvec, std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
 {
     std::vector<Angle> EGrid;
     GetCoefficients1(Eccentricity, Tolerence, &EGrid);
@@ -152,7 +152,7 @@ void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients(float64 Eccentricit
     GetCoefficients2(Eccentricity, EGrid, kvec, bp, coeffs);
 }
 
-void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients1
+void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients1
     (float64 Eccentricity, float64 Tolerence, std::vector<Angle> *Grid)
 {
     float64 E2 = 1. - Eccentricity;
@@ -172,7 +172,7 @@ void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients1
     Grid->back() = Angle::FromDegrees(180);
 }
 
-void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients2
+void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients2
     (float64 Eccentricity, const std::vector<Angle> &Grid, std::vector<int64> *kvec,
     std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
 {
@@ -221,7 +221,7 @@ void __Piecewise_Quintic_Keplerian_Equation::GetCoefficients2
     }
 }
 
-uint64 __Piecewise_Quintic_Keplerian_Equation::FindInterval(float64 MRad)const
+uint64 __Piecewise_Inverse_Quintic_Keplerian_Equation::FindInterval(float64 MRad)const
 {
     uint64 ny = Breakpoints.size() - 1;
     uint64 Left = 0;
@@ -251,7 +251,7 @@ uint64 __Piecewise_Quintic_Keplerian_Equation::FindInterval(float64 MRad)const
     return Left;
 }
 
-float64 __Piecewise_Quintic_Keplerian_Equation::BoundaryHandler
+float64 __Piecewise_Inverse_Quintic_Keplerian_Equation::BoundaryHandler
     (float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     uint64 i = FindInterval(MRad);
@@ -272,7 +272,7 @@ float64 __Piecewise_Quintic_Keplerian_Equation::BoundaryHandler
     return Mid;
 }
 
-float64 __Piecewise_Quintic_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
+float64 __Piecewise_Inverse_Quintic_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     uint64 i = FindInterval(MRad);
     float64 delM = Coefficients.at(1, i) * (MRad - Breakpoints[i].ToRadians());
@@ -281,6 +281,21 @@ float64 __Piecewise_Quintic_Keplerian_Equation::Run(float64 MRad, float64 AbsTol
         (Coefficients.at(2, i) + delM *
         (Coefficients.at(3, i) + delM *
         (Coefficients.at(4, i) + delM * Coefficients.at(5, i)))));
+}
+
+////////////////////////////////// PARABOLIC //////////////////////////////////
+
+Angle __Polynomial_Parabolic_Inverse_Keplerian_Equation::operator()(Angle MeanAnomaly) const
+{
+    float64 MRad = MeanAnomaly.ToRadians();
+    std::vector<float64> Coefficients(4);
+    Coefficients[0] = 1;
+    Coefficients[1] = 0;
+    Coefficients[2] = 3;
+    Coefficients[3] = -6 * MRad;
+    std::vector<complex64> Roots(3);
+    SolveCubic(Coefficients, Roots);
+    return Angle::FromRadians(Roots[0].real());
 }
 
 /////////////////////////////////// HKE-SDG ///////////////////////////////////
@@ -304,17 +319,13 @@ float64 __Piecewise_Quintic_Keplerian_Equation::Run(float64 MRad, float64 AbsTol
 
 #include "HKE-SDG.tbl"
 
-__SDGH_Equacion_de_Keplerh::__SDGH_Equacion_de_Keplerh(float64 e)
+__SDGH_Equacion_Inversa_de_Keplerh::__SDGH_Equacion_Inversa_de_Keplerh(float64 e)
+    : __SDGH_Equacion_Inversa_de_Keplerh::Mybase(e)
 {
-    if (e <= 1)
-    {
-        throw std::logic_error("HKE-SDG is only adapt for hyperbolic orbits.");
-    }
-    Eccentricity = e;
     GetSegments(e, this->SegmentTable);
 }
 
-void __SDGH_Equacion_de_Keplerh::GetSegments(float64 Eccentricity, float64 *SegTable)
+void __SDGH_Equacion_Inversa_de_Keplerh::GetSegments(float64 Eccentricity, float64 *SegTable)
 {
     for (uint64 i = 0; i < SegmentTableSize; ++i)
     {
@@ -324,7 +335,7 @@ void __SDGH_Equacion_de_Keplerh::GetSegments(float64 Eccentricity, float64 *SegT
     }
 }
 
-float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimator(float64 MRad)const
+float64 __SDGH_Equacion_Inversa_de_Keplerh::SingularCornerInitEstimator(float64 MRad)const
 {
     float64 eps = Eccentricity - 1.;
     float64 chi = MRad / sqrt(eps * eps * eps);
@@ -365,7 +376,7 @@ float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimator(float64 MRad)con
     return sqrt(eps) * nuh_as(sig, eps);
 }
 
-float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimatorDOS(float64 MRad)const
+float64 __SDGH_Equacion_Inversa_de_Keplerh::SingularCornerInitEstimatorDOS(float64 MRad)const
 {
     float64 S, u;
     for (int i = 0; i < 10; i++)
@@ -377,7 +388,7 @@ float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimatorDOS(float64 MRad)
     return S;
 }
 
-float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimatorTRES(float64 MRad)const
+float64 __SDGH_Equacion_Inversa_de_Keplerh::SingularCornerInitEstimatorTRES(float64 MRad)const
 {
     double S, u, z;
     double le, l2, lm, tt, phi, xi;
@@ -402,7 +413,7 @@ float64 __SDGH_Equacion_de_Keplerh::SingularCornerInitEstimatorTRES(float64 MRad
     return S;
 }
 
-float64 __SDGH_Equacion_de_Keplerh::NewtonInitValue(Angle MeanAnomaly)const
+float64 __SDGH_Equacion_Inversa_de_Keplerh::NewtonInitValue(Angle MeanAnomaly)const
 {
     float64 e = Eccentricity;
     float64 M = MeanAnomaly.ToRadians();
@@ -443,7 +454,7 @@ float64 __SDGH_Equacion_de_Keplerh::NewtonInitValue(Angle MeanAnomaly)const
     return k >= PolynomTableSize ? 0.0 : TablaPolinomios[k](e, M);
 }
 
-vec4 __SDGH_Equacion_de_Keplerh::VectorizedHKE(float64 Eccentricity, float64 MRad, float64 Init)
+vec4 __SDGH_Equacion_Inversa_de_Keplerh::VectorizedHKE(float64 Eccentricity, float64 MRad, float64 Init)
 {
     float64 ad = 1.0L + Init * Init;
     float64 a = sqrt(ad);
@@ -459,7 +470,7 @@ vec4 __SDGH_Equacion_de_Keplerh::VectorizedHKE(float64 Eccentricity, float64 MRa
     };
 }
 
-Angle __SDGH_Equacion_de_Keplerh::Run(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual) const
+Angle __SDGH_Equacion_Inversa_de_Keplerh::Run(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual) const
 {
     float64 RealAbsTol = pow(10, -AbsoluteTolerence);
     float64 RealRelTol = pow(10, -RelativeTolerence);
@@ -503,12 +514,12 @@ Angle __SDGH_Equacion_de_Keplerh::Run(Angle MeanAnomaly, uint64* NumberOfIters, 
     return Angle::FromRadians(u);
 }
 
-Angle __SDGH_Equacion_de_Keplerh::operator()(Angle MeanAnomaly)const
+Angle __SDGH_Equacion_Inversa_de_Keplerh::operator()(Angle MeanAnomaly)const
 {
     return operator()(MeanAnomaly, nullptr, nullptr);
 }
 
-Angle __SDGH_Equacion_de_Keplerh::operator()
+Angle __SDGH_Equacion_Inversa_de_Keplerh::operator()
     (Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const
 {
     Angle MeanAnomaly0 = abs(MeanAnomaly);
@@ -516,6 +527,8 @@ Angle __SDGH_Equacion_de_Keplerh::operator()
     return Angle::FromRadians((MeanAnomaly < 0 ? -1 : 1) *
         ln(ERad + sqrt(1.0 + ERad * ERad)));
 }
+
+_KE_END
 
 _ORBIT_END
 _CSE_END

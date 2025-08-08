@@ -66,18 +66,77 @@ bool KeplerCompute(OrbitElems& InitElems)
     return true;
 }
 
-Angle EllipticalKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity)
+// ---------------------------------------- 开普勒方程 ---------------------------------------- //
+
+_KE_BEGIN
+
+Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
 {
+    if (Eccentricity >= 0)
+    {
+        throw std::logic_error("This function is only adapt for elliptical orbit.");
+    }
     float64 EARadians = EccentricAnomaly.ToRadians();
     return Angle::FromRadians
         (EARadians - Eccentricity * sin(EccentricAnomaly)).ToDegrees();
 }
 
-Angle HyperbolicKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity)
+Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly)
 {
+    float64 EARadians = EccentricAnomaly.ToRadians();
+    return EARadians + EARadians * EARadians * EARadians / 3.;
+}
+
+Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
+{
+    if (Eccentricity <= 0)
+    {
+        throw std::logic_error("This function is only adapt for hyperbolic orbit.");
+    }
     float64 EARadians = EccentricAnomaly.ToRadians();
     return Angle::FromRadians
         (Eccentricity * sinh(EARadians) - EARadians).ToDegrees();
+}
+
+_KE_END
+
+// ---------------------------------------------------------------------------------------------
+
+Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
+{
+    if (Eccentricity == 0) {return EccentricAnomaly;}
+    if (Eccentricity < 1)
+    {
+        return _KE __Elliptical_Keplerian_Equation(EccentricAnomaly, Eccentricity);
+    }
+    if (Eccentricity == 1)
+    {
+        return _KE __Parabolic_Keplerian_Equation(EccentricAnomaly);
+    }
+    else
+    {
+        return _KE __Hyperbolic_Keplerian_Equation(EccentricAnomaly, Eccentricity);
+    }
+}
+
+Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly)
+{
+    if (Eccentricity == 0) {return MeanAnomaly;}
+    if (Eccentricity < 1)
+    {
+        _KE DefaultEllipticalIKE IKE(Eccentricity);
+        return IKE(MeanAnomaly);
+    }
+    if (Eccentricity == 1)
+    {
+        _KE DefaultParabolicIKE IKE;
+        return IKE(MeanAnomaly);
+    }
+    else
+    {
+        _KE DefaultHyperbolicIKE IKE(Eccentricity);
+        return IKE(MeanAnomaly);
+    }
 }
 
 _ORBIT_END

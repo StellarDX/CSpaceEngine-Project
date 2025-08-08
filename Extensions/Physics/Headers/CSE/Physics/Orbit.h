@@ -193,13 +193,26 @@ bool KeplerCompute(OrbitElems& InitElems);
         DOI:10.1016/j.apm.2023.12.017.
 */
 
+#define _KE_BEGIN namespace KE {
+#define _KE_END }
+#define _KE KE::
+
+_KE_BEGIN
+
 /**
- * @brief 开普勒方程
+ * @brief 椭圆开普勒方程
  * @param EccentricAnomaly 偏近点角
  * @param Eccentricity 离心率
  * @return 平近点角
  */
-Angle EllipticalKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity);
+Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly);
+
+/**
+ * @brief 抛物线开普勒方程
+ * @param EccentricAnomaly 偏近点角
+ * @return 平近点角
+ */
+Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly);
 
 /**
  * @brief 双曲开普勒方程
@@ -207,26 +220,50 @@ Angle EllipticalKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity);
  * @param Eccentricity 离心率
  * @return 平近点角
  */
-Angle HyperbolicKeplerianEquation(Angle EccentricAnomaly, float64 Eccentricity);
+Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly);
 
 /**
- * @brief 开普勒方程的反函数
+ * @brief 椭圆开普勒方程的反函数
  */
-class __Inverse_Keplerian_Equation
+class __Elliptical_Inverse_Keplerian_Equation
 {
 protected:
     float64 Eccentricity;
 public:
+    __Elliptical_Inverse_Keplerian_Equation(float64 e);
     virtual Angle operator()(Angle MeanAnomaly)const = 0;
 };
 
 /**
- * @brief 增强型开普勒方程求解工具
+ * @brief 抛物线开普勒方程的反函数
  */
-class __Enhanced_Keplerian_Equation_Solver : public __Inverse_Keplerian_Equation
+class __Parabolic_Inverse_Keplerian_Equation
 {
 public:
-    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+    __Parabolic_Inverse_Keplerian_Equation() {}
+    virtual Angle operator()(Angle MeanAnomaly)const = 0;
+};
+
+/**
+ * @brief 双曲开普勒方程的反函数
+ */
+class __Hyperbolic_Inverse_Keplerian_Equation
+{
+protected:
+    float64 Eccentricity;
+public:
+    __Hyperbolic_Inverse_Keplerian_Equation(float64 e);
+    virtual Angle operator()(Angle MeanAnomaly)const = 0;
+};
+
+/**
+ * @brief 椭圆开普勒方程求解工具
+ */
+class __Enhanced_Inverse_Keplerian_Equation_Solver
+    : public __Elliptical_Inverse_Keplerian_Equation
+{
+public:
+    using Mybase = __Elliptical_Inverse_Keplerian_Equation;
 
 protected:
     float64 AbsoluteTolerence = 14.522878745280337562704972096745; // 3E-15
@@ -239,40 +276,40 @@ protected:
     virtual float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const;
 
 public:
+    __Enhanced_Inverse_Keplerian_Equation_Solver(float64 e) : Mybase(e) {}
     Angle operator()(Angle MeanAnomaly)const final;
 };
 
 // ENRKE
-class __Newton_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+class __Newton_Inverse_Keplerian_Equation
+    : public __Enhanced_Inverse_Keplerian_Equation_Solver
 {
 public:
-    using Mybase = __Enhanced_Keplerian_Equation_Solver;
-
+    using Mybase = __Enhanced_Inverse_Keplerian_Equation_Solver;
 protected:
     float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
-
 public:
-    __Newton_Keplerian_Equation(float64 e = 0);
+    __Newton_Inverse_Keplerian_Equation(float64 e) : Mybase(e) {}
 };
 
 // ENMAKE
-class __Markley_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+class __Markley_Inverse_Keplerian_Equation
+    : public __Enhanced_Inverse_Keplerian_Equation_Solver
 {
 public:
-    using Mybase = __Enhanced_Keplerian_Equation_Solver;
-
+    using Mybase = __Enhanced_Inverse_Keplerian_Equation_Solver;
 protected:
     float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
-
 public:
-    __Markley_Keplerian_Equation(float64 e = 0);
+    __Markley_Inverse_Keplerian_Equation(float64 e) : Mybase(e) {}
 };
 
 // ENP5KE
-class __Piecewise_Quintic_Keplerian_Equation : public __Enhanced_Keplerian_Equation_Solver
+class __Piecewise_Inverse_Quintic_Keplerian_Equation
+    : public __Enhanced_Inverse_Keplerian_Equation_Solver
 {
 public:
-    using Mybase = __Enhanced_Keplerian_Equation_Solver;
+    using Mybase = __Enhanced_Inverse_Keplerian_Equation_Solver;
 
 protected:
     std::vector<int64>             BlockBoundaries;
@@ -291,7 +328,7 @@ protected:
     float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
 
 public:
-    __Piecewise_Quintic_Keplerian_Equation(float64 e = 0);
+    __Piecewise_Inverse_Quintic_Keplerian_Equation(float64 e);
 
     static void GetCoefficients(float64 Eccentricity, float64 Tolerence,
         /*uint64* n,*/ std::vector<int64>* kvec, std::vector<Angle>* bp,
@@ -299,12 +336,23 @@ public:
 };
 
 /**
- * @brief 双曲开普勒方程求解工具
+ * @brief 抛物线开普勒方程求解工具
  */
-class __SDGH_Equacion_de_Keplerh : public __Inverse_Keplerian_Equation
+class __Polynomial_Parabolic_Inverse_Keplerian_Equation
+    : public __Parabolic_Inverse_Keplerian_Equation
 {
 public:
-    using Mybase     = __Inverse_Keplerian_Equation;
+    Angle operator()(Angle MeanAnomaly)const;
+};
+
+/**
+ * @brief 双曲开普勒方程求解工具
+ */
+class __SDGH_Equacion_Inversa_de_Keplerh
+    : public __Hyperbolic_Inverse_Keplerian_Equation
+{
+public:
+    using Mybase     = __Hyperbolic_Inverse_Keplerian_Equation;
     using STableType = float64;
     using PTableType = std::function<float64(float64, float64)>;
 
@@ -331,7 +379,7 @@ protected:
     Angle Run(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const;
 
 public:
-    __SDGH_Equacion_de_Keplerh(float64 e);
+    __SDGH_Equacion_Inversa_de_Keplerh(float64 e);
 
     Angle operator()(Angle MeanAnomaly)const override;
     Angle operator()(Angle MeanAnomaly, uint64* NumberOfIters, float64* Residual)const;
@@ -340,9 +388,33 @@ public:
     static vec4 VectorizedHKE(float64 Eccentricity, float64 MRad, float64 Init);
 };
 
+using DefaultEllipticalIKE = KE::__Newton_Inverse_Keplerian_Equation;
+using DefaultParabolicIKE  = KE::__Polynomial_Parabolic_Inverse_Keplerian_Equation;
+using DefaultHyperbolicIKE = KE::__SDGH_Equacion_Inversa_de_Keplerh;
+
+_KE_END
+
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * @brief 开普勒方程
+ * @param Eccentricity 离心率
+ * @param EccentricAnomaly 偏近点角
+ * @return 平近点角
+ */
+Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly);
 
+/**
+ * @brief 开普勒方程的反函数
+ * @param Eccentricity 离心率
+ * @param MeanAnomaly 平近点角
+ * @return 偏近点角
+ */
+Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly);
+
+Angle GetTrueAnomalyFromEccentricAnomaly(float64 Eccentricity, Angle EccentricAnomaly);
+
+Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly);
 
 OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
 
