@@ -66,6 +66,14 @@ bool KeplerCompute(OrbitElems& InitElems)
     return true;
 }
 
+void TruncateTo360(Angle& Ang)
+{
+    float64 ADeg = Ang.ToDegrees();
+    if (abs(ADeg) > 360) {ADeg = mod(ADeg, 360);}
+    if (ADeg < 0) {ADeg += 360;}
+    Ang = Angle::FromDegrees(ADeg);
+}
+
 // ---------------------------------------- 开普勒方程 ---------------------------------------- //
 
 _KE_BEGIN
@@ -84,7 +92,8 @@ Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnoma
 Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly)
 {
     float64 EARadians = EccentricAnomaly.ToRadians();
-    return EARadians + EARadians * EARadians * EARadians / 3.;
+    return Angle::FromRadians
+        (EARadians / 2. + EARadians * EARadians * EARadians / 6.);
 }
 
 Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
@@ -105,11 +114,11 @@ _KE_END
 Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
 {
     if (Eccentricity == 0) {return EccentricAnomaly;}
-    if (Eccentricity < 1)
+    else if (Eccentricity < 1)
     {
         return _KE __Elliptical_Keplerian_Equation(EccentricAnomaly, Eccentricity);
     }
-    if (Eccentricity == 1)
+    else if (Eccentricity == 1)
     {
         return _KE __Parabolic_Keplerian_Equation(EccentricAnomaly);
     }
@@ -122,12 +131,12 @@ Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
 Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly)
 {
     if (Eccentricity == 0) {return MeanAnomaly;}
-    if (Eccentricity < 1)
+    else if (Eccentricity < 1)
     {
         _KE DefaultEllipticalIKE IKE(Eccentricity);
         return IKE(MeanAnomaly);
     }
-    if (Eccentricity == 1)
+    else if (Eccentricity == 1)
     {
         _KE DefaultParabolicIKE IKE;
         return IKE(MeanAnomaly);
@@ -137,6 +146,60 @@ Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly)
         _KE DefaultHyperbolicIKE IKE(Eccentricity);
         return IKE(MeanAnomaly);
     }
+}
+
+Angle GetTrueAnomalyFromEccentricAnomaly(float64 Eccentricity, Angle EccentricAnomaly)
+{
+    if (Eccentricity == 0) {return EccentricAnomaly;}
+    else if (Eccentricity < 1)
+    {
+        float64 EDeg = EccentricAnomaly.ToDegrees();
+        float64 bet = Eccentricity /
+            (1. + sqrt(1. - Eccentricity * Eccentricity));
+        return Angle::FromDegrees(EDeg +
+            2. * arctan((bet * sin(EccentricAnomaly)) /
+            (1. - bet * cos(EccentricAnomaly))));
+    }
+    else if (Eccentricity == 1)
+    {
+        float64 ERad = EccentricAnomaly.ToRadians();
+        return Angle::FromDegrees(2. * arctan(ERad).ToDegrees());
+    }
+    else
+    {
+        float64 ERad = EccentricAnomaly.ToRadians();
+        float64 TanPhi = tanh(ERad / 2.) *
+            sqrt((Eccentricity + 1) / (Eccentricity - 1));
+        return Angle::FromDegrees(2. * arctan(TanPhi).ToDegrees());
+    }
+}
+
+Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly)
+{
+    if (Eccentricity == 0) {return TrueAnomaly;}
+    else if (Eccentricity < 1)
+    {
+        float64 y = sqrt(1. - Eccentricity * Eccentricity) * sin(TrueAnomaly);
+        float64 x = Eccentricity + cos(TrueAnomaly);
+        float64 r = Arctan2(y, x).ToDegrees();
+        return Angle::FromDegrees(r + ((r < 0) ? 360 : 0));
+    }
+    else if (Eccentricity == 1)
+    {
+        float64 TDeg = TrueAnomaly.ToDegrees() / 2.;
+        return Angle::FromRadians(tan(Angle::FromDegrees(TDeg)));
+    }
+    else
+    {
+        float64 y = sqrt(Eccentricity * Eccentricity - 1) * sin(TrueAnomaly);
+        float64 x = Eccentricity + cos(TrueAnomaly);
+        return Angle::FromRadians(artanh(y / x));
+    }
+}
+
+OrbitState KeplerianElementsToStateVectors(OrbitElems Elems)
+{
+
 }
 
 _ORBIT_END

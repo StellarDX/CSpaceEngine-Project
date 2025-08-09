@@ -132,28 +132,12 @@ public:
     void Reset();
 
     OrbitElemType KeplerianElems()const;
-    OrbitState State()const;
-
-    CSEDateTime Epoch()const;
-    float64 EpochJD()const;
-    float64 Aphelion()const;
-    float64 Perihelion()const;
-    float64 SemiMajorAxis()const;
-    float64 MeanMotion()const;
-    float64 Eccentricity()const;
-    float64 SiderealOrbitalPeriod()const;
-    Angle MeanAnomaly()const;
-    Angle MeanLongitude()const;
-    Angle Inclination()const;
-    Angle LongitudeOfAscendingNode()const;
-    CSEDateTime TimeOfPerihelion()const;
-    Angle ArgumentOfPerihelion()const;
-    Angle LongitudeOfPerihelion()const;
-    Angle EccentricAnomaly()const;
-    Angle TrueAnomaly()const;
+    OrbitStateType StateVectors()const;
 };
 
 bool KeplerCompute(OrbitElems& InitElems);
+
+void TruncateTo360(Angle& Ang);
 
 // ---------------------------------------- 开普勒方程 ---------------------------------------- //
 
@@ -412,9 +396,22 @@ Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly);
  */
 Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly);
 
+/**
+ * @brief 从偏近点角计算真近点角
+ * @param Eccentricity 离心率
+ * @param EccentricAnomaly 偏近点角
+ * @return 真近点角
+ */
 Angle GetTrueAnomalyFromEccentricAnomaly(float64 Eccentricity, Angle EccentricAnomaly);
 
+/**
+ * @brief 从真近点角计算偏近点角
+ * @param Eccentricity 离心率
+ * @param EccentricAnomaly 真近点角
+ * @return 偏近点角
+ */
 Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly);
+
 
 OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
 

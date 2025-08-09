@@ -84,6 +84,7 @@ SatelliteTracker::OrbitElemType SatelliteTracker::CheckParams(const OrbitElemTyp
     if (IS_NO_DATA_DBL(ReturnElems.AscendingNode)) {ReturnElems.AscendingNode = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.ArgOfPericenter)) {ReturnElems.ArgOfPericenter = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.MeanAnomaly)) {ReturnElems.MeanAnomaly = 0;}
+    TruncateTo360(ReturnElems.MeanAnomaly);
     return ReturnElems;
 }
 
