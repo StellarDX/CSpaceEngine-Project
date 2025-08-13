@@ -4,7 +4,38 @@
 _CSE_BEGIN
 _ORBIT_BEGIN
 
-bool KeplerCompute(OrbitElems& InitElems)
+KeplerianOrbitElems& KeplerianOrbitElems::operator=
+    (const Object::OrbitParams& P)noexcept
+{
+    this->Epoch           = P.Epoch;
+    this->GravParam       = P.GravParam;
+    this->PericenterDist  = P.PericenterDist;
+    this->Period          = P.Period;
+    this->Eccentricity    = P.Eccentricity;
+    this->Inclination     = Angle::FromDegrees(P.Inclination);
+    this->AscendingNode   = Angle::FromDegrees(P.AscendingNode);
+    this->ArgOfPericenter = Angle::FromDegrees(P.ArgOfPericenter);
+    this->MeanAnomaly     = Angle::FromDegrees(P.MeanAnomaly);
+    return *this;
+}
+
+KeplerianOrbitElems::operator Object::OrbitParams()
+{
+    return
+    {
+        .Epoch            = Epoch,
+        .Period           = Period,
+        .PericenterDist   = PericenterDist,
+        .GravParam        = GravParam,
+        .Eccentricity     = Eccentricity,
+        .Inclination      = Inclination.ToDegrees(),
+        .AscendingNode    = AscendingNode.ToDegrees(),
+        .ArgOfPericenter  = ArgOfPericenter.ToDegrees(),
+        .MeanAnomaly      = MeanAnomaly.ToDegrees(),
+    };
+}
+
+bool KeplerCompute(KeplerianOrbitElems& InitElems)
 {
     // 检查三个关键参数中有几个已提供
     int ProvidedParams = 0;
@@ -111,6 +142,11 @@ _KE_END
 
 // ---------------------------------------------------------------------------------------------
 
+float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 PericenterDist)
+{
+    return PericenterDist / (1 - Eccentricity);
+}
+
 Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
 {
     if (Eccentricity == 0) {return EccentricAnomaly;}
@@ -197,9 +233,19 @@ Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly
     }
 }
 
-OrbitState KeplerianElementsToStateVectors(OrbitElems Elems)
+float64 GetSemiLatusRectumFromPericenterDist(float64 Eccentricity, float64 PericenterDist)
 {
+    return PericenterDist * (1. + Eccentricity);
+}
 
+Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly)
+{
+    return Angle::FromDegrees(ArgOfPericen.ToDegrees() + Anomaly.ToDegrees());
+}
+
+float64 PeriodToAngularVelocity(float64 Period)
+{
+    return 360. / Period;
 }
 
 _ORBIT_END

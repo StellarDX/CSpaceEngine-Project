@@ -134,14 +134,14 @@ float64 __Markley_Inverse_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, 
 
 //////////////////////////////////// ENP5KE ///////////////////////////////////
 
-__Piecewise_Inverse_Quintic_Keplerian_Equation::__Piecewise_Inverse_Quintic_Keplerian_Equation(float64 e)
-    : __Piecewise_Inverse_Quintic_Keplerian_Equation::Mybase(e)
+__Piecewise_Quintic_Inverse_Keplerian_Equation::__Piecewise_Quintic_Inverse_Keplerian_Equation(float64 e)
+    : __Piecewise_Quintic_Inverse_Keplerian_Equation::Mybase(e)
 {
     GetCoefficients(Eccentricity, pow(10, -AbsoluteTolerence),
         &BlockBoundaries, &Breakpoints, &Coefficients);
 }
 
-void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients(float64 Eccentricity, float64 Tolerence, std::vector<int64> *kvec, std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
+void __Piecewise_Quintic_Inverse_Keplerian_Equation::GetCoefficients(float64 Eccentricity, float64 Tolerence, std::vector<int64> *kvec, std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
 {
     std::vector<Angle> EGrid;
     GetCoefficients1(Eccentricity, Tolerence, &EGrid);
@@ -152,7 +152,7 @@ void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients(float64 Ecc
     GetCoefficients2(Eccentricity, EGrid, kvec, bp, coeffs);
 }
 
-void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients1
+void __Piecewise_Quintic_Inverse_Keplerian_Equation::GetCoefficients1
     (float64 Eccentricity, float64 Tolerence, std::vector<Angle> *Grid)
 {
     float64 E2 = 1. - Eccentricity;
@@ -172,7 +172,7 @@ void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients1
     Grid->back() = Angle::FromDegrees(180);
 }
 
-void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients2
+void __Piecewise_Quintic_Inverse_Keplerian_Equation::GetCoefficients2
     (float64 Eccentricity, const std::vector<Angle> &Grid, std::vector<int64> *kvec,
     std::vector<Angle> *bp, SciCxx::DynamicMatrix<float64> *coeffs)
 {
@@ -221,7 +221,7 @@ void __Piecewise_Inverse_Quintic_Keplerian_Equation::GetCoefficients2
     }
 }
 
-uint64 __Piecewise_Inverse_Quintic_Keplerian_Equation::FindInterval(float64 MRad)const
+uint64 __Piecewise_Quintic_Inverse_Keplerian_Equation::FindInterval(float64 MRad)const
 {
     uint64 ny = Breakpoints.size() - 1;
     uint64 Left = 0;
@@ -251,7 +251,7 @@ uint64 __Piecewise_Inverse_Quintic_Keplerian_Equation::FindInterval(float64 MRad
     return Left;
 }
 
-float64 __Piecewise_Inverse_Quintic_Keplerian_Equation::BoundaryHandler
+float64 __Piecewise_Quintic_Inverse_Keplerian_Equation::BoundaryHandler
     (float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     uint64 i = FindInterval(MRad);
@@ -272,7 +272,7 @@ float64 __Piecewise_Inverse_Quintic_Keplerian_Equation::BoundaryHandler
     return Mid;
 }
 
-float64 __Piecewise_Inverse_Quintic_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
+float64 __Piecewise_Quintic_Inverse_Keplerian_Equation::Run(float64 MRad, float64 AbsTol, float64 RelTol)const
 {
     uint64 i = FindInterval(MRad);
     float64 delM = Coefficients.at(1, i) * (MRad - Breakpoints[i].ToRadians());

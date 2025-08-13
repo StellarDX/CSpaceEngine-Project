@@ -61,12 +61,12 @@
 _CSE_BEGIN
 _ORBIT_BEGIN
 
-SatelliteTracker::OrbitElemType SatelliteTracker::CheckParams(const OrbitElemType& InitElems)
+KeplerianSatelliteTracker::BaseType KeplerianSatelliteTracker::CheckParams(const BaseType& InitElems)
 {
-    OrbitElemType ReturnElems = InitElems;
+    BaseType ReturnElems = InitElems;
     if (IS_NO_DATA_DBL(ReturnElems.Epoch)) {ReturnElems.Epoch = J2000;}
     if (IS_NO_DATA_DBL(ReturnElems.Eccentricity)) {ReturnElems.Eccentricity = 0;}
-    if (ReturnElems.Eccentricity < 1 && KeplerCompute(ReturnElems))
+    if (ReturnElems.Eccentricity < 1 && !KeplerCompute(ReturnElems))
     {
         throw std::logic_error("2 parameters of Pericenter distance, Period and Gravity parameter is required");
     }
@@ -84,13 +84,167 @@ SatelliteTracker::OrbitElemType SatelliteTracker::CheckParams(const OrbitElemTyp
     if (IS_NO_DATA_DBL(ReturnElems.AscendingNode)) {ReturnElems.AscendingNode = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.ArgOfPericenter)) {ReturnElems.ArgOfPericenter = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.MeanAnomaly)) {ReturnElems.MeanAnomaly = 0;}
-    TruncateTo360(ReturnElems.MeanAnomaly);
+    //TruncateTo360(ReturnElems.MeanAnomaly);
     return ReturnElems;
 }
 
-SatelliteTracker::SatelliteTracker(const OrbitElemType& InitElems)
+KeplerianSatelliteTracker::KeplerianSatelliteTracker(const BaseType& InitElems)
+{
+    auto IElems = CheckParams(InitElems);
+    InitialState = IElems;
+    CurrentState = IElems;
+    AngularVelocity = PeriodToAngularVelocity(IElems.Period);
+}
+
+KeplerianSatelliteTracker::KeplerianSatelliteTracker(const OrbitStateVectors &InitState)
 {
 
+}
+
+void KeplerianSatelliteTracker::AddMsecs(int64 Ms)
+{
+
+}
+
+void KeplerianSatelliteTracker::AddSeconds(int64 Sec)
+{
+
+}
+
+void KeplerianSatelliteTracker::AddHours(int64 Hrs)
+{
+
+}
+
+void KeplerianSatelliteTracker::AddDays(int64 Days)
+{
+
+}
+
+void KeplerianSatelliteTracker::AddYears(int64 Years)
+{
+
+}
+
+void KeplerianSatelliteTracker::AddCenturies(int64 Centuries)
+{
+
+}
+
+void KeplerianSatelliteTracker::ToCurrentDate()
+{
+
+}
+
+void KeplerianSatelliteTracker::SetDate(CSEDateTime DateTime)
+{
+
+}
+
+void KeplerianSatelliteTracker::SetDate(float64 JD)
+{
+
+}
+
+void KeplerianSatelliteTracker::Move(Angle Offset)
+{
+    float64 MDeg = CurrentState.MeanAnomaly.ToDegrees();
+    float64 ODeg = Offset.ToDegrees();
+    CurrentState.MeanAnomaly = Angle::FromDegrees(MDeg + ODeg);
+    //TruncateTo360(CurrentState.MeanAnomaly);
+    if (CurrentState.Eccentricity < 1)
+    {
+        CurrentState.Epoch +=
+            (CurrentState.Period * (ODeg / 360.0)) / SynodicDay;
+    }
+}
+
+void KeplerianSatelliteTracker::Reset()
+{
+
+}
+
+KeplerianOrbitElems KeplerianSatelliteTracker::KeplerianElems() const
+{
+    return CurrentState;
+}
+
+EquinoctialOrbitElems KeplerianSatelliteTracker::EquinoctialElems() const
+{
+    Angle AscNodePArgOfPeri = Angle::FromDegrees(
+        CurrentState.AscendingNode.ToDegrees() +
+        CurrentState.ArgOfPericenter.ToDegrees());
+    Angle InclinationD2 = Angle::FromDegrees(
+        CurrentState.Inclination.ToDegrees() / 2.);
+    Angle MeanLongitude = Angle::FromDegrees(
+        AscNodePArgOfPeri.ToDegrees() +
+        CurrentState.MeanAnomaly.ToDegrees());
+    //TruncateTo360(MeanLongitude);
+    return
+    {
+        .RefPlane       = CurrentState.RefPlane,
+        .Epoch          = CurrentState.Epoch,
+        .GravParam      = CurrentState.GravParam,
+        .PericenterDist = CurrentState.PericenterDist,
+        .Period         = CurrentState.Period,
+        .EccentricityF  = CurrentState.Eccentricity * cos(AscNodePArgOfPeri),
+        .EccentricityG  = CurrentState.Eccentricity * sin(AscNodePArgOfPeri),
+        .InclinationH   = tan(InclinationD2) * cos(CurrentState.AscendingNode),
+        .InclinationK   = tan(InclinationD2) * sin(CurrentState.AscendingNode),
+        .MeanLongitude  = MeanLongitude
+    };
+}
+
+OrbitStateVectors KeplerianSatelliteTracker::StateVectors(mat3 AxisMapper)const
+{
+    Angle EccentricAnomaly = InverseKeplerianEquation(
+        CurrentState.Eccentricity, CurrentState.MeanAnomaly);
+    Angle TrueAnomaly = GetTrueAnomalyFromEccentricAnomaly(
+        CurrentState.Eccentricity, EccentricAnomaly);
+    float64 SemiLatusRectum = GetSemiLatusRectumFromPericenterDist(
+        CurrentState.Eccentricity, CurrentState.PericenterDist);
+    float64 CurrentDist = SemiLatusRectum /
+        (1. + CurrentState.Eccentricity * cos(TrueAnomaly));
+    Angle ArgOfLatitude = GetArgOfLatitude(
+        CurrentState.ArgOfPericenter, TrueAnomaly);
+
+    float64 SinAscNode = sin(CurrentState.AscendingNode);
+    float64 CosAscNode = cos(CurrentState.AscendingNode);
+    float64 SinArgOfLatitude = sin(ArgOfLatitude);
+    float64 CosArgOfLatitude = cos(ArgOfLatitude);
+    float64 SinInclination = sin(CurrentState.Inclination);
+    float64 CosInclination = cos(CurrentState.Inclination);
+
+    vec3 CurrentPos = (AxisMapper * matrix<1, 3>{CurrentDist * vec3(
+        CosAscNode * CosArgOfLatitude -
+        SinAscNode * SinArgOfLatitude * CosInclination,
+        SinAscNode * CosArgOfLatitude +
+        CosAscNode * SinArgOfLatitude * CosInclination,
+        SinArgOfLatitude * SinInclination)})[0];
+
+    float64 EMSinArgOfPeri = CurrentState.Eccentricity *
+        sin(CurrentState.ArgOfPericenter);
+    float64 EMCosArgOfPeri = CurrentState.Eccentricity *
+        cos(CurrentState.ArgOfPericenter);
+    float64 SinArgOfLatPEMSinArgOfPeri = SinArgOfLatitude + EMSinArgOfPeri;
+    float64 CosArgOfLatPEMCosArgOfPeri = CosArgOfLatitude + EMCosArgOfPeri;
+
+    vec3 CurrentVelocity = (AxisMapper * matrix<1, 3>{
+        sqrt(CurrentState.GravParam / SemiLatusRectum) * vec3(
+        -CosAscNode * SinArgOfLatPEMSinArgOfPeri -
+        SinAscNode * CosArgOfLatPEMCosArgOfPeri * CosInclination,
+        -SinAscNode * SinArgOfLatPEMSinArgOfPeri +
+        CosAscNode * CosArgOfLatPEMCosArgOfPeri * CosInclination,
+        CosArgOfLatPEMCosArgOfPeri * CosInclination)})[0];
+
+    return
+    {
+        .RefPlane  = CurrentState.RefPlane,
+        .GravParam = CurrentState.GravParam,
+        .Time      = CurrentState.Epoch,
+        .Position  = CurrentPos,
+        .Velocity  = CurrentVelocity
+    };
 }
 
 _ORBIT_END

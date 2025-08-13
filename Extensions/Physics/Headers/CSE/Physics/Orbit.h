@@ -42,7 +42,7 @@ _STL_DISABLE_CLANG_WARNINGS
 _CSE_BEGIN
 _ORBIT_BEGIN
 
-struct OrbitElems
+struct KeplerianOrbitElems
 {
     ustring   RefPlane        = _NoDataStr;
     float64   Epoch           = _NoDataDbl;
@@ -55,45 +55,32 @@ struct OrbitElems
     Angle     ArgOfPericenter = _NoDataDbl;
     Angle     MeanAnomaly     = _NoDataDbl;
 
-    OrbitElems() {}
-
-    OrbitElems(const Object::OrbitParams& P)
-    {
-        Epoch           = P.Epoch;
-        GravParam       = P.GravParam;
-        PericenterDist  = P.PericenterDist;
-        Period          = P.Period;
-        Eccentricity    = P.Eccentricity;
-        Inclination     = Angle::FromDegrees(P.Inclination);
-        AscendingNode   = Angle::FromDegrees(P.AscendingNode);
-        ArgOfPericenter = Angle::FromDegrees(P.ArgOfPericenter);
-        MeanAnomaly     = Angle::FromDegrees(P.MeanAnomaly);
-    }
-
-    operator Object::OrbitParams()
-    {
-        return
-        {
-            .Epoch           = Epoch,
-            .Period          = Period,
-            .PericenterDist  = PericenterDist,
-            .GravParam       = GravParam,
-            .Eccentricity    = Eccentricity,
-            .Inclination     = Inclination.ToDegrees(),
-            .AscendingNode   = AscendingNode.ToDegrees(),
-            .ArgOfPericenter = ArgOfPericenter.ToDegrees(),
-            .MeanAnomaly     = MeanAnomaly.ToDegrees(),
-        };
-    }
+    KeplerianOrbitElems& operator=
+        (const Object::OrbitParams& P)noexcept;
+    operator Object::OrbitParams();
 };
 
-struct OrbitState
+struct EquinoctialOrbitElems
 {
-    ustring   RefPlane       = _NoDataStr;       // Reference System
-    float64   GravParam      = _NoDataDbl;       // Gravity Parameter (G*M)
-    float64   Time           = _NoDataDbl;       // Julian date
-    vec3      Position       = vec3(_NoDataDbl); // XYZ-pos in meters
-    vec3      Velocity       = vec3(_NoDataDbl); // Velocity in m/s (m/day in SE)
+    ustring   RefPlane        = _NoDataStr;
+    float64   Epoch           = _NoDataDbl;
+    float64   GravParam       = _NoDataDbl;
+    float64   PericenterDist  = _NoDataDbl;
+    float64   Period          = _NoDataDbl;
+    float64   EccentricityF   = _NoDataDbl; // Eccentricity vector components (f, g)
+    float64   EccentricityG   = _NoDataDbl;
+    float64   InclinationH    = _NoDataDbl; // Inclination vector components (h, k)
+    float64   InclinationK    = _NoDataDbl;
+    Angle     MeanLongitude   = _NoDataDbl;
+};
+
+struct OrbitStateVectors
+{
+    ustring   RefPlane        = _NoDataStr;       // Reference System
+    float64   GravParam       = _NoDataDbl;       // Gravity Parameter (G*M)
+    float64   Time            = _NoDataDbl;       // Julian date
+    vec3      Position        = vec3(_NoDataDbl); // XYZ-pos in meters
+    vec3      Velocity        = vec3(_NoDataDbl); // Velocity in m/s (m/day in SE)
 };
 
 /****************************************************************************************\
@@ -103,39 +90,64 @@ struct OrbitState
 /**
  * @brief 物体跟踪器，一切轨道工具的地基
  */
-class SatelliteTracker
+__interface SatelliteTracker
 {
 public:
-    using OrbitElemType  = OrbitElems;
-    using OrbitStateType = OrbitState;
+    virtual void AddMsecs(int64 Ms) = 0;
+    virtual void AddSeconds(int64 Sec) = 0;
+    virtual void AddHours(int64 Hrs) = 0;
+    virtual void AddDays(int64 Days) = 0;
+    virtual void AddYears(int64 Years) = 0;
+    virtual void AddCenturies(int64 Centuries) = 0;
 
-protected:
-    OrbitElemType InitialState;
-    OrbitElemType CurrentState;
+    virtual void ToCurrentDate() = 0;
+    virtual void SetDate(CSEDateTime DateTime) = 0;
+    virtual void SetDate(float64 JD) = 0;
+    virtual void Move(Angle Offset) = 0;
+    virtual void Reset() = 0;
 
-    OrbitElemType CheckParams(const OrbitElemType& InitElems);
-
-public:
-    SatelliteTracker(const OrbitElemType& InitElems);
-    SatelliteTracker(const OrbitStateType& InitState);
-
-    void AddMsecs(int64 Ms);
-    void AddSeconds(int64 Sec);
-    void AddHours(int64 Hrs);
-    void AddDays(int64 Days);
-    void AddYears(int64 Years);
-    void AddCenturies(int64 Centuries);
-
-    void ToCurrentDate();
-    void SetDate(CSEDateTime DateTime);
-    void SetDate(float64 JD);
-    void Reset();
-
-    OrbitElemType KeplerianElems()const;
-    OrbitStateType StateVectors()const;
+    virtual KeplerianOrbitElems KeplerianElems()const = 0;
+    virtual EquinoctialOrbitElems EquinoctialElems()const = 0;
+    virtual OrbitStateVectors StateVectors(mat3)const = 0;
 };
 
-bool KeplerCompute(OrbitElems& InitElems);
+class KeplerianSatelliteTracker : public SatelliteTracker
+{
+public:
+    using Mybase    = SatelliteTracker;
+    using BaseType  = KeplerianOrbitElems;
+
+protected:
+    BaseType InitialState;
+    BaseType CurrentState;
+    float64  AngularVelocity;
+
+    BaseType CheckParams(const BaseType& InitElems);
+
+public:
+    KeplerianSatelliteTracker(const BaseType& InitElems);
+    KeplerianSatelliteTracker(const OrbitStateVectors& InitState);
+
+    void AddMsecs(int64 Ms)override;
+    void AddSeconds(int64 Sec)override;
+    void AddHours(int64 Hrs)override;
+    void AddDays(int64 Days)override;
+    void AddYears(int64 Years)override;
+    void AddCenturies(int64 Centuries)override;
+
+    void ToCurrentDate()override;
+    void SetDate(CSEDateTime DateTime)override;
+    void SetDate(float64 JD)override;
+    void Move(Angle Offset)override;
+    void Reset()override;
+
+    KeplerianOrbitElems KeplerianElems()const override;
+    EquinoctialOrbitElems EquinoctialElems()const override;
+    OrbitStateVectors StateVectors(mat3 AxisMapper
+        = {1, 0, 0, 0, 0, -1, 0, 1, 0})const override;
+};
+
+bool KeplerCompute(KeplerianOrbitElems& InitElems);
 
 void TruncateTo360(Angle& Ang);
 
@@ -162,6 +174,9 @@ void TruncateTo360(Angle& Ang);
     速度可能是很快的。不过由于吴柏生算法并未开源，故目前无法验证其准确性。所以本文仍然使用HKE–SDG算法计算双曲开
     普勒方程。
 
+    抛物线这种情况反而是最简单的，定义为M = (1 / 2) * E + (1 / 6) * E^3，直接就是一个多项式[6]。此方程可使
+    用三次方程求根公式（如范盛金算法）求解，结果必然为1实2虚，其中唯一实根就是要得到的解。
+
     参考文献：
     [1] Murison M A .A Practical Method for Solving the Kepler Equation[J].  2006.
         DOI:10.13140/2.1.5019.6808.
@@ -175,6 +190,8 @@ void TruncateTo360(Angle& Ang);
     [5] Wu B , Zhou Y , Lim C W ,et al.A new method for solving the hyperbolic Kepler
         equation[J].Applied Mathematical Modelling, 2024, 127(000):7.
         DOI:10.1016/j.apm.2023.12.017.
+    [6] 平近点角 - 卫星百科(灰机Wiki)
+        https://sat.huijiwiki.com/wiki/%E5%B9%B3%E8%BF%91%E7%82%B9%E8%A7%92
 */
 
 #define _KE_BEGIN namespace KE {
@@ -289,7 +306,7 @@ public:
 };
 
 // ENP5KE
-class __Piecewise_Inverse_Quintic_Keplerian_Equation
+class __Piecewise_Quintic_Inverse_Keplerian_Equation
     : public __Enhanced_Inverse_Keplerian_Equation_Solver
 {
 public:
@@ -312,7 +329,7 @@ protected:
     float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const override;
 
 public:
-    __Piecewise_Inverse_Quintic_Keplerian_Equation(float64 e);
+    __Piecewise_Quintic_Inverse_Keplerian_Equation(float64 e);
 
     static void GetCoefficients(float64 Eccentricity, float64 Tolerence,
         /*uint64* n,*/ std::vector<int64>* kvec, std::vector<Angle>* bp,
@@ -380,6 +397,8 @@ _KE_END
 
 // ---------------------------------------------------------------------------------------------
 
+float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 PericenterDist);
+
 /**
  * @brief 开普勒方程
  * @param Eccentricity 离心率
@@ -412,10 +431,11 @@ Angle GetTrueAnomalyFromEccentricAnomaly(float64 Eccentricity, Angle EccentricAn
  */
 Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly);
 
+float64 GetSemiLatusRectumFromPericenterDist(float64 Eccentricity, float64 PericenterDist);
 
-OrbitState KeplerianElementsToStateVectors(OrbitElems Elems);
+Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly);
 
-OrbitElems StateVectorsToKeplerianElements(OrbitState Elems);
+float64 PeriodToAngularVelocity(float64 Period);
 
 _ORBIT_END
 _CSE_END
