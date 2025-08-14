@@ -103,7 +103,7 @@ public:
     virtual void ToCurrentDate() = 0;
     virtual void SetDate(CSEDateTime DateTime) = 0;
     virtual void SetDate(float64 JD) = 0;
-    virtual void Move(Angle Offset) = 0;
+    virtual void Move(Angle MeanAnomalyOffset) = 0;
     virtual void Reset() = 0;
 
     virtual KeplerianOrbitElems KeplerianElems()const = 0;
@@ -120,7 +120,7 @@ public:
 protected:
     BaseType InitialState;
     BaseType CurrentState;
-    float64  AngularVelocity;
+    Angle    AngularVelocity;
 
     BaseType CheckParams(const BaseType& InitElems);
 
@@ -138,13 +138,16 @@ public:
     void ToCurrentDate()override;
     void SetDate(CSEDateTime DateTime)override;
     void SetDate(float64 JD)override;
-    void Move(Angle Offset)override;
+    void Move(Angle MeanAnomalyOffset)override;
     void Reset()override;
 
     KeplerianOrbitElems KeplerianElems()const override;
     EquinoctialOrbitElems EquinoctialElems()const override;
     OrbitStateVectors StateVectors(mat3 AxisMapper
         = {1, 0, 0, 0, 0, -1, 0, 1, 0})const override;
+
+    // static KeplerianOrbitElems StateVectorstoKeplerianElements
+    //     (OrbitStateVectors State);
 };
 
 bool KeplerCompute(KeplerianOrbitElems& InitElems);
@@ -399,6 +402,8 @@ _KE_END
 
 float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 PericenterDist);
 
+float64 GetPericenterDistFromSemiMajorAxis(float64 Eccentricity, float64 SemiMajorAxis);
+
 /**
  * @brief 开普勒方程
  * @param Eccentricity 离心率
@@ -435,7 +440,9 @@ float64 GetSemiLatusRectumFromPericenterDist(float64 Eccentricity, float64 Peric
 
 Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly);
 
-float64 PeriodToAngularVelocity(float64 Period);
+Angle PeriodToAngularVelocity(float64 Period);
+
+Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDist, float64 GravParam);
 
 _ORBIT_END
 _CSE_END

@@ -1,29 +1,42 @@
 /**
  * @author: StellarDX Astronomy
  *
- * @brief: 天体轨道跟踪器，根据轨道六根数计算卫星的实时位置和速度
+ * @brief: 天体轨道跟踪器，根据轨道六根数计算物体的实时位置和速度
  *         使用的参数如下：
- *         轨道长半径(a)：卫星轨道的半径，表示卫星到中心的平均距离。
- *         轨道离心率(e)：卫星轨道的离心率，表示轨道的椭圆程度。
- *         轨道倾角(i)：卫星轨道与赤道面的夹角。
- *         升交点赤经(Ω)：卫星升交点在赤道面上的投影(位置)。
- *         近地点幅角(ω)：卫星近地点(最近点)的投影(位置)。
- *         平近点角(M)：卫星在升交点处的当地平交角。
+ *         近地点距离(P)：物体距离中心最近时的距离。
+ *         （至于为何不用半长轴，是因为当轨道为抛物线时半长轴恒为inf）
+ *         轨道离心率(e)：物体轨道的离心率，表示轨道的椭圆程度。
+ *         轨道倾角(i)：物体轨道与赤道面的夹角。
+ *         升交点赤经(Ω)：物体升交点在赤道面上的投影(位置)。
+ *         近地点幅角(ω)：物体近地点(最近点)的投影(位置)。
+ *         平近点角(M)：物体在升交点处的当地平交角。
  *
  *    编码过程简述：
- *      1.先计算当前状态下卫星的平均角速度，用于后续计算当前时刻下卫星的
- *        平近点角。具体可以解万有引力方程得到：G * ((M * m) / R^2) = m * R * ω^2 [a]
- *        其中G为万有引力常数，M为中心天体质量，m为卫星质量，R为两个天体
- *        之间的距离，ω为卫星的角速度。化简以后可以得到如下两个式：
- *        角速度与周期的转换：ω = 360 / T (T为周期) [b]
- *        联立[a]和[b]，得：ω = sqrt((G * M) / R^3)
- *        (注：这个数据只是在没有任何干扰的情况下得到的，实际上一个卫星
- *        的轨道可能会受到其他卫星的影响而发生变化)
+ *      1.先计算当前状态下物体的平均角速度，用于后续计算当前时刻下物体的
+ *        平近点角。具体可以解万有引力方程得到：
+ *          G * ((M * m) / R^2) = m * R * ω^2 [a]
+ *        其中G为万有引力常数，M为中心天体质量，m为物体质量，R为两个天体
+ *        之间的距离，ω为物体的角速度。化简以后可以得到如下两个式：
+ *        角速度与周期的转换：
+ *          ω = 360 / T (T为周期) [b]
+ *        联立[a]和[b]，得：
+ *          ω = sqrt((G * M) / R^3)
+ *        其中椭圆和双曲线轨道中R = a，抛物线轨道中R = p
+ *        (注：这个数据只是在没有任何干扰的情况下得到的，实际上一个物体
+ *        的轨道可能会受到其他物体的影响而发生变化)
  *      2.轨道六根数中唯一一个随时间变化的量是平近点角(M)，但是真正确定
- *        卫星位置需要用到真近点角，所以此处需要进行一些转换，公式如下： [1]
- *        平近点角计算偏近点角(E)：E = M + e * sin(E)  [c] (此方程由开普勒第二定律得到)
- *        偏近点角计算真近点角(φ)：φ = arctan((sqrt(1 - e^2) * sin(E)) / (cos(E) - e))  [d]
- *        很显然，式[c]无法直接得到精确解，此处使用牛顿迭代以获取近似值。
+ *        物体位置需要用到真近点角，所以此处需要进行一些转换，公式如下：
+ *        [1][3][4]
+ *        平近点角计算偏近点角(E)：
+ *          M = E - e * sin(E)          (椭圆轨道) [c1]
+ *          M = (1/2) * E + (1/6) * E^3 (抛物线轨道) [c2]
+ *          M = e * sinh(E) - E         (双曲线轨道) [c3]
+ *        偏近点角计算真近点角(φ)：
+ *          φ = arctan((sqrt(1 - e^2) * sin(E)) / (cos(E) - e))   (椭圆轨道) [d1]
+ *          φ = 2 * arctan(E)                                     (抛物线轨道) [d2]
+ *          φ = 2 * arctan(sqrt((e + 1) / (e - 1)) * tanh(E / 2)) (双曲线轨道) [d3]
+ *        很显然，式[c1]和式[c3]无法直接得到精确解，此处使用数值算法以
+ *        获取近似值。
  *      3.按照@蓝羽提出的模型[2]，轨道坐标系经过三次方向余弦矩阵变换即
  *        可变为中心天体惯性系。代入剩下的根数即可得到位置与速度。
  *
@@ -33,8 +46,10 @@
  *          DOI:10.16207/j.cnki.1009-4490.2015.04.015.
  *      [2] 轨道六根数 - 卫星百科(灰机Wiki)
  *          https://sat.huijiwiki.com/wiki/%E8%BD%A8%E9%81%93%E5%85%AD%E6%A0%B9%E6%95%B0
- *
- * @version:
+ *      [3] 开普勒方程 - 卫星百科(灰机Wiki)
+ *          https://sat.huijiwiki.com/wiki/%E5%BC%80%E6%99%AE%E5%8B%92%E6%96%B9%E7%A8%8B
+ *      [4] 偏近点角 - 卫星百科(灰机Wiki)
+ *          https://sat.huijiwiki.com/wiki/%E5%81%8F%E8%BF%91%E7%82%B9%E8%A7%92
  */
 
 /*
@@ -72,14 +87,14 @@ KeplerianSatelliteTracker::BaseType KeplerianSatelliteTracker::CheckParams(const
     }
     if (ReturnElems.Eccentricity >= 1)
     {
-        //throw std::logic_error("Runaway objects tracking is not supported.");
         ReturnElems.Period = __Float64::FromBytes(POS_INF_DOUBLE);
+        if (IS_NO_DATA_DBL(ReturnElems.PericenterDist) || IS_NO_DATA_DBL(ReturnElems.GravParam))
+        {
+            std::logic_error("Pericenter distance and Gravity parameter is required for runaway objects");
+        }
     }
-    if (ReturnElems.Eccentricity >= 1
-        && (IS_NO_DATA_DBL(ReturnElems.PericenterDist) || IS_NO_DATA_DBL(ReturnElems.GravParam)))
-    {
-        std::logic_error("Pericenter distance and Gravity parameter is required for runaway objects");
-    }
+    AngularVelocity = PericenterDistToAngularVelocity(
+        ReturnElems.Eccentricity, ReturnElems.PericenterDist, ReturnElems.GravParam);
     if (IS_NO_DATA_DBL(ReturnElems.Inclination)) {ReturnElems.Inclination = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.AscendingNode)) {ReturnElems.AscendingNode = 0;}
     if (IS_NO_DATA_DBL(ReturnElems.ArgOfPericenter)) {ReturnElems.ArgOfPericenter = 0;}
@@ -93,7 +108,6 @@ KeplerianSatelliteTracker::KeplerianSatelliteTracker(const BaseType& InitElems)
     auto IElems = CheckParams(InitElems);
     InitialState = IElems;
     CurrentState = IElems;
-    AngularVelocity = PeriodToAngularVelocity(IElems.Period);
 }
 
 KeplerianSatelliteTracker::KeplerianSatelliteTracker(const OrbitStateVectors &InitState)
@@ -103,65 +117,78 @@ KeplerianSatelliteTracker::KeplerianSatelliteTracker(const OrbitStateVectors &In
 
 void KeplerianSatelliteTracker::AddMsecs(int64 Ms)
 {
-
+    SetDate(CurrentState.Epoch + Ms / (1000.0 * SynodicDay));
 }
 
 void KeplerianSatelliteTracker::AddSeconds(int64 Sec)
 {
-
+    SetDate(CurrentState.Epoch + Sec / SynodicDay);
 }
 
 void KeplerianSatelliteTracker::AddHours(int64 Hrs)
 {
-
+    SetDate(CurrentState.Epoch + Hrs * (3600.0 / SynodicDay));
 }
 
 void KeplerianSatelliteTracker::AddDays(int64 Days)
 {
-
+    SetDate(CurrentState.Epoch + Days);
 }
 
 void KeplerianSatelliteTracker::AddYears(int64 Years)
 {
-
+    CSEDateTime CurrentDateTime = JDToDateTime(CurrentState.Epoch);
+    CurrentDateTime.AddYears(Years);
+    float64 NewJD;
+    GetJDFromDate(&NewJD,
+        CurrentDateTime.date().year(), CurrentDateTime.date().month(), CurrentDateTime.date().day(),
+        CurrentDateTime.time().hour(), CurrentDateTime.time().minute(),
+        CurrentDateTime.time().second() + CurrentDateTime.time().msec() / 1000.0);
+    SetDate(CurrentDateTime);
 }
 
 void KeplerianSatelliteTracker::AddCenturies(int64 Centuries)
 {
-
+    AddYears(100 * Centuries);
 }
 
 void KeplerianSatelliteTracker::ToCurrentDate()
 {
-
+    SetDate(GetJDFromSystem());
 }
 
 void KeplerianSatelliteTracker::SetDate(CSEDateTime DateTime)
 {
-
+    float64 JD;
+    GetJDFromDate(&JD,
+        DateTime.date().year(), DateTime.date().month(), DateTime.date().day(),
+        DateTime.time().hour(), DateTime.time().minute(),
+        DateTime.time().second() + DateTime.time().msec() / 1000.0);
+    SetDate(JD);
 }
 
 void KeplerianSatelliteTracker::SetDate(float64 JD)
 {
-
+    CurrentState.Epoch = JD;
+    float64 TimeDiff = (JD - InitialState.Epoch) * SynodicDay;
+    float64 MDeg = InitialState.MeanAnomaly.ToDegrees();
+    float64 MPass = AngularVelocity.ToDegrees() * TimeDiff;
+    CurrentState.MeanAnomaly = Angle::FromDegrees(MDeg + MPass);
 }
 
-void KeplerianSatelliteTracker::Move(Angle Offset)
+void KeplerianSatelliteTracker::Move(Angle MeanAnomalyOffset)
 {
     float64 MDeg = CurrentState.MeanAnomaly.ToDegrees();
-    float64 ODeg = Offset.ToDegrees();
+    float64 ODeg = MeanAnomalyOffset.ToDegrees();
     CurrentState.MeanAnomaly = Angle::FromDegrees(MDeg + ODeg);
     //TruncateTo360(CurrentState.MeanAnomaly);
-    if (CurrentState.Eccentricity < 1)
-    {
-        CurrentState.Epoch +=
-            (CurrentState.Period * (ODeg / 360.0)) / SynodicDay;
-    }
+    float64 TimePass = ODeg / AngularVelocity.ToDegrees();
+    CurrentState.Epoch += TimePass / SynodicDay;
 }
 
 void KeplerianSatelliteTracker::Reset()
 {
-
+    CurrentState = InitialState;
 }
 
 KeplerianOrbitElems KeplerianSatelliteTracker::KeplerianElems() const
@@ -235,7 +262,7 @@ OrbitStateVectors KeplerianSatelliteTracker::StateVectors(mat3 AxisMapper)const
         SinAscNode * CosArgOfLatPEMCosArgOfPeri * CosInclination,
         -SinAscNode * SinArgOfLatPEMSinArgOfPeri +
         CosAscNode * CosArgOfLatPEMCosArgOfPeri * CosInclination,
-        CosArgOfLatPEMCosArgOfPeri * CosInclination)})[0];
+        CosArgOfLatPEMCosArgOfPeri * SinInclination)})[0];
 
     return
     {

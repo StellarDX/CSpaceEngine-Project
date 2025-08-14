@@ -486,7 +486,7 @@ Angle __SDGH_Equacion_Inversa_de_Keplerh::Run(Angle MeanAnomaly, uint64* NumberO
     {
         if (NumberOfIters) {*NumberOfIters = 0;}
         if (Residual) {*Residual = c[0];}
-        return u;
+        return Angle::FromRadians(u);
     }
 
     uint64 MaxIter = floor(pow(10, MaxIterations));

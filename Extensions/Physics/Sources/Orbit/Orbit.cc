@@ -147,6 +147,11 @@ float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 Pericen
     return PericenterDist / (1 - Eccentricity);
 }
 
+float64 GetPericenterDistFromSemiMajorAxis(float64 Eccentricity, float64 SemiMajorAxis)
+{
+    return abs(SemiMajorAxis - SemiMajorAxis * Eccentricity);
+}
+
 Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
 {
     if (Eccentricity == 0) {return EccentricAnomaly;}
@@ -243,9 +248,25 @@ Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly)
     return Angle::FromDegrees(ArgOfPericen.ToDegrees() + Anomaly.ToDegrees());
 }
 
-float64 PeriodToAngularVelocity(float64 Period)
+Angle PeriodToAngularVelocity(float64 Period)
 {
-    return 360. / Period;
+    return Angle::FromDegrees(360. / Period);
+}
+
+Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDist, float64 GravParam)
+{
+    float64 A;
+    if (Eccentricity == 1)
+    {
+        A = GetSemiLatusRectumFromPericenterDist(1, PericenterDist);
+    }
+    else
+    {
+        A = GetSemiMajorAxisFromPericenterDist(Eccentricity, PericenterDist);
+    }
+    A = abs(A);
+    float64 A3 = A * A * A;
+    return Angle::FromRadians(sqrt(GravParam / A3));
 }
 
 _ORBIT_END
