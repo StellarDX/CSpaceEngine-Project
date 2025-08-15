@@ -151,9 +151,10 @@ public:
         = {1, 0, 0, 0, 0, 1, 0, -1, 0});
 };
 
-bool KeplerCompute(KeplerianOrbitElems& InitElems);
-
-void TruncateTo360(Angle& Ang);
+class EquinoctialSatelliteTracker : public SatelliteTracker
+{
+    // TODO...
+};
 
 // ---------------------------------------- 开普勒方程 ---------------------------------------- //
 
@@ -401,48 +402,16 @@ _KE_END
 
 // ---------------------------------------------------------------------------------------------
 
+bool KeplerCompute(KeplerianOrbitElems& InitElems);
 float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 PericenterDist);
-
 float64 GetPericenterDistFromSemiMajorAxis(float64 Eccentricity, float64 SemiMajorAxis);
-
-/**
- * @brief 开普勒方程
- * @param Eccentricity 离心率
- * @param EccentricAnomaly 偏近点角
- * @return 平近点角
- */
 Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly);
-
-/**
- * @brief 开普勒方程的反函数
- * @param Eccentricity 离心率
- * @param MeanAnomaly 平近点角
- * @return 偏近点角
- */
 Angle InverseKeplerianEquation(float64 Eccentricity, Angle MeanAnomaly);
-
-/**
- * @brief 从偏近点角计算真近点角
- * @param Eccentricity 离心率
- * @param EccentricAnomaly 偏近点角
- * @return 真近点角
- */
 Angle GetTrueAnomalyFromEccentricAnomaly(float64 Eccentricity, Angle EccentricAnomaly);
-
-/**
- * @brief 从真近点角计算偏近点角
- * @param Eccentricity 离心率
- * @param EccentricAnomaly 真近点角
- * @return 偏近点角
- */
 Angle GetEccentricAnomalyFromTrueAnomaly(float64 Eccentricity, Angle TrueAnomaly);
-
 float64 GetSemiLatusRectumFromPericenterDist(float64 Eccentricity, float64 PericenterDist);
-
 Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly);
-
 Angle PeriodToAngularVelocity(float64 Period);
-
 Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDist, float64 GravParam);
 
 _ORBIT_END

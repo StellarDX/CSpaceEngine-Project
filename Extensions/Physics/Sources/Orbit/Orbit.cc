@@ -35,6 +35,43 @@ KeplerianOrbitElems::operator Object::OrbitParams()
     };
 }
 
+// ---------------------------------------- 开普勒方程 ---------------------------------------- //
+
+_KE_BEGIN
+
+Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
+{
+    if (Eccentricity >= 1)
+    {
+        throw std::logic_error("This function is only adapt for elliptical orbit.");
+    }
+    float64 EARadians = EccentricAnomaly.ToRadians();
+    return Angle::FromRadians
+        (EARadians - Eccentricity * sin(EccentricAnomaly)).ToDegrees();
+}
+
+Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly)
+{
+    float64 EARadians = EccentricAnomaly.ToRadians();
+    return Angle::FromRadians
+        (EARadians / 2. + EARadians * EARadians * EARadians / 6.);
+}
+
+Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
+{
+    if (Eccentricity <= 1)
+    {
+        throw std::logic_error("This function is only adapt for hyperbolic orbit.");
+    }
+    float64 EARadians = EccentricAnomaly.ToRadians();
+    return Angle::FromRadians
+        (Eccentricity * sinh(EARadians) - EARadians).ToDegrees();
+}
+
+_KE_END
+
+// ---------------------------------------------------------------------------------------------
+
 bool KeplerCompute(KeplerianOrbitElems& InitElems)
 {
     // 检查三个关键参数中有几个已提供
@@ -96,51 +133,6 @@ bool KeplerCompute(KeplerianOrbitElems& InitElems)
 
     return true;
 }
-
-void TruncateTo360(Angle& Ang)
-{
-    float64 ADeg = Ang.ToDegrees();
-    if (abs(ADeg) > 360) {ADeg = mod(ADeg, 360);}
-    if (ADeg < 0) {ADeg += 360;}
-    Ang = Angle::FromDegrees(ADeg);
-}
-
-// ---------------------------------------- 开普勒方程 ---------------------------------------- //
-
-_KE_BEGIN
-
-Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
-{
-    if (Eccentricity >= 1)
-    {
-        throw std::logic_error("This function is only adapt for elliptical orbit.");
-    }
-    float64 EARadians = EccentricAnomaly.ToRadians();
-    return Angle::FromRadians
-        (EARadians - Eccentricity * sin(EccentricAnomaly)).ToDegrees();
-}
-
-Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly)
-{
-    float64 EARadians = EccentricAnomaly.ToRadians();
-    return Angle::FromRadians
-        (EARadians / 2. + EARadians * EARadians * EARadians / 6.);
-}
-
-Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
-{
-    if (Eccentricity <= 1)
-    {
-        throw std::logic_error("This function is only adapt for hyperbolic orbit.");
-    }
-    float64 EARadians = EccentricAnomaly.ToRadians();
-    return Angle::FromRadians
-        (Eccentricity * sinh(EARadians) - EARadians).ToDegrees();
-}
-
-_KE_END
-
-// ---------------------------------------------------------------------------------------------
 
 float64 GetSemiMajorAxisFromPericenterDist(float64 Eccentricity, float64 PericenterDist)
 {
