@@ -146,8 +146,9 @@ public:
     OrbitStateVectors StateVectors(mat3 AxisMapper
         = {1, 0, 0, 0, 0, -1, 0, 1, 0})const override;
 
-    // static KeplerianOrbitElems StateVectorstoKeplerianElements
-    //     (OrbitStateVectors State);
+    static KeplerianOrbitElems StateVectorstoKeplerianElements
+        (OrbitStateVectors State, mat3 AxisMapper
+        = {1, 0, 0, 0, 0, 1, 0, -1, 0});
 };
 
 bool KeplerCompute(KeplerianOrbitElems& InitElems);

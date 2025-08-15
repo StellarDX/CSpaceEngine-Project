@@ -111,7 +111,7 @@ _KE_BEGIN
 
 Angle __Elliptical_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
 {
-    if (Eccentricity >= 0)
+    if (Eccentricity >= 1)
     {
         throw std::logic_error("This function is only adapt for elliptical orbit.");
     }
@@ -129,7 +129,7 @@ Angle __Parabolic_Keplerian_Equation(Angle EccentricAnomaly)
 
 Angle __Hyperbolic_Keplerian_Equation(float64 Eccentricity, Angle EccentricAnomaly)
 {
-    if (Eccentricity <= 0)
+    if (Eccentricity <= 1)
     {
         throw std::logic_error("This function is only adapt for hyperbolic orbit.");
     }
@@ -157,7 +157,7 @@ Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
     if (Eccentricity == 0) {return EccentricAnomaly;}
     else if (Eccentricity < 1)
     {
-        return _KE __Elliptical_Keplerian_Equation(EccentricAnomaly, Eccentricity);
+        return _KE __Elliptical_Keplerian_Equation(Eccentricity, EccentricAnomaly);
     }
     else if (Eccentricity == 1)
     {
@@ -165,7 +165,7 @@ Angle KeplerianEquation(float64 Eccentricity, Angle EccentricAnomaly)
     }
     else
     {
-        return _KE __Hyperbolic_Keplerian_Equation(EccentricAnomaly, Eccentricity);
+        return _KE __Hyperbolic_Keplerian_Equation(Eccentricity, EccentricAnomaly);
     }
 }
 

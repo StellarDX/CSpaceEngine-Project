@@ -110,9 +110,11 @@ KeplerianSatelliteTracker::KeplerianSatelliteTracker(const BaseType& InitElems)
     CurrentState = IElems;
 }
 
-KeplerianSatelliteTracker::KeplerianSatelliteTracker(const OrbitStateVectors &InitState)
+KeplerianSatelliteTracker::KeplerianSatelliteTracker(const OrbitStateVectors& InitState)
 {
-
+    auto IElems = StateVectorstoKeplerianElements(InitState);
+    InitialState = IElems;
+    CurrentState = IElems;
 }
 
 void KeplerianSatelliteTracker::AddMsecs(int64 Ms)
@@ -274,5 +276,107 @@ OrbitStateVectors KeplerianSatelliteTracker::StateVectors(mat3 AxisMapper)const
     };
 }
 
+KeplerianOrbitElems KeplerianSatelliteTracker::StateVectorstoKeplerianElements(OrbitStateVectors State, mat3 AxisMapper)
+{
+    KeplerianOrbitElems Result;
+    Result.RefPlane = State.RefPlane;
+    Result.Epoch = State.Time;
+    Result.GravParam = State.GravParam;
+
+    State.Position = (AxisMapper * matrix<1, 3>{State.Position})[0];
+    State.Velocity = (AxisMapper * matrix<1, 3>{State.Velocity})[0];
+
+    float64 LPosition = linalg::EuclideanNorm(State.Position);
+    float64 LVelocity = linalg::EuclideanNorm(State.Velocity);
+    float64 SemiMajorAxis = 1. /
+        (2. / LPosition - LVelocity * LVelocity / State.GravParam);
+    bool IsParabolic = isinf(SemiMajorAxis);
+
+    vec3 AngularMomentum =
+        linalg::cross(State.Position, State.Velocity);
+    float64 LAngularMomentum =
+        linalg::EuclideanNorm(AngularMomentum);
+    vec3 EccentricityVector =
+        (linalg::cross(State.Velocity, AngularMomentum) -
+         (State.GravParam * State.Position) / LPosition) /
+        State.GravParam;
+
+    if (IsParabolic)
+    {
+        Result.Eccentricity = 1;
+        float64 SemiLatusRectum =
+            LAngularMomentum * LAngularMomentum / State.GravParam;
+        Result.PericenterDist = SemiLatusRectum / 2.;
+        Result.Period = __Float64::FromBytes(POS_INF_DOUBLE);
+    }
+    else
+    {
+        Result.Eccentricity =
+            linalg::EuclideanNorm(EccentricityVector);
+        Result.PericenterDist = GetPericenterDistFromSemiMajorAxis(
+            Result.Eccentricity, SemiMajorAxis);
+        if (SemiMajorAxis > 0) {KeplerCompute(Result);}
+        else {Result.Period = __Float64::FromBytes(POS_INF_DOUBLE);}
+    }
+
+    Result.Inclination = arccos(
+        linalg::dot(vec3(0, 0, 1), AngularMomentum) / LAngularMomentum);
+
+    vec3 AscendingLine = linalg::cross(vec3(0, 0, 1), AngularMomentum);
+    float64 LAscendingLine = linalg::EuclideanNorm(AscendingLine);
+    float64 AscNodeDegrees = arccos(
+        linalg::dot(vec3(1, 0, 0), AscendingLine) / LAscendingLine)
+        .ToDegrees();
+    if (linalg::dot(vec3(0, 1, 0), AscendingLine) < 0)
+    {
+        // 若dot(y, n) > 0，即升交线与y轴交角为锐角，则Ω < 180
+        AscNodeDegrees = 360 - AscNodeDegrees;
+    }
+    Result.AscendingNode = Angle::FromDegrees(AscNodeDegrees);
+
+    if (Result.Eccentricity == 0)
+    {
+        Result.ArgOfPericenter = 0;
+
+        float64 MeanAnomalyDeg = arccos(
+            linalg::dot(AscendingLine, State.Position) /
+            (LAscendingLine * LPosition)).ToDegrees();
+        if (linalg::dot(State.Position, vec3(0, 0, 1)) < 0)
+        {
+            // 如果dot(r, z) > 0，即物体在赤道面上方，则M < 180。
+            MeanAnomalyDeg = 360 - MeanAnomalyDeg;
+        }
+        Result.MeanAnomaly = Angle::FromDegrees(MeanAnomalyDeg);
+    }
+    else
+    {
+        float64 ArgOfPeriDegrees = arccos(
+            linalg::dot(AscendingLine, EccentricityVector) /
+            (LAscendingLine * Result.Eccentricity)).ToDegrees();
+        if (linalg::dot(vec3(0, 0, 1), EccentricityVector) < 0)
+        {
+            // 如果dot(z, e) > 0，即离心率向量与z轴正半轴夹角为锐角，那么ω < 180
+            ArgOfPeriDegrees = 360 - ArgOfPeriDegrees;
+        }
+        Result.ArgOfPericenter = Angle::FromDegrees(ArgOfPeriDegrees);
+
+        float64 TrueAnomalyDegrees = arccos(
+            linalg::dot(EccentricityVector, State.Position) /
+            (Result.Eccentricity * LPosition)).ToDegrees();
+        if (linalg::dot(State.Position, State.Velocity) < 0)
+        {
+            // 如果dot(r, v) > 0，即位置与速度之间夹角为锐角，则φ < 180
+            TrueAnomalyDegrees = 360 - TrueAnomalyDegrees;
+        }
+        Angle TrueAnomaly = Angle::FromDegrees(TrueAnomalyDegrees);
+        Angle EccentricAnomaly =
+            GetEccentricAnomalyFromTrueAnomaly(
+            Result.Eccentricity, TrueAnomaly);
+        Result.MeanAnomaly = KeplerianEquation(
+            Result.Eccentricity, EccentricAnomaly);
+    }
+
+    return Result;
+}
 _ORBIT_END
 _CSE_END
