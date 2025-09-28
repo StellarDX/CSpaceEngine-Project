@@ -83,6 +83,14 @@ struct OrbitStateVectors
     vec3      Velocity        = vec3(_NoDataDbl); // Velocity in m/s (m/day in SE)
 };
 
+// 地心惯性系映射CSE直角坐标用的矩阵
+// 一般，x轴为天体赤道与黄道交线，指向春分点；z轴由中心天体中心指向北极；y轴根据右手定则确定。
+static const mat3 ECIFrameToCSECoord = {1, 0, 0, 0, 0, -1, 0, 1, 0};
+
+// CSE直角坐标映射地心惯性系用的矩阵
+// CSE直角坐标的X轴为春分线，Y轴指向北极，Z轴按右手定则确定。
+static const mat3 CSECoordToECIFrame = {1, 0, 0, 0, 0, 1, 0, -1, 0};
+
 /****************************************************************************************\
 *                                         基本元素                                        *
 \****************************************************************************************/
@@ -143,12 +151,11 @@ public:
 
     KeplerianOrbitElems KeplerianElems()const override;
     EquinoctialOrbitElems EquinoctialElems()const override;
-    OrbitStateVectors StateVectors(mat3 AxisMapper
-        = {1, 0, 0, 0, 0, -1, 0, 1, 0})const override;
+    OrbitStateVectors StateVectors
+        (mat3 AxisMapper = ECIFrameToCSECoord)const override;
 
     static KeplerianOrbitElems StateVectorstoKeplerianElements
-        (OrbitStateVectors State, mat3 AxisMapper
-        = {1, 0, 0, 0, 0, 1, 0, -1, 0});
+        (OrbitStateVectors State, mat3 AxisMapper = CSECoordToECIFrame);
 };
 
 class EquinoctialSatelliteTracker : public SatelliteTracker
@@ -413,6 +420,93 @@ float64 GetSemiLatusRectumFromPericenterDist(float64 Eccentricity, float64 Peric
 Angle GetArgOfLatitude(Angle ArgOfPericen, Angle Anomaly);
 Angle PeriodToAngularVelocity(float64 Period);
 Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDist, float64 GravParam);
+
+
+/****************************************************************************************\
+*                                         两行根数                                        *
+\****************************************************************************************/
+
+struct SpacecraftBasicData
+{
+    uint32_t     CatalogNumber;
+    ustring      Classification;
+
+    struct COSPAR_ID
+    {
+        int32_t  LaunchYear;
+        uint32_t LaunchNumber;
+        ustring  LaunchPiece;
+    }IntDesignator;
+
+    float64      D1MeanMotion;
+    float64      D2MeanMotion;
+    float64      BSTAR;
+    uint32_t     EphemerisType;
+    uint32_t     ElementSet;
+    uint32_t     RevolutionNum;
+};
+
+class TLE
+{
+public:
+    static const auto TitleLength      = 24; // 一个24个字符的名称（与NORAD SATCAT中的名称长度一致）
+    static const auto DataLength       = 69; // 第1行和第2行是标准的双线轨道元素集格式，与NORAD和NASA使用的格式相同
+
+    static const auto L1LineNumber     = 0;
+    static const auto L1CatalogNumber  = 2;
+    static const auto L1Classification = 7;
+    static const auto L1COSPARIDYD     = 9;
+    static const auto L1COSPARIDP      = 14;
+    static const auto L1Epoch          = 18;
+    static const auto L1D1MeanMotion   = 33;
+    static const auto L1D2MeanMotionM  = 44;
+    static const auto L1D2MeanMotionE  = 51;
+    static const auto L1BSTARM         = 53;
+    static const auto L1BSTARE         = 59;
+    static const auto L1EphemerisType  = 62;
+    static const auto L1ElemSetChkSum  = 64;
+
+    static const auto L2LineNumber     = 0;
+    static const auto L2CatalogNumber  = 2;
+    static const auto L2Inclination    = 8;
+    static const auto L2AscendingNode  = 17;
+    static const auto L2Eccentricity   = 26;
+    static const auto L2ArgOfPericen   = 34;
+    static const auto L2MeanAnomaly    = 43;
+    static const auto L2MeanMotionI    = 52;
+    static const auto L2MeanMotionF    = 55;
+    static const auto L2RevoChkSum     = 63;
+
+    enum SatelliteClassification : char
+    {
+        Unclassified = 'U',
+        Classified   = 'C',
+        Secret       = 'S'
+    };
+
+protected:
+    char Title[TitleLength + 1]; // 防御性，因为C语言中字符串必须以\0结尾，
+    char Line1[DataLength + 1];  // 而且format格式化输出会自动忽略最后一个字符。
+    char Line2[DataLength + 1];
+
+public:
+    TLE() {}
+    TLE(char const* Name, char const* L1, char const* L2);
+    TLE(char const* const* Data) : TLE(Data[0], Data[1], Data[2]) {}
+
+    bool IsValid()const;
+
+    void Get(void* Title, void* L1, void* L2)const;
+
+    ustring SatelliteName()const;
+    SpacecraftBasicData BasicData()const;
+    KeplerianOrbitElems OrbitElems()const;
+
+    std::string ToString(char Delim = '\n')const;
+    static TLE FromString(char const* Data, char Delim = '\n');
+}__declspec(packed);
+
+
 
 _ORBIT_END
 _CSE_END
