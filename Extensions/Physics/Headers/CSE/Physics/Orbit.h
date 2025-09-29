@@ -428,25 +428,25 @@ Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDi
 
 struct SpacecraftBasicData
 {
-    uint32_t     CatalogNumber;
-    ustring      Classification;
+    uint32_t     CatalogNumber;  // Satellite catalog number
+    char         Classification; // Classification (U: unclassified, C: classified, S: secret)
 
     struct COSPAR_ID
     {
-        int32_t  LaunchYear;
-        uint32_t LaunchNumber;
-        ustring  LaunchPiece;
+        int32_t  LaunchYear;     // last two digits of launch year
+        uint32_t LaunchNumber;   // launch number of the year
+        char     LaunchPiece[3]; // piece of the launch
     }IntDesignator;
 
-    float64      D1MeanMotion;
-    float64      D2MeanMotion;
-    float64      BSTAR;
-    uint32_t     EphemerisType;
-    uint32_t     ElementSet;
-    uint32_t     RevolutionNum;
+    float64      D1MeanMotion;   // First derivative of mean motion; the ballistic coefficient (rev/day, per day) (Stored as deg/s in this condition)
+    float64      D2MeanMotion;   // Second derivative of mean motion (rev/day³, decimal point assumed) (Stored as deg/s^3 in this condition)
+    float64      BSTAR;          // B*, the drag term, or radiation pressure coefficient (units of 1/(Earth radius), decimal point assumed) (Stored as 1/m in this condition)
+    uint32_t     EphemerisType;  // Ephemeris type (always zero; only used in undistributed TLE data)
+    uint32_t     ElementSet;     // Element set number. Incremented when a new TLE is generated for this object.
+    uint32_t     RevolutionNum;  // Revolution number at epoch (revolutions)
 };
 
-class TLE
+class TLE // Two-line element set
 {
 public:
     static const auto TitleLength      = 24; // 一个24个字符的名称（与NORAD SATCAT中的名称长度一致）
@@ -457,14 +457,16 @@ public:
     static const auto L1Classification = 7;
     static const auto L1COSPARIDYD     = 9;
     static const auto L1COSPARIDP      = 14;
-    static const auto L1Epoch          = 18;
+    static const auto L1EpochI         = 18;
+    static const auto L1EpochF         = 24;
     static const auto L1D1MeanMotion   = 33;
     static const auto L1D2MeanMotionM  = 44;
-    static const auto L1D2MeanMotionE  = 51;
+    static const auto L1D2MeanMotionE  = 50;
     static const auto L1BSTARM         = 53;
     static const auto L1BSTARE         = 59;
     static const auto L1EphemerisType  = 62;
-    static const auto L1ElemSetChkSum  = 64;
+    static const auto L1ElementSet     = 64;
+    static const auto L1Checksum       = 68;
 
     static const auto L2LineNumber     = 0;
     static const auto L2CatalogNumber  = 2;
@@ -475,7 +477,8 @@ public:
     static const auto L2MeanAnomaly    = 43;
     static const auto L2MeanMotionI    = 52;
     static const auto L2MeanMotionF    = 55;
-    static const auto L2RevoChkSum     = 63;
+    static const auto L2Revolutions    = 63;
+    static const auto L2Checksum       = 68;
 
     enum SatelliteClassification : char
     {
@@ -490,7 +493,7 @@ protected:
     char Line2[DataLength + 1];
 
 public:
-    TLE() {}
+    TLE();
     TLE(char const* Name, char const* L1, char const* L2);
     TLE(char const* const* Data) : TLE(Data[0], Data[1], Data[2]) {}
 
@@ -504,9 +507,60 @@ public:
 
     std::string ToString(char Delim = '\n')const;
     static TLE FromString(char const* Data, char Delim = '\n');
+    static int VerifyLine(const char* Line, int Size, int Checksum);
 }__declspec(packed);
 
+/**
+ * @class OEM
+ * @brief 轨道星历消息
+ *
+ * @details
+ * @par 功能描述
+ * 实现CCSDS 502.0-B-3标准的轨道星历消息数据结构，用于高精度轨道数据存储。
+ *
+ * @par 参考文献
+ * [1] Orbit Data Messages[S/OL]. CCSDS 502.0-B-3. 2023. https://ccsds.org/wp-content/uploads/gravity_forms/5-448e85c647331d9cbaf66c096458bdd5/2025/01//502x0b3e1.pdf<br>
+ * [2] Sease B. oem[C]. Github. https://github.com/bradsease/oem<br>
+ * [3] 刘泽康. 中国空间站OEM来啦，快来和我们一起追"星"吧！[EB/OL]. (2023-09-13). https://www.cmse.gov.cn/xwzx/202309/t20230913_54312.html<br>
+ *
+ * @todo 此功能待实现
+ */
+class OEM
+{
+public:
+    using KeyType = float64; // Use julian day
 
+    struct ValueType
+    {
+        vec3 Position     = vec3(0);
+        vec3 Velocity     = vec3(0);
+        vec3 Acceleration = vec3(0);
+    };
+
+protected:
+    std::string OEMVersion;
+    CSEDateTime CreationDate;
+    std::string Originator;
+
+    std::string ObjectName;
+    std::string ObjectID;
+    std::string CenterName;
+    std::string RefFrame;
+    CSEDateTime RefFrameEpoch;
+    std::string TimeSystem;
+    CSEDateTime StartTime;
+    CSEDateTime UseableStartTime;
+    CSEDateTime UseableStopTime;
+    CSEDateTime StopTime;
+    std::string Interpolation;
+    int64       InterpolaDegrees;
+
+    std::map<KeyType, ValueType> Data;
+
+public:
+    static OEM FromString(std::string Src);
+    static OEM FromFile(std::filesystem::path Path);
+};
 
 _ORBIT_END
 _CSE_END

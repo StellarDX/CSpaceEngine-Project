@@ -117,6 +117,16 @@ _STL_DISABLE_CLANG_WARNINGS
 #include <CSE/Base/StelCXXRes/StelCXX-UniString.h>
 //#include <CSE/Base/StelCXXRes/GLM/StelCXX-GLM.hh>
 
+#define restrict __restrict__
+typedef size_t rsize_t;
+
+#ifdef CSE_OS_LINUX // most of compiler on Linux doesn't support memcpy_s
+typedef int errno_t;
+errno_t memcpy_s(void* restrict dest, rsize_t destsz,
+    const void* restrict src, rsize_t count,
+    const char* FileName = __FILE__, uint32_t LineNumber = __LINE__);
+#endif
+
 _CSE_BEGIN
 
 // CSE Type Declearations
