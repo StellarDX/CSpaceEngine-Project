@@ -487,12 +487,10 @@ public:
         Secret       = 'S'
     };
 
-protected:
     char Title[TitleLength + 1]; // 防御性，因为C语言中字符串必须以\0结尾，
     char Line1[DataLength + 1];  // 而且format格式化输出会自动忽略最后一个字符。
     char Line2[DataLength + 1];
 
-public:
     TLE();
     TLE(char const* Name, char const* L1, char const* L2);
     TLE(char const* const* Data) : TLE(Data[0], Data[1], Data[2]) {}
@@ -528,38 +526,79 @@ public:
 class OEM
 {
 public:
-    using KeyType = float64; // Use julian day
+    std::string          OEMVersion;
+    std::string          Classification;
+    CSEDateTime          CreationDate;
+    std::string          Originator;
+    std::string          MessageID;
 
     struct ValueType
     {
-        vec3 Position     = vec3(0);
-        vec3 Velocity     = vec3(0);
-        vec3 Acceleration = vec3(0);
+        struct MetadataType
+        {
+            std::string  ObjectName;
+            std::string  ObjectID;
+            std::string  CenterName;
+            std::string  RefFrame;
+            CSEDateTime  RefFrameEpoch;
+            std::string  TimeSystem;
+            CSEDateTime  StartTime;
+            CSEDateTime  UseableStartTime;
+            CSEDateTime  UseableStopTime;
+            CSEDateTime  StopTime;
+            std::string  Interpolation;
+            int64        InterpolaDegrees;
+        }MetaData;
+
+        struct EphemerisType
+        {
+            CSEDateTime  Epoch;
+            vec3         Position;
+            vec3         Velocity;
+            vec3         Acceleration;
+        };
+        std::vector<EphemerisType> Ephemeris;
+
+        struct CovarianceMatrixType
+        {
+            CSEDateTime  Epoch;
+            std::string  RefFrame;
+            matrix<6, 6> Data;
+        };
+        std::vector<CovarianceMatrixType> CovarianceMatrices;
     };
 
+    using ValueSet = std::vector<ValueType>;
+    ValueSet Data;
+
+    // 这个表存的是Interpolation字段对应的插值工具或函数，通过指针侧载调用。
+    // 值类型目前未实现，暂时上一个“能通过编译”的占位符。
+    static const std::map<std::string, void*> InterpolationTools;
+
 protected:
-    std::string OEMVersion;
-    CSEDateTime CreationDate;
-    std::string Originator;
-
-    std::string ObjectName;
-    std::string ObjectID;
-    std::string CenterName;
-    std::string RefFrame;
-    CSEDateTime RefFrameEpoch;
-    std::string TimeSystem;
-    CSEDateTime StartTime;
-    CSEDateTime UseableStartTime;
-    CSEDateTime UseableStopTime;
-    CSEDateTime StopTime;
-    std::string Interpolation;
-    int64       InterpolaDegrees;
-
-    std::map<KeyType, ValueType> Data;
+    static void Parse(std::istream& fin, ValueSet* out);
+    static bool ParseComment(std::string Line);
+    static void RemoveWhiteSpace(std::string& Line);
+    static std::pair<std::string, std::string> ParseKeyValue(std::string Line);
+    static std::vector<std::string> ParseRawData(std::string Line);
+    static ValueType::EphemerisType ParseEphemeris(std::string Line);
+    static void TransferHeader
+        (std::map<std::string, std::string> Buf, ValueSet* out);
+    static void TransferMetaData
+        (std::map<std::string, std::string> Buf, ValueSet* out);
+    static void TransferEphemeris
+        (std::vector<ValueType::EphemerisType> Buf, ValueSet* out);
+    static void TransferCovarianceMatrices
+        (std::vector<ValueType::CovarianceMatrixType> Buf, ValueSet* out);
 
 public:
-    static OEM FromString(std::string Src);
-    static OEM FromFile(std::filesystem::path Path);
+    static ValueSet FromString(std::string Src);
+    static ValueSet FromFile(std::filesystem::path Path);
+    std::string ToString()const;
+    void ToFile(std::filesystem::path Path)const;
+
+    OrbitStateVectors operator()(CSEDateTime); // TODO
+    OrbitStateVectors operator()(float64); // TODO
 };
 
 _ORBIT_END
