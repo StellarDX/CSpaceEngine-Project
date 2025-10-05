@@ -1,5 +1,8 @@
 #include "CSE/Physics/Orbit.h"
 #include <ranges>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 // Text-formating header
 #if USE_FMTLIB
@@ -12,7 +15,7 @@ using namespace fmt;
 _CSE_BEGIN
 _ORBIT_BEGIN
 
-void OEM::Parse(std::istream& fin, ValueSet* out)
+void OEM::Import(std::istream& fin, OEM* out)
 {
     using namespace std;
     /*
@@ -111,6 +114,7 @@ void OEM::Parse(std::istream& fin, ValueSet* out)
         case CovarianceMatrix:
             if (Line == "COVARIANCE_STOP")
             {
+                CovarianceMatrixBuf.push_back(CovarianceMatrixC);
                 TransferCovarianceMatrices(CovarianceMatrixBuf, out);
                 CovarianceMatrixBuf.clear();
                 State = EndOfData;
@@ -133,7 +137,20 @@ void OEM::Parse(std::istream& fin, ValueSet* out)
                         CMState = DataBlock;
                         CMDataCount = 1;
                     }
-                    else if (Line.substr(0, 5) == "EPOCH" ||
+                    break;
+                case DataBlock:
+                    if (::isupper(Line[0]))
+                    {
+                        CovarianceMatrixBuf.push_back(CovarianceMatrixC);
+                        CMState = Keywords;
+                        CMDataCount = 0;
+                    }
+                }
+
+                switch (CMState)
+                {
+                case Keywords:
+                    if (Line.substr(0, 5) == "EPOCH" ||
                         Line.substr(0, 13) == "COV_REF_FRAME")
                     {
                         auto KeyValue = ParseKeyValue(Line);
@@ -146,32 +163,26 @@ void OEM::Parse(std::istream& fin, ValueSet* out)
                         MetadataBuf.insert(KeyValue);
                     }
                     else {throw logic_error("Unexpected key.");}
+                    break;
                 case DataBlock:
-                    if (::isupper(Line[0]))
+                    if (CMDataCount > 6)
                     {
-                        CovarianceMatrixBuf.push_back(CovarianceMatrixC);
-                        CMState = Keywords;
-                        CMDataCount = 0;
+                        throw logic_error("Covariance Matrix data out of range");
                     }
-                    else
+                    auto Parts = ParseRawData(Line);
+                    if (Parts.size() != CMDataCount)
                     {
-                        if (CMDataCount > 6)
-                        {
-                            throw logic_error("Covariance Matrix data out of range");
-                        }
-                        auto Parts = ParseRawData(Line);
-                        if (Parts.size() != CMDataCount)
-                        {
-                            throw logic_error(
-                                format("Number of data in line {} must be {}",
-                                LineNumber, CMDataCount));
-                        }
-                        for (int i = 0; i < Parts.size(); ++i)
-                        {
-                            CovarianceMatrixC.Data[i][CMDataCount - 1]
-                                = stod(Parts[i]);
-                        }
+                        throw logic_error(
+                            format("Number of data in line {} must be {}",
+                            LineNumber, CMDataCount));
                     }
+                    for (int i = 0; i < Parts.size(); ++i)
+                    {
+                        CovarianceMatrixC.Data[i][CMDataCount - 1]
+                            = stod(Parts[i]);
+                    }
+                    ++CMDataCount;
+                    break;
                 }
             }
             break;
@@ -269,25 +280,220 @@ OEM::ValueType::EphemerisType OEM::ParseEphemeris(std::string Line)
         {
             .Epoch = {{Y, M, D}, {h, m, s}, float64(off)},
             .Position = vec3(std::stod(Parts[1]),
-                std::stod(Parts[2]), std::stod(Parts[3])),
+                std::stod(Parts[2]), std::stod(Parts[3])) * 1000.,
             .Velocity =  vec3(std::stod(Parts[4]),
-                std::stod(Parts[5]), std::stod(Parts[6]))
+                std::stod(Parts[5]), std::stod(Parts[6])) * 1000.
         };
     }
 
-    if (Parts.size() == 10)
+    else // if (Parts.size() == 10)
     {
         return
         {
             .Epoch = {{Y, M, D}, {h, m, s}, float64(off)},
             .Position = vec3(std::stod(Parts[1]),
-                std::stod(Parts[2]), std::stod(Parts[3])),
+                std::stod(Parts[2]), std::stod(Parts[3])) * 1000.,
             .Velocity =  vec3(std::stod(Parts[4]),
-                std::stod(Parts[5]), std::stod(Parts[6])),
+                std::stod(Parts[5]), std::stod(Parts[6])) * 1000.,
             .Acceleration =  vec3(std::stod(Parts[7]),
-                std::stod(Parts[8]), std::stod(Parts[9]))
+                std::stod(Parts[8]), std::stod(Parts[9])) * 1000.
         };
     }
+}
+
+void OEM::TransferHeader(std::map<std::string, std::string> Buf, OEM *out)
+{
+    out->OEMVersion = Buf.at("CCSDS_OEM_VERS");
+    if (Buf.contains("CLASSIFICATION")) {out->Classification = Buf.at("CLASSIFICATION");}
+    int Y, M, D, h, m, off;
+    double s;
+    GetDateTimeFromISO8601String(Buf.at("CREATION_DATE"), &Y, &M, &D, &h, &m, &s, &off);
+    out->CreationDate = {{Y, M, D}, {h, m, s}, float64(off)};
+    out->Originator = Buf.at("ORIGINATOR");
+    if (Buf.contains("MESSAGE_ID")) {out->MessageID = Buf.at("MESSAGE_ID");}
+}
+
+void OEM::TransferMetaData(std::map<std::string, std::string> Buf, OEM *out)
+{
+    OEM::ValueType NewSection;
+    NewSection.MetaData.ObjectName = Buf.at("OBJECT_NAME");
+    NewSection.MetaData.ObjectID = Buf.at("OBJECT_ID");
+    NewSection.MetaData.CenterName = Buf.at("CENTER_NAME");
+    NewSection.MetaData.RefFrame = Buf.at("REF_FRAME");
+    int Y, M, D, h, m, off;
+    double s;
+    if (Buf.contains("REF_FRAME_EPOCH"))
+    {
+        GetDateTimeFromISO8601String(Buf.at("REF_FRAME_EPOCH"), &Y, &M, &D, &h, &m, &s, &off);
+        NewSection.MetaData.RefFrameEpoch = {{Y, M, D}, {h, m, s}, float64(off)};
+    }
+    NewSection.MetaData.TimeSystem = Buf.at("TIME_SYSTEM");
+    GetDateTimeFromISO8601String(Buf.at("START_TIME"), &Y, &M, &D, &h, &m, &s, &off);
+    NewSection.MetaData.StartTime = {{Y, M, D}, {h, m, s}, float64(off)};
+    if (Buf.contains("USEABLE_START_TIME"))
+    {
+        GetDateTimeFromISO8601String(Buf.at("USEABLE_START_TIME"), &Y, &M, &D, &h, &m, &s, &off);
+        NewSection.MetaData.UseableStartTime = {{Y, M, D}, {h, m, s}, float64(off)};
+    }
+    if (Buf.contains("USEABLE_STOP_TIME"))
+    {
+        GetDateTimeFromISO8601String(Buf.at("USEABLE_STOP_TIME"), &Y, &M, &D, &h, &m, &s, &off);
+        NewSection.MetaData.UseableStopTime = {{Y, M, D}, {h, m, s}, float64(off)};
+    }
+    GetDateTimeFromISO8601String(Buf.at("STOP_TIME"), &Y, &M, &D, &h, &m, &s, &off);
+    NewSection.MetaData.StopTime = {{Y, M, D}, {h, m, s}, float64(off)};
+    if (Buf.contains("INTERPOLATION"))
+    {
+        NewSection.MetaData.Interpolation = Buf.at("INTERPOLATION");
+        NewSection.MetaData.InterpolaDegrees = stoull(Buf.at("INTERPOLATION_DEGREE"));
+    }
+    out->Data.push_back(NewSection);
+}
+
+void OEM::TransferEphemeris(std::vector<ValueType::EphemerisType> Buf, OEM *out)
+{
+    out->Data.back().Ephemeris = Buf;
+}
+
+void OEM::TransferCovarianceMatrices(std::vector<ValueType::CovarianceMatrixType> Buf, OEM *out)
+{
+    out->Data.back().CovarianceMatrices = Buf;
+}
+
+void OEM::ExportKeyValue(std::ostream& fout, std::string Key, std::string Value, bool Optional, cstring Fmt)
+{
+    using namespace std;
+    if ((!Optional) || (Optional && !Value.empty()))
+    {
+        fout << vformat(Fmt, make_format_args(Key, Value));
+        fout << '\n';
+    }
+}
+
+void OEM::ExportEphemeris(std::ostream& fout, std::vector<ValueType::EphemerisType> Eph, cstring Fmt)
+{
+    using namespace std;
+    for (const auto& i : Eph)
+    {
+        fout << vformat(Fmt, make_format_args(
+            i.Epoch.ToString(SimplifiedISO8601String).ToStdString(),
+            i.Position.x / 1000., i.Position.y / 1000., i.Position.z / 1000.,
+            i.Velocity.x / 1000., i.Velocity.y / 1000., i.Velocity.z / 1000.,
+            i.Acceleration.x / 1000., i.Acceleration.y / 1000., i.Acceleration.z / 1000.));
+        fout << '\n';
+    }
+}
+
+void OEM::ExportCovarianceMatrix(std::ostream& fout, std::vector<ValueType::CovarianceMatrixType> Mat, cstring KVFmt, cstring MatFmt)
+{
+    using namespace std;
+    fout << "COVARIANCE_START\n";
+
+    for (const auto& i : Mat)
+    {
+        ExportKeyValue(fout, "EPOCH", i.Epoch.ToString(SimplifiedISO8601String), 0, KVFmt);
+        ExportKeyValue(fout, "COV_REF_FRAME", i.RefFrame, 0, KVFmt);
+
+        for (int j = 0; j < 6; ++j)
+        {
+            for (int k = 0; k <= j; ++k)
+            {
+                if (k) {fout << ' ';}
+                fout << vformat(MatFmt, make_format_args(i.Data[k][j]));
+            }
+            fout << '\n';
+        }
+
+        fout << '\n';
+    }
+
+    fout << "COVARIANCE_STOP\n";
+}
+
+OEM OEM::FromString(std::string Src)
+{
+    OEM Result;
+    std::istringstream fin(Src);
+    Import(fin, &Result);
+    return Result;
+}
+
+OEM OEM::FromFile(std::filesystem::path Path)
+{
+    OEM Result;
+    std::ifstream fin(Path);
+    Import(fin, &Result);
+    fin.close();
+    return Result;
+}
+
+void OEM::Export(std::ostream& fout, cstring KVFmt, cstring EphFmt, cstring CMFmt)const
+{
+    // Export header
+    ExportKeyValue(fout, "CCSDS_OEM_VERS", OEMVersion, 0, KVFmt);
+    ExportKeyValue(fout, "CLASSIFICATION", Classification, 1, KVFmt);
+    ExportKeyValue(fout, "CREATION_DATE", CreationDate.ToString(SimplifiedISO8601String), 0, KVFmt);
+    ExportKeyValue(fout, "ORIGINATOR", Originator, 0, KVFmt);
+    ExportKeyValue(fout, "MESSAGE_ID", MessageID, 1, KVFmt);
+
+    fout << '\n';
+
+    for (const auto& i : Data)
+    {
+        // Export Metadata
+        fout << "META_START\n";
+        ExportKeyValue(fout, "OBJECT_NAME", i.MetaData.ObjectName, 0, KVFmt);
+        ExportKeyValue(fout, "OBJECT_ID", i.MetaData.ObjectID, 0, KVFmt);
+        ExportKeyValue(fout, "CENTER_NAME", i.MetaData.CenterName, 0, KVFmt);
+        ExportKeyValue(fout, "REF_FRAME", i.MetaData.RefFrame, 0, KVFmt);
+        if (i.MetaData.RefFrameEpoch.IsValid())
+        {
+            ExportKeyValue(fout, "REF_FRAME_EPOCH", i.MetaData.RefFrameEpoch.ToString(SimplifiedISO8601String), 1, KVFmt);
+        }
+        ExportKeyValue(fout, "TIME_SYSTEM", i.MetaData.TimeSystem, 0, KVFmt);
+        ExportKeyValue(fout, "START_TIME", i.MetaData.StartTime.ToString(SimplifiedISO8601String), 0, KVFmt);
+        if (i.MetaData.UseableStartTime.IsValid())
+        {
+            ExportKeyValue(fout, "USEABLE_START_TIME", i.MetaData.UseableStartTime.ToString(SimplifiedISO8601String), 0, KVFmt);
+        }
+        if (i.MetaData.UseableStopTime.IsValid())
+        {
+            ExportKeyValue(fout, "USEABLE_STOP_TIME", i.MetaData.UseableStopTime.ToString(SimplifiedISO8601String), 0, KVFmt);
+        }
+        ExportKeyValue(fout, "STOP_TIME", i.MetaData.StopTime.ToString(SimplifiedISO8601String), 0, KVFmt);
+        ExportKeyValue(fout, "INTERPOLATION", i.MetaData.Interpolation, 1, KVFmt);
+        if (i.MetaData.InterpolaDegrees)
+        {
+            ExportKeyValue(fout, "INTERPOLATION_DEGREE", std::to_string(i.MetaData.InterpolaDegrees), 0, KVFmt);
+        }
+        fout << "META_STOP\n";
+
+        fout << '\n';
+
+        ExportEphemeris(fout, i.Ephemeris, EphFmt);
+
+        fout << '\n';
+
+        if (!i.CovarianceMatrices.empty())
+        {
+            ExportCovarianceMatrix(fout, i.CovarianceMatrices, KVFmt, CMFmt);
+            fout << '\n';
+        }
+    }
+}
+
+std::string OEM::ToString() const
+{
+    std::ostringstream fout;
+    Export(fout);
+    return fout.str();
+}
+
+void OEM::ToFile(std::filesystem::path Path) const
+{
+    std::ofstream fout(Path);
+    Export(fout);
+    fout.close();
 }
 
 _ORBIT_END

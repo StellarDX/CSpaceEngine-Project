@@ -521,11 +521,20 @@ public:
  * [2] Sease B. oem[C]. Github. https://github.com/bradsease/oem<br>
  * [3] 刘泽康. 中国空间站OEM来啦，快来和我们一起追"星"吧！[EB/OL]. (2023-09-13). https://www.cmse.gov.cn/xwzx/202309/t20230913_54312.html<br>
  *
- * @todo 此功能待实现
+ * @todo 目前只支持导入和导出，完整功能待实现
  */
 class OEM
 {
 public:
+    constexpr static const cstring KeyValueFmtString = "{} = {}";
+    constexpr static const cstring SimplifiedISO8601String =
+        "{}-{:02}-{:02}T{:02}:{:02}:{:02}.{:03}";
+    constexpr static const cstring EphemerisFmtString =
+        "{} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g}";
+    constexpr static const cstring EphemerisFmtStringWithAccel =
+        "{} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g} {:.13g}";
+    constexpr static const cstring CovarianceMatFmtString = "{:.8g}";
+
     std::string          OEMVersion;
     std::string          Classification;
     CSEDateTime          CreationDate;
@@ -547,7 +556,7 @@ public:
             CSEDateTime  UseableStopTime;
             CSEDateTime  StopTime;
             std::string  Interpolation;
-            int64        InterpolaDegrees;
+            uint64       InterpolaDegrees = 0;
         }MetaData;
 
         struct EphemerisType
@@ -576,24 +585,37 @@ public:
     static const std::map<std::string, void*> InterpolationTools;
 
 protected:
-    static void Parse(std::istream& fin, ValueSet* out);
     static bool ParseComment(std::string Line);
     static void RemoveWhiteSpace(std::string& Line);
     static std::pair<std::string, std::string> ParseKeyValue(std::string Line);
     static std::vector<std::string> ParseRawData(std::string Line);
     static ValueType::EphemerisType ParseEphemeris(std::string Line);
     static void TransferHeader
-        (std::map<std::string, std::string> Buf, ValueSet* out);
+        (std::map<std::string, std::string> Buf, OEM* out);
     static void TransferMetaData
-        (std::map<std::string, std::string> Buf, ValueSet* out);
+        (std::map<std::string, std::string> Buf, OEM* out);
     static void TransferEphemeris
-        (std::vector<ValueType::EphemerisType> Buf, ValueSet* out);
+        (std::vector<ValueType::EphemerisType> Buf, OEM* out);
     static void TransferCovarianceMatrices
-        (std::vector<ValueType::CovarianceMatrixType> Buf, ValueSet* out);
+        (std::vector<ValueType::CovarianceMatrixType> Buf, OEM* out);
+
+    static void ExportKeyValue
+        (std::ostream& fout, std::string Key, std::string Value,
+        bool Optional = 0, cstring Fmt = KeyValueFmtString);
+    static void ExportEphemeris
+        (std::ostream& fout, std::vector<ValueType::EphemerisType> Eph,
+        cstring Fmt = EphemerisFmtString);
+    static void ExportCovarianceMatrix
+        (std::ostream& fout, std::vector<ValueType::CovarianceMatrixType> Mat,
+        cstring KVFmt = KeyValueFmtString, cstring MatFmt = CovarianceMatFmtString);
 
 public:
-    static ValueSet FromString(std::string Src);
-    static ValueSet FromFile(std::filesystem::path Path);
+    static void Import(std::istream& fin, OEM* out);
+    static OEM FromString(std::string Src);
+    static OEM FromFile(std::filesystem::path Path);
+
+    void Export(std::ostream& fout, cstring KVFmt = KeyValueFmtString,
+        cstring EphFmt = EphemerisFmtString, cstring CMFmt = CovarianceMatFmtString)const;
     std::string ToString()const;
     void ToFile(std::filesystem::path Path)const;
 
@@ -603,6 +625,11 @@ public:
 
 _ORBIT_END
 _CSE_END
+
+// 种豆南山下，草盛豆苗稀。
+// 晨兴理荒秽，带月荷锄归。
+// 道狭草木长，夕露沾我衣。
+// 衣沾不足惜，但使愿无违。
 
 #if defined _MSC_VER
 #pragma pop_macro("new")

@@ -369,12 +369,15 @@ CSEDate CSEDate::AddMonths(int nmonths)const
     M += nmonths;
     while (M <= 0)
     {
-        if (--Y) {M += 12;} // skip over year 0
+        M += 12;
+        --Y;
+        //if (--Y) {M += 12;} // skip over year 0
     }
     while (M > 12)
     {
         M -= 12;
-        if (!++Y) {++Y;} // skip over year 0
+        ++Y;
+        //if (!++Y) {++Y;} // skip over year 0
     }
 
     if (D > NumOfDaysInMonthInYear(M, Y))
