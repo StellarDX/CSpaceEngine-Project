@@ -311,7 +311,7 @@ inline auto __Str_Contain(ustring Left, ustring Right)
     return Left.find(Right) != ustring::npos;
 }
 
-inline ustringlist __Str_Split(ustring Str, ucs2_t Symb = L'/')
+inline ustringlist __Str_Split(ustring Str, wchar_t Symb = L'/')
 {
     ustringlist Toks;
     auto First = Str.find_first_not_of(Symb, 0);
@@ -505,7 +505,7 @@ inline void __Get_Value_With_Unit(gvec<float64, _Nm>* Dst, const _SC SharedTable
 }
 
 // Convert to Table Helpers
-inline ustring __Str_List_To_String(ustringlist usl, ucs2_t pun = L'/')
+inline ustring __Str_List_To_String(ustringlist usl, wchar_t pun = L'/')
 {
     ustring ustr;
     for (int i = 0; i < usl.size(); ++i)

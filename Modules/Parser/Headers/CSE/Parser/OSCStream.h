@@ -75,13 +75,13 @@ public:
     using _TyBase  = __OSC_BASE;
     using fmtflags = int;
     using outstate = int; // Preparing, Writing, ...
-    using encoder  = __StelCXX_UString_Codec&;
+    using encoder  = __stelcxx_codec_type&;
 
     __SC_Smart_Output_Base(const __SC_Smart_Output_Base&) = delete;
     __SC_Smart_Output_Base& operator=(const __SC_Smart_Output_Base&) = delete;
 
 private:
-    __StelCXX_UString_Codec_65001 _DefEncod = __StelCXX_UString_Codec_65001();
+    __stelcxx_codec(65001) _DefEncod = __stelcxx_codec(65001)();
 
     fmtflags        _Fmtfl;             // format flags
     encoder         _Encod = _DefEncod; // file encoder

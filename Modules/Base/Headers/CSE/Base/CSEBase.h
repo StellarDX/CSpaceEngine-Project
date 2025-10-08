@@ -134,7 +134,12 @@ using int64              = long long;           // int
 using float64            = double;              // real
 using uint64             = unsigned long long;  // unsigned int
 using cstring            = const char*;         // C style string
+
+#if defined(CSE_OS_WIN32)
 using ustring            = __StelCXX_UniString; // String
+#elif defined(CSE_OS_LINUX)
+using ustring            = __StelCXX_UniString_Big; // String
+#endif
 
 // Write bytes of buffer into return value with another type
 template<typename genTypeA = uint64, typename genTypeB = float64>
