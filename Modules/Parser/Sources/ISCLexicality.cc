@@ -61,15 +61,15 @@ namespace Tokens
     static const regex HexFloatRegex ("^[+-]?0[Xx](([A-Fa-f0-9]*\\.[A-Fa-f0-9]+[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+\\.[Pp][+-]?[0-9]+)|([A-Fa-f0-9]+[Pp][+-]?[0-9]+))$");
     static const regex StringRegex   ("\".*\"");
 
-    static const ucs2_t Punctuators[8] = L",()[]{}";
-    static const ucs2_t Operators[5]   = L"<=>!";
+    static const wchar_t Punctuators[8] = L",()[]{}";
+    static const wchar_t Operators[5]   = L"<=>!";
 
-    static ucs2_t const* ValidSingleOperators[2]
+    static wchar_t const* ValidSingleOperators[2]
     {
         L"<", L">"
     };
 
-    static ucs2_t const* ValidBinaryOperators[4]
+    static wchar_t const* ValidBinaryOperators[4]
     {
         L"<=", L">=", L"==", L"!="
     };
@@ -80,13 +80,13 @@ void __SE_Lexicality::AddVariable(ustringlist Variable)
     VariableList.insert(VariableList.end(), Variable.begin(), Variable.end());
 }
 
-int __SE_Lexicality::IsPunctuator(ucs2_t _C)
+int __SE_Lexicality::IsPunctuator(wchar_t _C)
 {
     return find(begin(Tokens::Punctuators), end(Tokens::Punctuators), _C)
         != end(Tokens::Punctuators);
 }
 
-int __SE_Lexicality::IsOperator(ucs2_t _C)
+int __SE_Lexicality::IsOperator(wchar_t _C)
 {
     return find(begin(Tokens::Operators), end(Tokens::Operators), _C)
         != end(Tokens::Operators);
@@ -116,7 +116,7 @@ void __SE_Lexicality::ParseOperator(ustring::const_iterator& it, const ustring::
     *Output += *it;
     if (find_if(std::begin(Tokens::ValidBinaryOperators),
         std::end(Tokens::ValidBinaryOperators),
-        [it](ucs2_t const* ch) {return ch[0] == *it;})) // If possible binary
+        [it](wchar_t const* ch) {return ch[0] == *it;})) // If possible binary
     {
         if (IsOperator(*(++it))) {*Output += *it;}
         ++(*column);
@@ -124,7 +124,7 @@ void __SE_Lexicality::ParseOperator(ustring::const_iterator& it, const ustring::
         {
             if (find_if(std::begin(Tokens::ValidBinaryOperators),
                     std::end(Tokens::ValidBinaryOperators),
-                    [Output](ucs2_t const* str)->bool{return !wcscmp(str, Output->c_str());})
+                    [Output](wchar_t const* str)->bool{return !wcscmp(str, Output->c_str());})
                 != std::end(Tokens::ValidBinaryOperators))
             {
                 ++it;
@@ -136,7 +136,7 @@ void __SE_Lexicality::ParseOperator(ustring::const_iterator& it, const ustring::
 
     if (find_if(std::begin(Tokens::ValidSingleOperators),
             std::end(Tokens::ValidSingleOperators),
-            [Output](ucs2_t const* str)->bool{return !wcscmp(str, Output->c_str());})
+            [Output](wchar_t const* str)->bool{return !wcscmp(str, Output->c_str());})
         != std::end(Tokens::ValidSingleOperators))
     {
         ++it;

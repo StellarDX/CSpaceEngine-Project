@@ -86,7 +86,7 @@ _SC_BEGIN
 #define _LOG_LEVEL_KEY "LogLevel"
 
 // This grammar table has been modified to expermental support ".se" scripts.
-const __LR_Parser_Base<ucs2_t>::GrammaTableType __SE_Grammar_Production_Table =
+const __LR_Parser_Base<wchar_t>::GrammaTableType __SE_Grammar_Production_Table =
 {
     {STX, L"S"},
     {'S', L"iTS"},
@@ -132,7 +132,7 @@ ustring __SE_General_Parser::TokenToString(TokenArrayType Tokens)
     for (auto i : Tokens)
     {
         if (i.Type == Punctuator) {Res.push_back(i.Value[0]);}
-        else {Res.push_back(ucs2_t(i.Type));}
+        else {Res.push_back(wchar_t(i.Type));}
     }
     return Res;
 }
@@ -203,7 +203,7 @@ SharedPointer<SCSTable> __SE_General_Parser::Run(TokenArrayType Tokens) noexcept
     // Initialize parsing stacks
     ustring SymbolString = TokenToString(Tokens);
     std::stack<size_t> StateStack;
-    std::stack<ucs2_t> SymbolStack;
+    std::stack<wchar_t> SymbolStack;
 
     SymbolString.push_back(ETX);
     auto CurrentPosition = SymbolString.begin();
@@ -223,7 +223,7 @@ SharedPointer<SCSTable> __SE_General_Parser::Run(TokenArrayType Tokens) noexcept
     while(!Accepted)
     {
         size_t CurrentState = StateStack.top();
-        ucs2_t CurrentSymbol;
+        wchar_t CurrentSymbol;
         if (CurrentPosition != SymbolString.end()) {CurrentSymbol = *CurrentPosition;}
         else {CurrentSymbol = ETX;}
         typename _Mybase::Actions CurrentAction;

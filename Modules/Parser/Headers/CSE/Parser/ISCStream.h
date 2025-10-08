@@ -79,8 +79,8 @@ _SC_BEGIN
 #endif
 
 // Tables
-extern const __LR_Parser_Base<ucs2_t>::GrammaTableType __SE_Grammar_Production_Table;
-extern const __LR_Parser_Base<ucs2_t>::StatesType __SE_State_Table;
+extern const __LR_Parser_Base<wchar_t>::GrammaTableType __SE_Grammar_Production_Table;
+extern const __LR_Parser_Base<wchar_t>::StatesType __SE_State_Table;
 
 // Pre-processing
 void SkipComments(ustring& Input);
@@ -95,8 +95,8 @@ public:
 
     void AddVariable(ustringlist Variable);
 
-    static int IsPunctuator(ucs2_t _C);
-    static int IsOperator(ucs2_t _C);
+    static int IsPunctuator(wchar_t _C);
+    static int IsOperator(wchar_t _C);
 
     static void ConsumeWhiteSpace(ustring::const_iterator& it, const ustring::const_iterator& end,
         uint64* line, uint64* column);
@@ -113,10 +113,10 @@ public:
 };
 
 // SC Parser
-class __SE_General_Parser : public __StelCXX_LR_Parser<ucs2_t>
+class __SE_General_Parser : public __StelCXX_LR_Parser<wchar_t>
 {
 public:
-    using _Mybase = __StelCXX_LR_Parser<ucs2_t>;
+    using _Mybase = __StelCXX_LR_Parser<wchar_t>;
 
     __SE_General_Parser() : _Mybase(__SE_Grammar_Production_Table, __SE_State_Table) {}
 
@@ -137,15 +137,15 @@ _SC_END
 class ISCStream
 {
 public:
-    __StelCXX_UString_Codec_65001 _DefDecoder = __StelCXX_UString_Codec_65001();
-    __StelCXX_UString_Codec& Decoder = _DefDecoder;
+    __stelcxx_codec(65001) _DefDecoder = __stelcxx_codec(65001)();
+    __stelcxx_codec_type& Decoder = _DefDecoder;
     ustringlist VariableList;
 
     std::istream& input;
     ISCStream(std::istream& is) : input(is){}
     ISCStream& operator=(const ISCStream& is) = delete;
 
-    void SetDecoder(__StelCXX_UString_Codec& NewDecoder) {Decoder = NewDecoder;}
+    void SetDecoder(__stelcxx_codec_type& NewDecoder) {Decoder = NewDecoder;}
 
     _SC SharedTablePointer Parse()const;
 };
