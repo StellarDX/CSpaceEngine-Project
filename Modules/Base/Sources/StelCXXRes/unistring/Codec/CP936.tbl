@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 1999-2001, 2016 Free Software Foundation, Inc.
+ * This file is part of the GNU LIBICONV Library.
+ *
+ * The GNU LIBICONV Library is free software; you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either version 2.1
+ * of the License, or (at your option) any later version.
+ *
+ * The GNU LIBICONV Library is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with the GNU LIBICONV Library; see the file COPYING.LIB.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/*
+ * CP936 extensions
+ */
+
+static const unsigned short cp936ext_2uni_pagea6[181-159] =
+{
+    /* 0xa6 */
+                                                            0xfe35,
+    0xfe36, 0xfe39, 0xfe3a, 0xfe3f, 0xfe40, 0xfe3d, 0xfe3e, 0xfe41,
+    0xfe42, 0xfe43, 0xfe44, 0xfffd, 0xfffd, 0xfe3b, 0xfe3c, 0xfe37,
+    0xfe38, 0xfe31, 0xfffd, 0xfe33, 0xfe34,
+};
+
+static const unsigned short cp936ext_2uni_pagea8[128-122] =
+{
+    /* 0xa8 */
+                    0x0251, 0xfffd, 0x0144, 0x0148, 0xfffd, 0x0261,
+};
+
+static const unsigned short cp936ext_page01[16] =
+{
+    0x0000, 0x0000, 0x0000, 0x0000, 0xa8bd, 0x0000, 0x0000, 0x0000, /*0x40-0x47*/
+    0xa8be, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, /*0x48-0x4f*/
+};
+
+static const unsigned short cp936ext_page02[24] =
+{
+    0x0000, 0xa8bb, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, /*0x50-0x57*/
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, /*0x58-0x5f*/
+    0x0000, 0xa8c0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, /*0x60-0x67*/
+};
+
+static const unsigned short cp936ext_pagefe[24] =
+{
+    0x0000, 0xa6f2, 0x0000, 0xa6f4, 0xa6f5, 0xa6e0, 0xa6e1, 0xa6f0, /*0x30-0x37*/
+    0xa6f1, 0xa6e2, 0xa6e3, 0xa6ee, 0xa6ef, 0xa6e6, 0xa6e7, 0xa6e4, /*0x38-0x3f*/
+    0xa6e5, 0xa6e8, 0xa6e9, 0xa6ea, 0xa6eb, 0x0000, 0x0000, 0x0000, /*0x40-0x47*/
+};

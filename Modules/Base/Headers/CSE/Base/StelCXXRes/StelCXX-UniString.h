@@ -469,10 +469,20 @@ std::weak_ordering operator<=>(const __StelCXX_UniString_Big& __lhs, const __Ste
 #endif
 
 _EXTERN_C
+
+struct Summary16
+{
+    unsigned short indx; // index into big table
+    unsigned short used; // bitmask of used entries
+};
+
 int __Decoder_65001_16(const char* istr, ucs2_t* ostr, size_t size);
 int __Encoder_65001_16(const ucs2_t* istr, char* ostr, size_t size);
 int __Decoder_65001_32(const char* istr, ucs4_t* ostr, size_t size);
 int __Encoder_65001_32(const ucs4_t* istr, char* ostr, size_t size);
+int __Decoder_936_32(const unsigned char* istr, ucs4_t* ostr, size_t size);
+int __Encoder_936_32(const ucs4_t* istr, unsigned char* ostr, size_t size);
+
 _END_EXTERN_C
 
 #endif

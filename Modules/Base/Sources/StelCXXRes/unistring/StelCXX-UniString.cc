@@ -70,6 +70,30 @@ std::string __StelCXX_UString_Codec_Big_65001::Encode(__StelCXX_UniString_Big st
     return sstr;
 }
 
+__StelCXX_UniString_Big __StelCXX_UString_Codec_Big_936::Decode(std::string str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    ucs4_t* wc = (ucs4_t*)malloc(size * 4 + 4);
+    memset(wc, 0, size * 4 + 4);
+    __Decoder_936_32((const unsigned char*)istr, wc, size);
+    __StelCXX_UniString_Big wstr(wc);
+    free(wc);
+    return wstr;
+}
+
+std::string __StelCXX_UString_Codec_Big_936::Encode(__StelCXX_UniString_Big str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    unsigned char* cstr = (unsigned char*)malloc(size * 4 + 4);
+    memset(cstr, 0, size * 4 + 4);
+    __Encoder_936_32(istr, cstr, size);
+    std::string sstr((char*)cstr);
+    free(cstr);
+    return sstr;
+}
+
 _END_EXTERN_C
 
 // String literals
