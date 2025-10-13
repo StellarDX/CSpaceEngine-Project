@@ -116,7 +116,8 @@ struct __StelCXX_UniString : public std::u16string
     using _Alloc  = std::allocator<_CharT>;
 
     constexpr static const __StelCXX_UString_Codec_65001 DefEncode = __StelCXX_UString_Codec_65001();
-    static const uint16_t CodePage = 1200;
+    static const uint16_t _CodePage = 1200;
+    bool BigEndian = 0;
 
     // Constructors
 
@@ -151,6 +152,8 @@ struct __StelCXX_UniString : public std::u16string
     template<typename _Tp>
     explicit __StelCXX_UniString(const _Tp& __t, const _Alloc& __a = _Alloc())
         : _Mybase(__t, __a) {}
+
+    uint16_t CodePage()const {return _CodePage + BigEndian;}
 
     // Encoder and decoder
 
@@ -288,7 +291,9 @@ struct __StelCXX_UString_Codec_Big_1200 : public __StelCXX_UString_Codec_Big
 
     uint16_t CodePage()const {return 1200 + BigEndian;}
     __StelCXX_UniString_Big Decode(std::string str)const;
+    __StelCXX_UniString_Big Decode2(__StelCXX_UniString str)const;
     std::string Encode(__StelCXX_UniString_Big str)const;
+    __StelCXX_UniString Encode2(__StelCXX_UniString_Big str)const;
 };
 
 struct __StelCXX_UString_Codec_Big_936 : public __StelCXX_UString_Codec_Big
@@ -315,7 +320,10 @@ struct __StelCXX_UniString_Big : public std::wstring
     using _Alloc  = std::allocator<_CharT>;
 
     constexpr static const __StelCXX_UString_Codec_Big_65001 DefEncode = __StelCXX_UString_Codec_Big_65001();
-    static const uint16_t CodePage = 12000;
+    static const uint16_t _CodePage = 12000;
+    bool BigEndian = 0;
+
+    uint16_t CodePage()const {return _CodePage + BigEndian;}
 
     __StelCXX_UniString_Big() : _Mybase() {}
     explicit __StelCXX_UniString_Big(const _Alloc& __a)  : _Mybase(__a) {}
@@ -482,6 +490,8 @@ int __Decoder_65001_32(const char* istr, ucs4_t* ostr, size_t size);
 int __Encoder_65001_32(const ucs4_t* istr, char* ostr, size_t size);
 int __Decoder_936_32(const unsigned char* istr, ucs4_t* ostr, size_t size);
 int __Encoder_936_32(const ucs4_t* istr, unsigned char* ostr, size_t size);
+int __Decoder_1200_32(const void* istr, ucs4_t* ostr, size_t size, bool Reverse = 0);
+int __Encoder_1200_32(const ucs4_t* istr, void* ostr, size_t size, bool Reverse = 0);
 
 _END_EXTERN_C
 
