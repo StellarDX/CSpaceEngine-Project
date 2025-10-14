@@ -645,8 +645,8 @@ protected:
     float64 TimeOfFlight;
 
 public:
-    void Run();
-    KeplerianOrbitElems Kep();
+    virtual void Run() = 0;
+    virtual KeplerianOrbitElems Kep() = 0;
 };
 
 /**
