@@ -94,6 +94,54 @@ std::string __StelCXX_UString_Codec_Big_936::Encode(__StelCXX_UniString_Big str)
     return sstr;
 }
 
+__StelCXX_UniString_Big __StelCXX_UString_Codec_Big_1200::Decode(std::string str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    ucs4_t* wc = (ucs4_t*)malloc(size * 4 + 4);
+    memset(wc, 0, size * 4 + 4);
+    __Decoder_1200_32(istr, wc, size, 0);
+    __StelCXX_UniString_Big wstr(wc);
+    free(wc);
+    return wstr;
+}
+
+__StelCXX_UniString_Big __StelCXX_UString_Codec_Big_1200::Decode2(__StelCXX_UniString str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    ucs4_t* wc = (ucs4_t*)malloc(size * 4 + 4);
+    memset(wc, 0, size * 4 + 4);
+    __Decoder_1200_32(istr, wc, size, 0);
+    __StelCXX_UniString_Big wstr(wc);
+    free(wc);
+    return wstr;
+}
+
+std::string __StelCXX_UString_Codec_Big_1200::Encode(__StelCXX_UniString_Big str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    unsigned char* cstr = (unsigned char*)malloc(size * 4 + 4);
+    memset(cstr, 0, size * 4 + 4);
+    __Encoder_1200_32(istr, cstr, size);
+    std::string sstr((char*)cstr);
+    free(cstr);
+    return sstr;
+}
+
+__StelCXX_UniString __StelCXX_UString_Codec_Big_1200::Encode2(__StelCXX_UniString_Big str) const
+{
+    auto istr = str.c_str();
+    auto size = str.size();
+    ucs2_t* cstr = (ucs2_t*)malloc(size * 4 + 4);
+    memset(cstr, 0, size * 4 + 4);
+    __Encoder_1200_32(istr, cstr, size);
+    __StelCXX_UniString sstr(cstr);
+    free(cstr);
+    return sstr;
+}
+
 _END_EXTERN_C
 
 // String literals

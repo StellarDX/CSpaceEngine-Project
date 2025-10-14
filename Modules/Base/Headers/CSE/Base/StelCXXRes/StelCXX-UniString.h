@@ -99,18 +99,9 @@ struct __StelCXX_UString_Codec_65001 : public __StelCXX_UString_Codec
     std::string Encode(__StelCXX_UniString str)const;
 };
 
-#if defined(USTR_OS_WIN32)
-struct __StelCXX_UniString : public std::wstring
-#elif defined(USTR_OS_LINUX)
-struct __StelCXX_UniString : public std::u16string
-#endif
+struct __StelCXX_UniString : public std::basic_string<ucs2_t>
 {
-    #if defined(USTR_OS_WIN32)
-    using _Mybase = std::wstring;
-    #elif defined(USTR_OS_LINUX)
-    using _Mybase = std::u16string;
-    #endif
-
+    using _Mybase = std::basic_string<ucs2_t>;
     using _CharT  = ucs2_t;
     using _Traits = std::char_traits<_CharT>;
     using _Alloc  = std::allocator<_CharT>;
@@ -303,18 +294,9 @@ struct __StelCXX_UString_Codec_Big_936 : public __StelCXX_UString_Codec_Big
     std::string Encode(__StelCXX_UniString_Big str)const;
 };
 
-#if defined(USTR_OS_WIN32)
-struct __StelCXX_UniString_Big : public std::u32string
-#elif defined(USTR_OS_LINUX)
-struct __StelCXX_UniString_Big : public std::wstring
-#endif
+struct __StelCXX_UniString_Big : public std::basic_string<ucs4_t>
 {
-    #if defined(USTR_OS_WIN32)
-    using _Mybase = std::u32string;
-    #elif defined(USTR_OS_LINUX)
-    using _Mybase = std::wstring;
-    #endif
-
+    using _Mybase = std::basic_string<ucs4_t>;
     using _CharT  = ucs4_t;
     using _Traits = std::char_traits<_CharT>;
     using _Alloc  = std::allocator<_CharT>;
