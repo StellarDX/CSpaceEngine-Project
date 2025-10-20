@@ -408,6 +408,8 @@ public:
  * 其实现更直接地遵循了泰勒级数理论（可以说是天真地遵循了泰勒级数理论）。
  * <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.differentiate.derivative.html#scipy.differentiate.derivative">参见官方文档</a>
  *
+ * 「凌波能信步，苦海岂无边。函数千千万万，一次最简单。」
+ *
  * @example
  * 求ln(x)的导函数，已知ln'(x) = 1 / x
  *  float64 (*f)(float64) = cse::ln;
@@ -554,8 +556,6 @@ using DefaultDerivativeFunction = Adaptive1stOrderFDDerivativeFunction;
 
 // 参见：https://en.wikipedia.org/wiki/Numerical_integration
 
-// 「每日一积，成为积佬」
-
 /**
  * @brief 一元函数的定积分。
  */
@@ -629,6 +629,9 @@ extern const __Tbl_FpType __Kronrod61_Table[62];
 
 /**
  * @brief 高斯-克朗罗德积分 (实为高斯积分和高斯-克朗罗德积分两种方法的合并)
+ *
+ * 「每日一积，成为积佬」
+ *
  * @example
  *  计算exp(-t^2)从0到+inf的积分：
  *      auto f1 = [](double t) { return exp(-t*t); };
@@ -680,6 +683,8 @@ extern const __Newton_Cotes_Param_Table_Type __Newton_Cotes_Table[14];
 /**
  * @brief 牛顿-科特斯积分，梯形，辛普森等积分算法均为此算法的子集
  * 注：使用此方法计算封闭图形的面积(即曲线积分)时阶数不能太高，最好直接使用梯形或辛普森，要不然结果会很怪
+ *
+ * 「一帆难遇风顺，一路高低不平。平平淡淡分秒，编织百味人生。」
  */
 class NewtonCotesFormulae : public SampleBasedIntegratingFunction
 {
@@ -752,6 +757,8 @@ using DefaultIntegratingFunction = GaussKronrodQuadrature;
  *  此时f(x)的一阶不定积分为 F1(x) = (1 / 2) * x^2 - (1 / 2)
  *  二阶不定积分为 F2(x) = (1 / 6) * x^3 - (1 / 2) * x + (1 / 3)
  *  更高阶的不定积分以此类推。
+ *
+ * 「量天何必苦登高，借问银河落九霄。直下凡尘几万里，几多里处宴蟠桃。」
  */
 class RiemannLiouvilleIntegratingFunction : public IndefiniteIntegratingFunction
 {

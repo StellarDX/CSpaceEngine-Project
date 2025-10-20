@@ -53,3 +53,4 @@ deploy/
 *.pb.h
 *.pb.cc
 
+.qtcreator
