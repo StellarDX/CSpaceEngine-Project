@@ -498,8 +498,8 @@ protected:
     float64 AbsoluteTolerence = 14.522878745280337562704972096745; // 3E-15
     float64 RelativeTolerence = 15.657577319177793764036061134032; // 2.2E-16
 
-    constexpr static const float64 EBoundary = 0.99;
-    constexpr static const float64 MBoundary = 0.0045;
+    float64 EBoundary         = 0.99;
+    float64 MBoundary         = 0.0045;
 
     virtual float64 Run(float64 MRad, float64 AbsTol, float64 RelTol)const = 0;
     virtual float64 BoundaryHandler(float64 MRad, float64 AbsTol, float64 RelTol)const;
@@ -640,13 +640,21 @@ _Lambert_BEGIN
 class __Lambert_Solver_Base
 {
 protected:
-    vec3    Departure;
-    vec3    Destination;
-    float64 TimeOfFlight;
+    float64 GravParam;    // 中心物体引力常数(GM)
+    vec3    Departure;    // 始发坐标
+    vec3    Destination;  // 终到坐标
+    float64 TimeOfFlight; // 持续时间
+    bool    Retrograde;   // 出发方向，0 = 由西向东，1 = 由东向西
+    uint64  Revolutions;  // 环绕中心物体的最多圈数
 
 public:
+    mat3 AxisMapper    = CSECoordToECIFrame;
+    mat3 InvAxisMapper = ECIFrameToCSECoord;
+
     virtual void Run() = 0;
-    virtual KeplerianOrbitElems Kep() = 0;
+    virtual OrbitStateVectors Dep()const = 0;
+    virtual OrbitStateVectors Dst()const = 0;
+    virtual KeplerianOrbitElems Kep()const = 0;
 };
 
 /**
@@ -663,11 +671,77 @@ public:
  * by lambert_test.cpp). With respect to Gooding algorithm it is 1.3 - 1.5 times faster (zero revs - multi revs).
  * The algorithm is described in detail in the publication below and its original with the author.
  *
- * @author Dario Izzo (dario.izzo _AT_ googlemail.com)
+ * @author Dario Izzo (dario.izzo@gmail.com)
  */
 class __ESA_PyKep_Lambert_Solver : public __Lambert_Solver_Base
 {
+public:
+    using Mybase = __Lambert_Solver_Base;
 
+    struct StateBlock
+    {
+        uint64  Iteration;
+        vec3    DepVelocity;
+        vec3    DstVelocity;
+        float64 XResult;
+    };
+
+protected:
+    std::vector<StateBlock> StateBuffer;
+
+    float64 Chord;
+    float64 SemiPerimeter;
+    float64 TransferAngle;
+
+    float64 MaxRevoDetectTolerence    = 13;
+    uint64  MaxRevoDetectIterCount    = 12;
+    float64 BattinBreakpoint          = 0.01;
+    float64 LancasterBreakPoint       = 0.2;
+    float64 BattinHypGeomTolerence    = 11;
+    uint64  ProbMaxRevolutions;
+
+    float64 HouseholderPivotTolerence = 5;
+    uint64  HouseholderPivotMaxIter   = 15;
+    float64 HouseholderLeftTolerence  = 8;
+    uint64  HouseholderLeftMaxIter    = 15;
+    float64 HouseholderRightTolerence = 8;
+    uint64  HouseholderRightMaxIter   = 15;
+
+    vec3 VectorizedTimeEquationDerivatives(float64 x, float64 T);
+    float64 TransferTimeEquation(float64 x, uint64 N);
+    float64 Lagrange(float64 x, uint64 N);
+    float64 BattinSeries(float64 x, uint64 N);
+    float64 Lancaster(float64 x, uint64 N);
+
+    float64 FastHouseholderIterate(float64 T, float64 x0, uint64 N,
+        float64 Tolerence, uint64 MaxIter, uint64* Iter);
+
+    void ZeroCheck();
+    std::tuple<float64, float64, float64, float64,
+        float64, vec3, vec3, vec3, vec3> PrepareIntermediateVariables();
+    std::tuple<float64, float64> DetectMaxRevolutions
+        (float64 T, float64 Lambda2, float64 Lambda3);
+    void HouseholderSolve(float64 T, float64 T00, float64 T1,
+        float64 Lambda2, float64 Lambda3);
+    void ComputeTerminalVelocities(float64 R1, float64 R2, float64 Lambda2,
+        vec3 ir1, vec3 ir2, vec3 it1, vec3 it2);
+
+public:
+    __ESA_PyKep_Lambert_Solver(const vec3& Dep, const vec3& Dst,
+        const float64& TOF, const float64& GP,
+        const bool& Dir = 0, const uint64& Rev = 5);
+
+    void Run()override;
+
+    OrbitStateVectors Dep()const override;
+    OrbitStateVectors Dst()const override;
+    KeplerianOrbitElems Kep()const override;
+
+    size_t SolutionCount()const;
+    OrbitStateVectors ExportState(uint64 Index, bool Pos)const;
+    KeplerianOrbitElems Kep(uint64 Index)const;
+
+    ustring ToString()const;
 };
 
 _Lambert_END
