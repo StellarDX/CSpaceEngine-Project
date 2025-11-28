@@ -883,15 +883,15 @@ complex64 __cdecl __GLIBCT_SIN64C(complex64 _X)
     float64 XReal = _X.real(), XImag = _X.imag();
     float64 Result;
     int Neg = std::signbit(XReal);
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
 
     XReal = abs(XReal);
 
-    if (IClass >= FP_ZERO)
+    if (IClass >= Zero)
     {
         // Imaginary part is finite.
-        if (RClass >= FP_ZERO)
+        if (RClass >= Zero)
         {
             // Real part is finite.
             const int ExpHuge = (int)((DBL_MAX_EXP - 1) * CSE_LN2);
@@ -944,7 +944,7 @@ complex64 __cdecl __GLIBCT_SIN64C(complex64 _X)
         }
         else
         {
-            if (IClass == FP_ZERO)
+            if (IClass == Zero)
             {
                 // Imaginary part is 0.0.
                 return {XReal - XReal, XImag};
@@ -959,15 +959,15 @@ complex64 __cdecl __GLIBCT_SIN64C(complex64 _X)
             }
         }
     }
-    else if (IClass == FP_INFINITE)
+    else if (IClass == Inf)
     {
         // Imaginary part is infinite.
-        if (RClass == FP_ZERO)
+        if (RClass == Zero)
         {
             // Real part is 0.0.
             return {::copysign(0, Neg ? -1 : 1), XImag};
         }
-        else if (RClass > FP_ZERO)
+        else if (RClass > Zero)
         {
             // Real part is finite.
             float64 sinix, cosix;
@@ -999,7 +999,7 @@ complex64 __cdecl __GLIBCT_SIN64C(complex64 _X)
     else
     {
         float64 YReal;
-        if (RClass == FP_ZERO) {YReal = ::copysign(0, Neg ? -1 : 1);}
+        if (RClass == Zero) {YReal = ::copysign(0, Neg ? -1 : 1);}
         else {YReal = __Float64::FromBytes(BIG_NAN_DOUBLE);}
         return {YReal, __Float64::FromBytes(BIG_NAN_DOUBLE)};
     }

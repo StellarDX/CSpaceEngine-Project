@@ -416,6 +416,7 @@ fvec<N> __cdecl smoothstep(fvec<N> edge0, fvec<N> edge1, fvec<N> x)
 
 int64 isinf(float64 _X)throw();
 int64 isnan(float64 _X)throw();
+int64 isfinite(float64 _X)throw();
 
 template<std::size_t N>
 ivec<N> __cdecl isinf(fvec<N> _X)
@@ -427,6 +428,30 @@ template<std::size_t N>
 ivec<N> __cdecl isnan(fvec<N> _X)
 {
     __stelcxx_array_math_function_body(i, i, _CSE isnan(_X[i]))
+}
+
+template<std::size_t N>
+ivec<N> __cdecl isfinite(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(i, i, _CSE isfinite(_X[i]))
+}
+
+// FPClassify函数在不同平台上返回值不同，此处统一下行为。
+enum FPTypes
+{
+    Nan = 0,
+    Inf = 1,
+    Zero = 2,
+    SubNormal = 3,
+    Normal = 4
+};
+
+int FPClassify(float64 x)throw();
+
+template<std::size_t N>
+ivec<N> __cdecl FPClassify(fvec<N> _X)
+{
+    __stelcxx_array_math_function_body(i, i, _CSE FPClassify(_X[i]))
 }
 
 _CSE_END

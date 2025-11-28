@@ -419,12 +419,12 @@ __Float64 __cdecl __IEEE854_EXPXM1128F_C64F(__Float64 _X)
 complex64 __cdecl __GLIBCT_EXP64C(complex64 _X)
 {
     float64 XReal = _X.real(), XImag = _X.imag();
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
 
-    if (RClass >= FP_ZERO) // Real part is finite
+    if (RClass >= Zero) // Real part is finite
     {
-        if (IClass >= FP_ZERO) // Imaginary part is finite.
+        if (IClass >= Zero) // Imaginary part is finite.
         {
             // exp(x) = exp(Re) * (cos(Im) + i * sin(Im))
             static const int IExpMax = int((DBL_MAX_EXP - 1) * CSE_LN2);
@@ -469,14 +469,14 @@ complex64 __cdecl __GLIBCT_EXP64C(complex64 _X)
                 __Float64::FromBytes(BIG_NAN_DOUBLE)};
         }
     }
-    else if (RClass == FP_INFINITE) // Real part is infinite.
+    else if (RClass == Inf) // Real part is infinite.
     {
-        if (IClass >= FP_ZERO) // Imaginary part is finite.
+        if (IClass >= Zero) // Imaginary part is finite.
         {
             float64 RValue = std::signbit(XReal) ? 0 :
                 __Float64::FromBytes(POS_INF_DOUBLE).x;
 
-            if (IClass == FP_ZERO) // Imaginary part is 0.0.
+            if (IClass == Zero) // Imaginary part is 0.0.
             {
                 return {RValue, 0};
             }
@@ -505,13 +505,13 @@ complex64 __cdecl __GLIBCT_EXP64C(complex64 _X)
     {
         // If the real part is NaN the result is NaN + iNaN unless the
         // imaginary part is zero.
-        if (IClass == FP_ZERO)
+        if (IClass == Zero)
         {
             return {__Float64::FromBytes(BIG_NAN_DOUBLE), XImag};
         }
         else
         {
-            if (RClass != FP_NAN || IClass != FP_NAN)
+            if (RClass != Nan || IClass != Nan)
             {
                 CSESysDebug("MathFunctions", CSEDebugger::ERROR,
                     "Invalid argument of exp(x).");

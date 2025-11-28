@@ -1143,14 +1143,14 @@ complex64 __cdecl __GLIBCT_TAN64C(complex64 _X)
 {
     float64 XReal = _X.real(), XImag = _X.imag();
     float64 YReal, YImag;
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
 
-    if (RClass < FP_ZERO || IClass < FP_ZERO)
+    if (RClass < Zero || IClass < Zero)
     {
-        if (IClass == FP_INFINITE)
+        if (IClass == Inf)
         {
-            if (RClass >= FP_ZERO && abs(XReal) > 1)
+            if (RClass >= Zero && abs(XReal) > 1)
             {
                 float64 sinrx, cosrx;
                 sinrx = __IBM_SIN64F(XReal);
@@ -1160,7 +1160,7 @@ complex64 __cdecl __GLIBCT_TAN64C(complex64 _X)
             else {YReal = ::copysign(0, XReal);}
             YImag = ::copysign(1, XImag);
         }
-        else if (RClass == FP_ZERO)
+        else if (RClass == Zero)
         {
             YReal = XReal;
             YImag = XImag;
@@ -1168,7 +1168,7 @@ complex64 __cdecl __GLIBCT_TAN64C(complex64 _X)
         else
         {
             YReal = __Float64::FromBytes(BIG_NAN_DOUBLE);
-            if (IClass == FP_ZERO) {YImag = XImag;}
+            if (IClass == Zero) {YImag = XImag;}
             else {YImag = __Float64::FromBytes(BIG_NAN_DOUBLE);}
         }
     }

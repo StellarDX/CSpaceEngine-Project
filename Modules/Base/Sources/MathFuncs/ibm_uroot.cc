@@ -172,25 +172,25 @@ std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
 {
     float64 XReal = _X.real();
     float64 XImag = _X.imag();
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
     float64 YReal0, YImag0;
     float64 YReal1, YImag1;
 
-    if (RClass <= FP_INFINITE || IClass <= FP_INFINITE)
+    if (RClass <= Inf || IClass <= Inf)
     {
-        if (IClass == FP_INFINITE)
+        if (IClass == Inf)
         {
             YReal0 = __Float64::FromBytes(POS_INF_DOUBLE);
             YImag0 = XImag;
             YReal1 = __Float64::FromBytes(NEG_INF_DOUBLE);
             YImag1 = -XImag;
         }
-        else if (RClass == FP_INFINITE)
+        else if (RClass == Inf)
         {
             if (XReal < 0)
             {
-                YReal0 = (IClass == FP_NAN) ?
+                YReal0 = (IClass == Nan) ?
                     __Float64::FromBytes(BIG_NAN_DOUBLE) : __Float64(0);
                 YImag0 = ::copysign(
                     __Float64::FromBytes(POS_INF_DOUBLE), XImag);
@@ -201,11 +201,11 @@ std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
             else
             {
                 YReal0 = XReal;
-                YImag0 = (IClass == FP_NAN
+                YImag0 = (IClass == Nan
                     ? __Float64::FromBytes(BIG_NAN_DOUBLE).x :
                         ::copysign(0, XImag));
                 YReal1 = -XReal;
-                YImag1 = (IClass == FP_NAN
+                YImag1 = (IClass == Nan
                     ? __Float64::FromBytes(BIG_NAN_DOUBLE).x :
                     ::copysign(0, -XImag));
             }
@@ -220,7 +220,7 @@ std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
     }
     else
     {
-        if (IClass == FP_ZERO)
+        if (IClass == Zero)
         {
             if (XReal < 0)
             {
@@ -237,7 +237,7 @@ std::array<complex64, 2> __cdecl __GLIBCT_SQRT64C(complex64 _X)
                 YImag1 = ::copysign(0, -XImag);
             }
         }
-        else if (RClass == FP_ZERO)
+        else if (RClass == Zero)
         {
             float64 r;
             if (abs(XImag) >= 2 * DBL_MIN)

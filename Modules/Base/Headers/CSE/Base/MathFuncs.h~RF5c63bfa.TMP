@@ -651,13 +651,10 @@ public:
 class DurandKernerSolvePoly : public SolvePolyRoutine
 {
 public:
-    enum InitValueConfig {Exponential, Circular, Homotopic};
-
     std::vector<complex64> InitValue         = {};
     float64                AbsoluteTolerence = 14;
     float64                RelativeTolerence = 14;
     float64                MaxIter           = 3;
-    InitValueConfig        InitValueType     = Circular;
 
     static std::vector<complex64> GetExponentialInitValue(float64 Power, complex64 IValue = 0.4 + 0.9i);
     static std::vector<complex64> GetCircularInitValue(InputArray Coeffs);
@@ -676,7 +673,7 @@ using DefaultSolvePolyRoutine = DurandKernerSolvePoly;
  * @param Routine 求解算法，默认使用杜兰德-肯纳算法
  * @return 迭代次数
  */
-uint64 SolvePoly(InputArray Coeffs, OutputArray Roots, const SolvePolyRoutine& Routine = DefaultSolvePolyRoutine());
+uint64 SolvePoly(InputArray Coeffs, OutputArray Roots, const SolvePolyRoutine& Routine = DurandKernerSolvePoly());
 
 
 

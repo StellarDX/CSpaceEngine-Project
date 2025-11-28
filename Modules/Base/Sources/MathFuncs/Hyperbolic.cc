@@ -182,13 +182,13 @@ float64 __cdecl cosh(float64 _X)
 complex64 __cdecl __GLIBCT_COSH64C(complex64 _X)
 {
     float64 XReal = _X.real(), XImag = _X.imag();
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
 
-    if (RClass >= FP_ZERO)
+    if (RClass >= Zero)
     {
         // Real part is finite.
-        if (IClass >= FP_ZERO)
+        if (IClass >= Zero)
         {
             // Imaginary part is finite.
             const int t = int((DBL_MAX_EXP - 1) * CSE_LN2);
@@ -246,10 +246,10 @@ complex64 __cdecl __GLIBCT_COSH64C(complex64 _X)
             };
         }
     }
-    else if (RClass == FP_INFINITE)
+    else if (RClass == Inf)
     {
         // Real part is infinite.
-        if (IClass > FP_ZERO)
+        if (IClass > Zero)
         {
             // Imaginary part is finite.
             float64 sinix, cosix;
@@ -272,7 +272,7 @@ complex64 __cdecl __GLIBCT_COSH64C(complex64 _X)
                     ::copysign(1, XReal))
             };
         }
-        else if (IClass == FP_ZERO)
+        else if (IClass == Zero)
         {
             // Imaginary part is 0.0.
             return

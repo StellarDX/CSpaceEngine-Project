@@ -1554,14 +1554,13 @@ vec3 Flattening(Object Obj)
     return (MaxRad - Radius) / MaxRad;
 }
 
-float64 EquatorialCircumference(Object Obj)
+float64 EquatorialCircumference(Object Obj, const SciCxx::IntegralFunction& IFunc)
 {
     float64 a = max(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
     float64 b = min(Obj.Dimensions.x, Obj.Dimensions.z) / 2.;
     if (a == b) {return 2. * CSE_PI * a;}
 
     float64 e2 = 1. - pow(b / a, 2);
-    SciCxx::DefaultIntegratingFunction IFunc;
     auto E = [e2](float64 tet)
     {
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
@@ -1569,14 +1568,13 @@ float64 EquatorialCircumference(Object Obj)
     return 4. * a * IFunc(E, 0, CSE_PI_D2);
 }
 
-float64 MeridionalCircumference(Object Obj)
+float64 MeridionalCircumference(Object Obj, const SciCxx::IntegralFunction& IFunc)
 {
     float64 a = EquatorialRadius(Obj);
     float64 b = PolarRadius(Obj);
     if (a == b) {return 2. * CSE_PI * a;}
 
     float64 e2 = 1. - pow(b / a, 2);
-    SciCxx::DefaultIntegratingFunction IFunc;
     auto E = [e2](float64 tet)
     {
         return sqrt(1. - e2 * pow(sin(Angle::FromRadians(tet)), 2));
@@ -1584,14 +1582,13 @@ float64 MeridionalCircumference(Object Obj)
     return 4. * a * IFunc(E, 0, CSE_PI_D2);
 }
 
-float64 SurfaceArea(Object Obj)
+float64 SurfaceArea(Object Obj, const SciCxx::IntegralFunction& IFunc)
 {
     std::array<float64, 3> Radius = Obj.Dimensions / 2.;
     std::sort(Radius.begin(), Radius.end());
     float64 a = Radius[2], b = Radius[1], c = Radius[0];
     if (a == b && b == c) {return 4. * CSE_PI * a * a;}
 
-    SciCxx::DefaultIntegratingFunction IFunc;
     auto F = [&IFunc](float64 phi, float64 k2)
     {
         auto EllipticalIntegral1st = [k2](float64 tet)

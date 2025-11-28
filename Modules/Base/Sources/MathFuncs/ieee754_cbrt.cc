@@ -70,7 +70,7 @@ __Float64 __cdecl __IEEE754_CBRT64F(__Float64 _X)
        if necessary.
        Note: *Our* version of `frexp' sets XE to zero if the argument is
        Inf or NaN.  This is not portable but faster.  */
-    if (xe == 0 && std::fpclassify(x.x) <= FP_ZERO) { return x; }
+    if (xe == 0 && FPClassify(x.x) <= Zero) { return x; }
 
     u = (0.354895765043919860
          + ((1.50819193781584896

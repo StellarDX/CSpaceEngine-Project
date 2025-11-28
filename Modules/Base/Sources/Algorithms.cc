@@ -454,7 +454,24 @@ int64 isnan(float64 _X)throw()
     int64_t hx = __Float64(_X).Bytes;
     hx &= 0x7fffffffffffffffull;
     hx = 0x7ff0000000000000ull - hx;
-    return (((uint64_t)hx)>>63);
+    return (((uint64_t)hx) >> 63);
+}
+
+int64 isfinite(float64 _X) throw()
+{
+    return !isinf(_X) && !isnan(_X);
+}
+
+int FPClassify(float64 _X)throw()
+{
+    // Using GNU implementation
+    uint32_t hx = __Float64(_X).parts.msw, lx = __Float64(_X).parts.lsw;
+    lx |= hx & 0xfffff;
+    hx &= 0x7ff00000;
+    if ((hx | lx) == 0) {return Zero;}
+    if (hx == 0) {return SubNormal;}
+    if (hx == 0x7ff00000) {return lx != 0 ? Nan : Inf;}
+    return Normal;
 }
 
 _CSE_END

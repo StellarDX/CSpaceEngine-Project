@@ -395,7 +395,21 @@ int DurandKernerSolvePoly::Run(InputArray _Coeffs, OutputArray _Roots)const
         }
         std::copy(InitValue.begin(), InitValue.end(), Roots.begin());
     }
-    else {Roots = GetCircularInitValue(Coeffs);}
+    else
+    {
+        switch (InitValueType)
+        {
+        case Exponential:
+            Roots = GetExponentialInitValue(Coeffs.size());
+            break;
+        case Circular:
+            Roots = GetCircularInitValue(Coeffs);
+            break;
+        case Homotopic:
+            Roots = GetHomotopicInitValue(Coeffs);
+            break;
+        };
+    }
 
     auto f = [&](complex64 x)->complex64
     {

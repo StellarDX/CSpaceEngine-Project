@@ -52,20 +52,20 @@ complex64 __cdecl yrootc(complex64 _X, complex64 _Expo, int64 _K)
 {
     float64 XReal = _X.real(), XImag = _X.imag();
     float64 EReal = _Expo.real(), EImag = _Expo.imag();
-    float64 XRCls = std::fpclassify(XReal);
-    float64 XICls = std::fpclassify(XImag);
-    float64 ERCls = std::fpclassify(EReal);
-    float64 EICls = std::fpclassify(EImag);
+    int XRCls = FPClassify(XReal);
+    int XICls = FPClassify(XImag);
+    int ERCls = FPClassify(EReal);
+    int EICls = FPClassify(EImag);
 
     // 处理 NaN 或 Inf 输入
-    if (XRCls == FP_NAN || XICls == FP_NAN || ERCls == FP_NAN || EICls == FP_NAN)
+    if (XRCls == Nan || XICls == Nan || ERCls == Nan || EICls == Nan)
     {
         return {__Float64::FromBytes(BIG_NAN_DOUBLE),
             __Float64::FromBytes(BIG_NAN_DOUBLE)};
     }
 
     // 处理 _X = 0 或 _X = -0
-    if (XRCls == FP_ZERO && XICls == FP_ZERO)
+    if (XRCls == Zero && XICls == Zero)
     {
         if (EReal > 0)
         {
@@ -81,14 +81,14 @@ complex64 __cdecl yrootc(complex64 _X, complex64 _Expo, int64 _K)
     }
 
     // 处理 _Expo = 0 或 _Expo = -0
-    if (ERCls == FP_ZERO && EICls == FP_ZERO)
+    if (ERCls == Zero && EICls == Zero)
     {
         // z^0 = 1（主值）
         return {1.0, 0.0};
     }
 
     // 处理 _X 为无穷大
-    if (XRCls == FP_INFINITE || XICls == FP_INFINITE)
+    if (XRCls == Inf || XICls == Inf)
     {
         if (EReal > 0)
         {
@@ -110,7 +110,7 @@ complex64 __cdecl yrootc(complex64 _X, complex64 _Expo, int64 _K)
     }
 
     // 处理 _Expo 为无穷大
-    if (ERCls == FP_INFINITE || EICls == FP_INFINITE)
+    if (ERCls == Inf || EICls == Inf)
     {
         // 若 _X 的模不为 1，则结果未定义
         // 模为 1 时，结果可能振荡或发散

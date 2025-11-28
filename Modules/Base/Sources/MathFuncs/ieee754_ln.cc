@@ -1003,11 +1003,11 @@ complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
 {
     float64 XReal = _X.real();
     float64 XImag = _X.imag();
-    int RClass = std::fpclassify(XReal);
-    int IClass = std::fpclassify(XImag);
+    int RClass = FPClassify(XReal);
+    int IClass = FPClassify(XImag);
     float64 YReal, YImag;
 
-    if (RClass == FP_ZERO && IClass == FP_ZERO)
+    if (RClass == Zero && IClass == Zero)
     {
         // Real and imaginary part are 0.0.
         YImag = std::signbit(XReal) ? CSE_PI : 0;
@@ -1015,7 +1015,7 @@ complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
         // Yes, the following line raises an exception.
         YReal = __Float64::FromBytes(NEG_INF_DOUBLE);
     }
-    else if (RClass != FP_NAN && IClass != FP_NAN)
+    else if (RClass != Nan && IClass != Nan)
     {
         // Neither real nor imaginary part is NaN.
         float64 AbsReal = abs(XReal);
@@ -1076,7 +1076,7 @@ complex64 __cdecl __GLIBCT_LN64C(complex64 _X, int64 _K)
     else
     {
         YImag = __Float64::FromBytes(BIG_NAN_DOUBLE);
-        if (RClass == FP_INFINITE || IClass == FP_INFINITE)
+        if (RClass == Inf || IClass == Inf)
         {
             /* Real or imaginary part is infinite.  */
             YReal = __Float64::FromBytes(POS_INF_DOUBLE);

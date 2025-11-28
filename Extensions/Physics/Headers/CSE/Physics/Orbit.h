@@ -888,9 +888,9 @@ public:
 class RocheLobe
 {
 public:
-    float64 PrimaryMass;
-    float64 CompanionMass;
-    float64 Separation;
+    float64 PrimaryMass;   // Primary at (0, 0, 0)
+    float64 CompanionMass; // Companion at (Separation, 0, 0)
+    float64 Separation;    // Distance between two objects
 
     float64 Potential(vec3 Pos);
     float64 PotentialXDerivative(vec3 Pos);
