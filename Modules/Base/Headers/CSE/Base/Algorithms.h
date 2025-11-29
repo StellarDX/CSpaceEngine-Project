@@ -446,7 +446,7 @@ enum FPTypes
     Normal = 4
 };
 
-int FPClassify(float64 x)throw();
+int64 FPClassify(float64 x)throw();
 
 template<std::size_t N>
 ivec<N> __cdecl FPClassify(fvec<N> _X)
