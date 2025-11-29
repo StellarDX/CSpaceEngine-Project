@@ -54,3 +54,4 @@ deploy/
 *.pb.cc
 
 .qtcreator
+*.TMP
