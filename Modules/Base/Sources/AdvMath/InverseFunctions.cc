@@ -1,5 +1,13 @@
 #include "CSE/Base/AdvMath.h"
 
+// Text-formating header
+#if USE_FMTLIB
+#include <fmt/format.h>
+using namespace fmt;
+#else
+#include <format>
+#endif
+
 _CSE_BEGIN
 _SCICXX_BEGIN
 
@@ -194,6 +202,7 @@ float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCal
 
     float64 x0 = ReferencePoint;
     uint64 Iter = 0;
+    float64 x1;
     for (; Iter <= MaxIter; ++Iter)
     {
         // 第一次检验
@@ -227,7 +236,7 @@ float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCal
         if (!gn1) {throw std::logic_error("Derivative was zero.");}
 
         float64 Step = n * gn0 / gn1;
-        float64 x1 = x0 + Step;
+        x1 = x0 + Step;
         if (abs(Step) <= (AbsTol + RelTol * abs(x0)))
         {
             if (IterCount) {(*IterCount) = Iter;}
@@ -235,7 +244,7 @@ float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCal
         }
         x0 = x1;
     }
-    throw std::logic_error("Failed to converge");
+    throw std::logic_error(std::format("Failed to converge: {}", x1));
 }
 
 float64 HouseholderIteratorGroup::operator()(float64 x) const
@@ -270,6 +279,7 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
     uint64 MaxIter = floor(pow(10, MaxIteration));
 
     uint64 Iter = 0;
+    float64 x1;
     for (; Iter <= MaxIter; ++Iter)
     {
         float64 f = Func(x0);
@@ -284,7 +294,7 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
         if (!df) {throw std::logic_error("Derivative was zero.");}
 
         float64 Step = f / df;
-        float64 x1 = x0 - Step;
+        x1 = x0 - Step;
         if (abs(Step) <= (AbsTol + RelTol * abs(x0)))
         {
             if (IterCount) {(*IterCount) = Iter;}
@@ -292,7 +302,7 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
         }
         x0 = x1;
     }
-    throw std::logic_error("Failed to converge");
+    throw std::logic_error(std::format("Failed to converge: {}", x1));
 }
 
 float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Function1D D2Func, float64 x0,
@@ -304,6 +314,7 @@ float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Func
     uint64 MaxIter = floor(pow(10, MaxIteration));
 
     uint64 Iter = 0;
+    float64 x1;
     for (; Iter <= MaxIter; ++Iter)
     {
         float64 f = Func(x0);
@@ -321,7 +332,7 @@ float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Func
         if (!gn1) {throw std::logic_error("Derivative was zero.");}
 
         float64 Step = gn0 / gn1;
-        float64 x1 = x0 - Step;
+        x1 = x0 - Step;
         if (abs(Step) <= (AbsTol + RelTol * abs(x0)))
         {
             if (IterCount) {(*IterCount) = Iter;}
@@ -329,7 +340,7 @@ float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Func
         }
         x0 = x1;
     }
-    throw std::logic_error("Failed to converge");
+    throw std::logic_error(std::format("Failed to converge: {}", x1));
 }
 
 _SCICXX_END

@@ -462,7 +462,7 @@ int64 isfinite(float64 _X) throw()
     return !isinf(_X) && !isnan(_X);
 }
 
-int FPClassify(float64 _X)throw()
+int64 FPClassify(float64 _X)throw()
 {
     // Using GNU implementation
     uint32_t hx = __Float64(_X).parts.msw, lx = __Float64(_X).parts.lsw;

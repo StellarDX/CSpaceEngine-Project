@@ -44,11 +44,11 @@ _ORBIT_BEGIN
 
 // 地心惯性系映射CSE直角坐标用的矩阵
 // 一般，x轴为天体赤道与黄道交线，指向春分点；z轴由中心天体中心指向北极；y轴根据右手定则确定。
-static const mat3 ECIFrameToCSECoord = {1, 0, 0, 0, 0, -1, 0, 1, 0};
+static const mat3 ECIFrameToCSECoord = {{1, 0, 0}, {0, 0, -1}, {0, 1, 0}};
 
 // CSE直角坐标映射地心惯性系用的矩阵
 // CSE直角坐标的X轴为春分线，Y轴指向北极，Z轴按右手定则确定。
-static const mat3 CSECoordToECIFrame = {1, 0, 0, 0, 0, 1, 0, -1, 0};
+static const mat3 CSECoordToECIFrame = {{1, 0, 0}, {0, 0, 1}, {0, -1, 0}};
 
 /****************************************************************************************\
 *                                         基本元素                                        *
@@ -892,15 +892,42 @@ public:
     float64 CompanionMass; // Companion at (Separation, 0, 0)
     float64 Separation;    // Distance between two objects
 
-    float64 Potential(vec3 Pos);
-    float64 PotentialXDerivative(vec3 Pos);
-    float64 PotentialYDerivative(vec3 Pos);
-    float64 PotentialZDerivative(vec3 Pos);
-    float64 PrimaryEffectiveLobeRadius();
-    float64 CompanionEffectiveLobeRadius();
-    std::array<vec2, 5> LagrangePoints();
-    vec3 CompanionEquipotentialDimensions();
-    vec3 CompanionPhysicalDimensions(float64 CompanionEffectiveRadius);
+    mat3    AxisMapper    = CSECoordToECIFrame;
+    mat3    InvAxisMapper = ECIFrameToCSECoord;
+
+protected:
+    float64 __Dimensionless_Potential_Impl(vec3 Pos)const;
+    float64 __Eggelton_1983_Effective_Lobe_Radius(float64 MassRatio)const;
+    float64 __Dimensionless_Potential_X_Derivative_Impl(vec3 Pos)const;
+    float64 __Dimensionless_Potential_Y_Derivative_Impl(vec3 Pos)const;
+    float64 __Dimensionless_Potential_Z_Derivative_Impl(vec3 Pos)const;
+
+public:
+    vec3 BarycenterPos()const;
+    // 等效势函数
+    float64 DimensionlessPotential(vec3 Pos)const;
+    // 引力势函数
+    float64 Potential(vec3 Pos)const;
+    // 等效势函数的X方向导函数
+    float64 DimensionlessPotentialXDerivative(vec3 Pos)const;
+    // 等效势函数的Y方向导函数
+    float64 DimensionlessPotentialYDerivative(vec3 Pos)const;
+    // 等效势函数的Z方向导函数
+    float64 DimensionlessPotentialZDerivative(vec3 Pos)const;
+    // 主星等效洛希瓣半径
+    float64 PrimaryEffectiveLobeRadius()const;
+    // 伴星等效洛希瓣半径
+    float64 CompanionEffectiveLobeRadius()const;
+    // 拉格朗日点
+    std::array<vec3, 5> LagrangePoints(
+        const SolvePolyRoutine& Routine = DurandKernerSolvePoly())const;
+    // 洛希瓣尺寸
+    std::array<vec3, 20> EquipotentialDimensions(float64 PotentialOffset = 0,
+        const SolvePolyRoutine& SPRoutine = DurandKernerSolvePoly())const;
+    // 物体尺寸
+    std::array<vec3, 2> PhysicalDimensions(
+        float64 PrimaryEffectiveRadius, float64 CompanionEffectiveRadius,
+        const SolvePolyRoutine& SPRoutine = DurandKernerSolvePoly())const;
 };
 
 // ---------------------------------------------------------------------------------------------
