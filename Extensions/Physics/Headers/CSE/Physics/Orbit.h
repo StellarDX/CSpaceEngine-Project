@@ -892,8 +892,8 @@ public:
     float64 CompanionMass; // Companion at (Separation, 0, 0)
     float64 Separation;    // Distance between two objects
 
-    mat3    AxisMapper    = CSECoordToECIFrame;
-    mat3    InvAxisMapper = ECIFrameToCSECoord;
+    mat3    AxisMapper    = Orbit::CSECoordToECIFrame;
+    mat3    InvAxisMapper = Orbit::ECIFrameToCSECoord;
 
 protected:
     float64 __Dimensionless_Potential_Impl(vec3 Pos)const;
@@ -901,6 +901,9 @@ protected:
     float64 __Dimensionless_Potential_X_Derivative_Impl(vec3 Pos)const;
     float64 __Dimensionless_Potential_Y_Derivative_Impl(vec3 Pos)const;
     float64 __Dimensionless_Potential_Z_Derivative_Impl(vec3 Pos)const;
+    std::array<vec3, 5> __Lagrange_Point_Impl(const SolvePolyRoutine& Routine)const;
+    std::array<vec3, 20> __Equipotential_Dimensions_Impl(float64 PotentialOffset,
+        const SolvePolyRoutine& SPRoutine)const;
 
 public:
     vec3 BarycenterPos()const;

@@ -135,6 +135,107 @@ float64 BrentInverseFunction::operator()(float64 x) const
     return Result.x;
 }
 
+float64 BrentInverseFunction::QSolve(Function1D Func, vec2 Domain, float64 AbsTolerence, float64 RelTolerence, float64 MaxIterCount, uint64* IterCount, uint64* FuncCalls)
+{
+    // SciPy Function (BSD3 License)
+    float64 xa = Domain.x, xb = Domain.y, iter = floor(pow(10, MaxIterCount)),
+        xtol = pow(10, -AbsTolerence), rtol = pow(10, -RelTolerence);
+    float64 xpre = xa, xcur = xb;
+    float64 xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
+
+    // the tolerance is 2*delta
+    float64 delta;
+    float64 stry, dpre, dblk;
+
+    fpre = Func(xpre);
+    fcur = Func(xcur);
+
+    if (fpre == 0) {return xpre;}
+    if (fcur == 0) {return xcur;}
+    if (FuncCalls) {*FuncCalls = 2;}
+
+    if (::signbit(fpre) == ::signbit(fcur))
+    {
+        throw std::logic_error("Brent: No solutions found between this domain");
+    }
+
+    for (uint64 i = 0; i < iter; ++i)
+    {
+        if (IterCount) {++(*IterCount);}
+
+        if (fpre != 0 && fcur != 0 && (::signbit(fpre) != ::signbit(fcur)))
+        {
+            xblk = xpre;
+            fblk = fpre;
+            spre = scur = xcur - xpre;
+        }
+
+        if (abs(fblk) < abs(fcur))
+        {
+            xpre = xcur;
+            xcur = xblk;
+            xblk = xpre;
+
+            fpre = fcur;
+            fcur = fblk;
+            fblk = fpre;
+        }
+
+        delta = (xtol + rtol * abs(xcur)) / 2;
+        sbis = (xblk - xcur) / 2;
+        if (fcur == 0 || abs(sbis) < delta) {return xcur;}
+
+        if (abs(spre) > delta && abs(fcur) < abs(fpre))
+        {
+            if (xpre == xblk)
+            {
+                /* interpolate */
+                stry = -fcur * (xcur - xpre) / (fcur - fpre);
+            }
+            else
+            {
+                /* extrapolate */
+                dpre = (fpre - fcur) / (xpre - xcur);
+                dblk = (fblk - fcur) / (xblk - xcur);
+                stry = -fcur * (fblk * dblk - fpre * dpre) / (dblk * dpre * (fblk - fpre));
+            }
+
+            if (2 * abs(stry) < min(abs(spre), 3 * abs(sbis) - delta))
+            {
+                /* good short step */
+                spre = scur;
+                scur = stry;
+            }
+            else
+            {
+                /* bisect */
+                spre = sbis;
+                scur = sbis;
+            }
+        }
+        else
+        {
+            /* bisect */
+            spre = sbis;
+            scur = sbis;
+        }
+
+        xpre = xcur; fpre = fcur;
+        if (abs(scur) > delta)
+        {
+            xcur += scur;
+        }
+        else
+        {
+            xcur += (sbis > 0 ? delta : -delta);
+        }
+
+        fcur = Func(xcur);
+        if (FuncCalls) {++(*FuncCalls);}
+    }
+    throw std::logic_error(std::format("Brent: Failed to converge: {}", xcur));
+}
+
 
 //////////////////////////////////// 二分搜索 ////////////////////////////////////
 
@@ -196,8 +297,8 @@ float64 BisectionRootFindingEngine::operator()(float64 x) const
 float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCallCount) const
 {
     Function1D Func([x, this](float64 _x){return OriginalFunction(_x) - x;});
-    uint64 AbsTol = pow(10, -AbsoluteTolerence);
-    uint64 RelTol = pow(10, -RelativeTolerence);
+    float64 AbsTol = pow(10, -AbsoluteTolerence);
+    float64 RelTol = pow(10, -RelativeTolerence);
     uint64 MaxIter = floor(pow(10, MaxIteration));
 
     float64 x0 = ReferencePoint;
@@ -233,7 +334,7 @@ float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCal
             gn1 += ((((k & 1) ? -1 : 1) * tgamma(k + 1)) / pow(f, k + 1)) * B.at(n, k);
         }
         // 处理分母为0的情况
-        if (!gn1) {throw std::logic_error("Derivative was zero.");}
+        if (!gn1) {throw std::logic_error("Householder: Derivative was zero.");}
 
         float64 Step = n * gn0 / gn1;
         x1 = x0 + Step;
@@ -244,7 +345,7 @@ float64 HouseholderIteratorGroup::Run(float64 x, uint64* IterCount, uint64* FCal
         }
         x0 = x1;
     }
-    throw std::logic_error(std::format("Failed to converge: {}", x1));
+    throw std::logic_error(std::format("Householder: Failed to converge: {}", x1));
 }
 
 float64 HouseholderIteratorGroup::operator()(float64 x) const
@@ -274,8 +375,8 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
     uint64* IterCount, uint64* FCallCount, float64 MaxIteration,
     float64 AbsoluteTolerence, float64 RelativeTolerence)
 {
-    uint64 AbsTol = pow(10, -AbsoluteTolerence);
-    uint64 RelTol = pow(10, -RelativeTolerence);
+    float64 AbsTol = pow(10, -AbsoluteTolerence);
+    float64 RelTol = pow(10, -RelativeTolerence);
     uint64 MaxIter = floor(pow(10, MaxIteration));
 
     uint64 Iter = 0;
@@ -291,7 +392,7 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
         }
 
         float64 df = DFunc(x0);
-        if (!df) {throw std::logic_error("Derivative was zero.");}
+        if (!df) {throw std::logic_error("Newton: Derivative was zero.");}
 
         float64 Step = f / df;
         x1 = x0 - Step;
@@ -302,15 +403,15 @@ float64 HouseholderIteratorGroup::Newton(Function1D Func, Function1D DFunc, floa
         }
         x0 = x1;
     }
-    throw std::logic_error(std::format("Failed to converge: {}", x1));
+    throw std::logic_error(std::format("Newton: Failed to converge: {}", x1));
 }
 
 float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Function1D D2Func, float64 x0,
     uint64* IterCount, uint64* FCallCount, float64 MaxIteration,
     float64 AbsoluteTolerence, float64 RelativeTolerence)
 {
-    uint64 AbsTol = pow(10, -AbsoluteTolerence);
-    uint64 RelTol = pow(10, -RelativeTolerence);
+    float64 AbsTol = pow(10, -AbsoluteTolerence);
+    float64 RelTol = pow(10, -RelativeTolerence);
     uint64 MaxIter = floor(pow(10, MaxIteration));
 
     uint64 Iter = 0;
@@ -329,7 +430,7 @@ float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Func
         float64 d2f = D2Func(x0);
         float64 gn0 = f * df;
         float64 gn1 = (df * df) - ((f * d2f) / 2.);
-        if (!gn1) {throw std::logic_error("Derivative was zero.");}
+        if (!gn1) {throw std::logic_error("Halley: Derivative was zero.");}
 
         float64 Step = gn0 / gn1;
         x1 = x0 - Step;
@@ -340,7 +441,7 @@ float64 HouseholderIteratorGroup::Halley(Function1D Func, Function1D DFunc, Func
         }
         x0 = x1;
     }
-    throw std::logic_error(std::format("Failed to converge: {}", x1));
+    throw std::logic_error(std::format("Halley: Failed to converge: {}", x1));
 }
 
 _SCICXX_END

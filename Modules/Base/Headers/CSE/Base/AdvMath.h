@@ -1321,6 +1321,11 @@ public:
     }
 
     float64 operator()(float64 x)const override;
+
+    // 快速求解函数(SciPy移植)
+    static float64 QSolve(Function1D Func, vec2 Domain,
+        float64 AbsTolerence = 11.69897, float64 RelTolerence = 15.0515, float64 MaxIterCount = 2,
+        uint64* IterCount = nullptr, uint64* FuncCalls = nullptr);
 };
 
 /**

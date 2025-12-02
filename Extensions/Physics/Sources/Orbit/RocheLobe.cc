@@ -54,7 +54,7 @@ float64 RocheLobe::DimensionlessPotential(vec3 Pos)const
 float64 RocheLobe::Potential(vec3 Pos)const
 {
     return -(GravConstant * (PrimaryMass + CompanionMass)) / (2. * Separation)
-        * DimensionlessPotential(Pos / Separation);
+    * DimensionlessPotential(Pos / Separation);
 }
 
 float64 RocheLobe::__Dimensionless_Potential_X_Derivative_Impl(vec3 Pos)const
@@ -65,7 +65,7 @@ float64 RocheLobe::__Dimensionless_Potential_X_Derivative_Impl(vec3 Pos)const
     float64 R2 = linalg::EuclideanNorm(Pos2);
     return 2 / (1 + MassRatio) * (- Pos.x / (R1 * R1 * R1))
         + 2 * MassRatio / (1 + MassRatio) * (-(Pos.x - 1) / (R2 * R2 * R2))
-         + 2 * (Pos.x - MassRatio / (1 + MassRatio));
+        + 2 * (Pos.x - MassRatio / (1 + MassRatio));
 }
 
 float64 RocheLobe::DimensionlessPotentialXDerivative(vec3 Pos)const
@@ -109,7 +109,7 @@ float64 RocheLobe::DimensionlessPotentialZDerivative(vec3 Pos)const
 
 float64 RocheLobe::__Eggelton_1983_Effective_Lobe_Radius(float64 MassRatio)const
 {
-    float64 CbrtMassRatio = cbrt(MassRatio);
+    float64 CbrtMassRatio = cse::cbrt(MassRatio);
     return (0.49 * CbrtMassRatio * CbrtMassRatio) /
         ((0.6 * CbrtMassRatio * CbrtMassRatio) + ln(1 + CbrtMassRatio));
 }
@@ -124,7 +124,7 @@ float64 RocheLobe::CompanionEffectiveLobeRadius()const
     return __Eggelton_1983_Effective_Lobe_Radius(CompanionMass / PrimaryMass);
 }
 
-std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)const
+std::array<vec3, 5> RocheLobe::__Lagrange_Point_Impl(const SolvePolyRoutine& Routine)const
 {
     float64 Mu = CompanionMass / (PrimaryMass + CompanionMass);
     std::vector<complex64> LRoots;
@@ -135,7 +135,7 @@ std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)co
     SolvePoly({1, Mu - 3, 3 - 2 * Mu, -Mu, 2 * Mu, -Mu}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return abs(x.imag()) < 1e-13;
+        return cse::abs(x.imag()) < 1e-13;
     })->real();
     Results[0] = vec3(Separation - RealRoot * Separation, 0, 0);
 
@@ -143,7 +143,7 @@ std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)co
     SolvePoly({1, 3 - Mu, 3 - 2 * Mu, -Mu, -2 * Mu, -Mu}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return abs(x.imag()) < 1e-13;
+        return cse::abs(x.imag()) < 1e-13;
     })->real();
     Results[1] = vec3(Separation + RealRoot * Separation, 0, 0);
 
@@ -162,19 +162,19 @@ std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)co
     //    -(7 * M_2) * R^5
     float64 C5 = PrimaryMass + CompanionMass;
     float64 C4 = -(7 * PrimaryMass + 8 * CompanionMass)
-        * Separation;
+                 * Separation;
     float64 C3 = (19 * PrimaryMass + 25 * CompanionMass)
-        * Separation * Separation;
+                 * Separation * Separation;
     float64 C2 = -(24 * PrimaryMass + 37 * CompanionMass)
-        * Separation * Separation * Separation;
+                 * Separation * Separation * Separation;
     float64 C1 = (12 * PrimaryMass + 26 * CompanionMass)
-        * Separation * Separation * Separation * Separation;
+                 * Separation * Separation * Separation * Separation;
     float64 C0 = -(7 * CompanionMass)
-        * Separation * Separation * Separation * Separation * Separation;
+                 * Separation * Separation * Separation * Separation * Separation;
     SolvePoly({C5, C4, C3, C2, C1, C0}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return abs(x.imag()) < 1e-13;
+        return cse::abs(x.imag()) < 1e-13;
     })->real();
     Results[2] = vec3(-(Separation - RealRoot), 0, 0);
 
@@ -185,6 +185,13 @@ std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)co
     // L5
     Results[4] = Separation * vec3(0.5 /** Correction*/, -0.86602540378443864676372317075294, 0);
 
+    return Results;
+}
+
+std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)const
+{
+    auto Results = __Lagrange_Point_Impl(Routine);
+
     for (int i = 0; i < 5; ++i)
     {
         Results[i] = (InvAxisMapper * matrix<1, 3>{Results[i]})[0];
@@ -193,7 +200,7 @@ std::array<vec3, 5> RocheLobe::LagrangePoints(const SolvePolyRoutine& Routine)co
     return Results;
 }
 
-std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset, const SolvePolyRoutine& SPRoutine)const
+std::array<vec3, 20> RocheLobe::__Equipotential_Dimensions_Impl(float64 PotentialOffset, const SolvePolyRoutine& SPRoutine)const
 {
     /*
         已知归一化势函数为：
@@ -305,7 +312,7 @@ std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset,
     */
 
     std::array<vec3, 20> Results;
-    float64 L1Pot = __Dimensionless_Potential_Impl(LagrangePoints(SPRoutine)[0] / Separation);
+    float64 L1Pot = __Dimensionless_Potential_Impl(__Lagrange_Point_Impl(SPRoutine)[0] / Separation);
     float64 PHI = L1Pot + PotentialOffset;
 
     float64 q = CompanionMass / PrimaryMass;
@@ -356,7 +363,7 @@ std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset,
 
     U8InitValue -= 1;
     float64 Barycen = BarycenterPos().x / Separation;
-    U9InitValue = sqrt(pow(U9InitValue - Barycen, 2) - pow(1 - Barycen, 2));
+    U9InitValue = cse::sqrt(cse::pow(U9InitValue - Barycen, 2) - cse::pow(1 - Barycen, 2));
     float64 NRoot1 = SciCxx::HouseholderIteratorGroup::Newton(
         [this, PHI](float64 y){return __Dimensionless_Potential_Impl({1, y, 0}) - PHI;},
         [this](float64 y){return __Dimensionless_Potential_Y_Derivative_Impl({1, y, 0});},
@@ -373,8 +380,8 @@ std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset,
 
     Results[1].z = Results[8].y * 2;
 
-    U12InitValue = abs(U12InitValue);
-    U13InitValue = sqrt(pow(Barycen - U13InitValue, 2) - pow(Barycen, 2));
+    U12InitValue = cse::abs(U12InitValue);
+    U13InitValue = cse::sqrt(cse::pow(Barycen - U13InitValue, 2) - cse::pow(Barycen, 2));
     NRoot1 = SciCxx::HouseholderIteratorGroup::Newton(
         [this, PHI](float64 y){return __Dimensionless_Potential_Impl({0, y, 0}) - PHI;},
         [this](float64 y){return __Dimensionless_Potential_Y_Derivative_Impl({0, y, 0});},
@@ -409,6 +416,13 @@ std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset,
 
     Results[0].y = Results[18].z * 2;
 
+    return Results;
+}
+
+std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset, const SolvePolyRoutine& SPRoutine)const
+{
+    auto Results = __Equipotential_Dimensions_Impl(PotentialOffset, SPRoutine);
+
     for (int i = 2; i < 20; ++i)
     {
         Results[i] = (InvAxisMapper * matrix<1, 3>{Results[i]})[0];
@@ -419,7 +433,36 @@ std::array<vec3, 20> RocheLobe::EquipotentialDimensions(float64 PotentialOffset,
 
 std::array<vec3, 2> RocheLobe::PhysicalDimensions(float64 PrimaryEffectiveRadius, float64 CompanionEffectiveRadius, const SolvePolyRoutine& SPRoutine)const
 {
-    return std::array<vec3, 2>(); // TODO
+    // 此处需要先求解有效半径所在的等势面对应的洛希势，需要求解一个无法用解析式表示的超越方程的解。
+
+    float64 CDReff = CompanionEffectiveRadius / Separation;
+    float64 PDReff = PrimaryEffectiveRadius / Separation;
+    float64 CPeff = __Dimensionless_Potential_Impl(vec3(1 - CDReff, 0, 0));
+    float64 PPeff = __Dimensionless_Potential_Impl(vec3(PDReff, 0, 0));
+    float64 L1Pot = __Dimensionless_Potential_Impl(__Lagrange_Point_Impl(SPRoutine)[0] / Separation);
+
+    float64 CEqPotPlaneRadius = SciCxx::BrentInverseFunction::QSolve(
+        [&SPRoutine, this, L1Pot, CDReff](float64 Potential)
+    {
+        auto Results = __Equipotential_Dimensions_Impl(Potential - L1Pot, SPRoutine);
+        float64 rz = Results[8].y / Separation;
+        float64 ry = Results[16].z / Separation;
+        return rz * ry - CDReff * CDReff;
+    }, vec2(L1Pot + 1e-10, CPeff * 10));
+
+    float64 PEqPotPlaneRadius = SciCxx::BrentInverseFunction::QSolve(
+        [&SPRoutine, this, L1Pot, PDReff](float64 Potential)
+    {
+        auto Results = __Equipotential_Dimensions_Impl(Potential - L1Pot, SPRoutine);
+        float64 rz = Results[12].y / Separation;
+        float64 ry = Results[18].z / Separation;
+        return rz * ry - PDReff * PDReff;
+    }, vec2(L1Pot + 1e-10, PPeff * 10));
+
+    auto CRadiuses = __Equipotential_Dimensions_Impl(CEqPotPlaneRadius - L1Pot, SPRoutine);
+    auto PRadiuses = __Equipotential_Dimensions_Impl(PEqPotPlaneRadius - L1Pot, SPRoutine);
+
+    return std::array<vec3, 2>{PRadiuses[0], CRadiuses[1]};
 }
 
 _ORBIT_END
