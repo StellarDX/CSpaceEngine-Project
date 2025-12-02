@@ -1,4 +1,4 @@
-// Roche Lobe functions is based on PyAstronomy
+// Roche Lobe is based on PyAstronomy
 // PyAstronomy is released under the MIT license
 
 /*
@@ -109,7 +109,7 @@ float64 RocheLobe::DimensionlessPotentialZDerivative(vec3 Pos)const
 
 float64 RocheLobe::__Eggelton_1983_Effective_Lobe_Radius(float64 MassRatio)const
 {
-    float64 CbrtMassRatio = cse::cbrt(MassRatio);
+    float64 CbrtMassRatio = cbrt(MassRatio);
     return (0.49 * CbrtMassRatio * CbrtMassRatio) /
         ((0.6 * CbrtMassRatio * CbrtMassRatio) + ln(1 + CbrtMassRatio));
 }
@@ -135,7 +135,7 @@ std::array<vec3, 5> RocheLobe::__Lagrange_Point_Impl(const SolvePolyRoutine& Rou
     SolvePoly({1, Mu - 3, 3 - 2 * Mu, -Mu, 2 * Mu, -Mu}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return cse::abs(x.imag()) < 1e-13;
+        return abs(x.imag()) < 1e-13;
     })->real();
     Results[0] = vec3(Separation - RealRoot * Separation, 0, 0);
 
@@ -143,7 +143,7 @@ std::array<vec3, 5> RocheLobe::__Lagrange_Point_Impl(const SolvePolyRoutine& Rou
     SolvePoly({1, 3 - Mu, 3 - 2 * Mu, -Mu, -2 * Mu, -Mu}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return cse::abs(x.imag()) < 1e-13;
+        return abs(x.imag()) < 1e-13;
     })->real();
     Results[1] = vec3(Separation + RealRoot * Separation, 0, 0);
 
@@ -174,7 +174,7 @@ std::array<vec3, 5> RocheLobe::__Lagrange_Point_Impl(const SolvePolyRoutine& Rou
     SolvePoly({C5, C4, C3, C2, C1, C0}, LRoots, Routine);
     RealRoot = std::find_if(LRoots.begin(), LRoots.end(), [](complex64 x)
     {
-        return cse::abs(x.imag()) < 1e-13;
+        return abs(x.imag()) < 1e-13;
     })->real();
     Results[2] = vec3(-(Separation - RealRoot), 0, 0);
 
@@ -363,7 +363,7 @@ std::array<vec3, 20> RocheLobe::__Equipotential_Dimensions_Impl(float64 Potentia
 
     U8InitValue -= 1;
     float64 Barycen = BarycenterPos().x / Separation;
-    U9InitValue = cse::sqrt(cse::pow(U9InitValue - Barycen, 2) - cse::pow(1 - Barycen, 2));
+    U9InitValue = sqrt(pow(U9InitValue - Barycen, 2) - pow(1 - Barycen, 2));
     float64 NRoot1 = SciCxx::HouseholderIteratorGroup::Newton(
         [this, PHI](float64 y){return __Dimensionless_Potential_Impl({1, y, 0}) - PHI;},
         [this](float64 y){return __Dimensionless_Potential_Y_Derivative_Impl({1, y, 0});},
@@ -380,8 +380,8 @@ std::array<vec3, 20> RocheLobe::__Equipotential_Dimensions_Impl(float64 Potentia
 
     Results[1].z = Results[8].y * 2;
 
-    U12InitValue = cse::abs(U12InitValue);
-    U13InitValue = cse::sqrt(cse::pow(Barycen - U13InitValue, 2) - cse::pow(Barycen, 2));
+    U12InitValue = abs(U12InitValue);
+    U13InitValue = sqrt(pow(Barycen - U13InitValue, 2) - pow(Barycen, 2));
     NRoot1 = SciCxx::HouseholderIteratorGroup::Newton(
         [this, PHI](float64 y){return __Dimensionless_Potential_Impl({0, y, 0}) - PHI;},
         [this](float64 y){return __Dimensionless_Potential_Y_Derivative_Impl({0, y, 0});},
