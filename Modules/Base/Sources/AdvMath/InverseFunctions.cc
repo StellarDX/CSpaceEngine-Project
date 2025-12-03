@@ -154,7 +154,7 @@ float64 BrentInverseFunction::QSolve(Function1D Func, vec2 Domain, float64 AbsTo
     if (fcur == 0) {return xcur;}
     if (FuncCalls) {*FuncCalls = 2;}
 
-    if (::signbit(fpre) == ::signbit(fcur))
+    if (std::signbit(fpre) == std::signbit(fcur))
     {
         throw std::logic_error("Brent: No solutions found between this domain");
     }
@@ -163,7 +163,7 @@ float64 BrentInverseFunction::QSolve(Function1D Func, vec2 Domain, float64 AbsTo
     {
         if (IterCount) {++(*IterCount);}
 
-        if (fpre != 0 && fcur != 0 && (::signbit(fpre) != ::signbit(fcur)))
+        if (fpre != 0 && fcur != 0 && (std::signbit(fpre) != std::signbit(fcur)))
         {
             xblk = xpre;
             fblk = fpre;
