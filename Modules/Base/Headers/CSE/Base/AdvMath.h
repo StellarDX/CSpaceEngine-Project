@@ -971,6 +971,13 @@ public:
     virtual ValueArray operator()(float64 x)const = 0;
 };
 
+/// @see __State_Vector_Planetary_Simulator
+class __Symplectic_Ordinary_Differential_Equation : public OrdinaryDifferentialEquation
+{
+public:
+    virtual int SymplecticOrder()const = 0;
+};
+
 extern const uint64  __RK23_C_Table[3];
 extern const uint64  __RK23_A_Table[9];
 extern const uint64  __RK23_B_Table[3];

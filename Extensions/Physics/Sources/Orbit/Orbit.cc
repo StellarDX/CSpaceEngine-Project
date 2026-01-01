@@ -84,7 +84,7 @@ bool KeplerCompute(KeplerianOrbitElems& InitElems)
     if (ProvidedParams < 2) {return false;}
 
     // 根据开普勒第三定律计算缺失的参数
-    // 开普勒第三定律: T^2 = (4π²a³)/μ
+    // 开普勒第三定律: T^2 = (4π^2a^3)/μ
     // 其中 a 是半长轴，μ 是重力参数，T 是周期
 
     // 计算半长轴 (a = PericenterDist / (1 - Eccentricity))
@@ -259,6 +259,55 @@ Angle PericenterDistToAngularVelocity(float64 Eccentricity, float64 PericenterDi
     A = abs(A);
     float64 A3 = A * A * A;
     return Angle::FromRadians(sqrt(GravParam / A3));
+}
+
+float64 RigidRocheLimit(float64 PrimaryRadius, float64 PrimaryDensity, float64 CompanionDensity)
+{
+    return PrimaryRadius * cbrt(2 * (PrimaryDensity / CompanionDensity));
+}
+
+float64 FluidRocheLimit(float64 PrimaryMass, float64 PrimaryRadius, float64 PrimaryFlattening, float64 CompanionMass, float64 CompanionDensity)
+{
+    float64 PrimaryDensity = PrimaryMass / ((4. / 3) * CSE_PI * PrimaryRadius * PrimaryRadius * PrimaryRadius);
+    return 2.423 * PrimaryRadius * cbrt(PrimaryDensity / CompanionDensity) *
+        cbrt(((1 + CompanionMass / (3 * PrimaryMass)) + PrimaryFlattening / 3 * (1 + CompanionMass / PrimaryMass)) / (1 - PrimaryFlattening));
+}
+
+float64 ApproxHillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation)
+{
+    return Separation * cbrt(CompanionMass / (3 * (PrimaryMass + CompanionMass)));
+}
+
+float64 HillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation, const SolvePolyRoutine& SPRoutine)
+{
+    // (G * M_2) / x^2 - (G * M_1) / (R - x)^2 + Ω^2 * (R - x) = 0
+    // => (-G * M_1 * x^2 + G * M_2 * R^2 - 2 * G * M_2 * R * x + G * M_2 * x^2 + R^3 * Ω^2 * x^2 - 3 * R^2 * Ω^2 * x^3 + 3 * R * Ω^2 * x^4 - Ω^2 * x^5) / (R^2 * x^2 - 2 * R * x^3 + x^4) = 0
+    // => - (Ω^2) * x^5
+    //    + (3 * R * Ω^2) * x^4
+    //    - (3 * R^2 * Ω^2) * x^3
+    //    + ((-G * M_1) + (G * M_2) + (R^3 * Ω^2)) * x^2
+    //    - (2 * G * M_2 * R) * x
+    //    + (G * M_2 * R^2)
+
+    float64 Separation3 = Separation * Separation * Separation;
+    float64 AngularVelocity2 = (GravConstant * (PrimaryMass + CompanionMass)) / Separation3;
+    float64 GravParamPrim = GravConstant * PrimaryMass;
+    float64 GravParamComp = GravConstant * CompanionMass;
+    std::vector<float64> Coeffs
+    {
+        -AngularVelocity2,
+        3 * Separation * AngularVelocity2,
+        -3 * Separation * Separation * AngularVelocity2,
+        GravParamComp - GravParamPrim + Separation3 * AngularVelocity2,
+        -2 * GravParamComp * Separation,
+        GravParamComp * Separation * Separation
+    };
+    std::vector<complex64> Roots;
+    SolvePoly(Coeffs, Roots, SPRoutine);
+    return std::find_if(Roots.begin(), Roots.end(), [](complex64 x)
+    {
+        return abs(x.imag()) < 1e-13;
+    })->real();
 }
 
 _ORBIT_END

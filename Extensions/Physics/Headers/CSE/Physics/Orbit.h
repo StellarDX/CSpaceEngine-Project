@@ -879,12 +879,6 @@ _PSim_END
 
 // ----------------------------------- 平面圆型限制性三体问题 ---------------------------------- //
 
-class __Circular_Restricted_Three_Body_Orbit_Generator
-{
-public:
-    vec2 operator()(float64 TimeOffset);
-};
-
 class RocheLobe
 {
 public:
@@ -937,7 +931,8 @@ public:
 
 float64 RigidRocheLimit(float64 PrimaryRadius, float64 PrimaryDensity, float64 CompanionDensity);
 float64 FluidRocheLimit(float64 PrimaryMass, float64 PrimaryRadius, float64 PrimaryFlattening, float64 CompanionMass, float64 CompanionDensity);
-float64 HillSphere(float64 PrimaryMass, float64 CompanionMass, float64 PericenterDist);
+float64 ApproxHillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation);
+float64 HillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation, const SolvePolyRoutine& SPRoutine = DurandKernerSolvePoly());
 
 _ORBIT_END
 _CSE_END
