@@ -824,5 +824,76 @@ float64 RiemannLiouvilleIntegratingFunction::operator()(float64 x) const
     }, InitValue.x, x) / tgamma(IntegralOrder) + InitValue.y;
 }
 
+
+//////////////////////////////////// 多维积分 ///////////////////////////////////
+
+const __Multidimensional_Integral::DefaultEngine __Multidimensional_Integral::DefEngine{};
+
+float64 __Multidimensional_Integral::UnpackBoundary(const BoundaryType& Func, const std::vector<float64>& Pinned) const
+{
+    if (std::holds_alternative<float64>(Func))
+    {
+        return std::get<float64>(Func);
+    }
+    else
+    {
+        // 函数边界，依赖于已固定的变量
+        return std::get<FuncType>(Func)(Pinned);
+    }
+}
+
+float64 __Multidimensional_Integral::RecursiveIntergrate(FuncType Func, std::vector<float64> Pinned, std::stack<BoundPairType> Remains) const
+{
+    if (Remains.empty())
+    {
+        // 所有维度都已固定，直接计算函数值
+        return Func(Pinned);
+    }
+
+    // 取出当前要积分的维度
+    BoundPairType Current = Remains.top();
+    Remains.pop();
+
+    // 获取当前维度的上下界
+    float64 Lower = UnpackBoundary(Current.first, Pinned);
+    float64 Upper = UnpackBoundary(Current.second, Pinned);
+
+    // 构造当前维度的一维积分函数
+    Func1DType InnerIntergral = [this, Func, Pinned, Remains](float64 x)
+    {
+        std::vector<float64> CurrentPinned = Pinned;
+        CurrentPinned.push_back(x);
+        return RecursiveIntergrate(Func, CurrentPinned, Remains);
+    };
+
+    // 使用引擎计算一维积分
+    return (*Engine)(InnerIntergral, Lower, Upper);
+}
+
+__Multidimensional_Integral::BoundPairType __Multidimensional_Integral::MakeBound(BoundaryType a, BoundaryType b)
+{
+    return {a, b};
+}
+
+float64 __Multidimensional_Integral::operator()(Func1DType Func, vec2 BoundaryX) const
+{
+    return (*Engine)(Func, BoundaryX.x, BoundaryX.y);
+}
+
+float64 __Multidimensional_Integral::operator()(FuncType Func, vec2 BoundaryX, std::vector<BoundPairType> OtherBounds)const
+{
+    // 将第一维边界转换为BoundPairType
+    std::stack<BoundPairType> Bounds;
+    for (auto it = OtherBounds.rbegin(); it != OtherBounds.rend(); ++it)
+    {
+        Bounds.push(*it);
+    }
+    BoundPairType XBound = {BoundaryX[0], BoundaryX[1]};
+    Bounds.push(XBound);
+
+    // 从空向量开始递归积分
+    return RecursiveIntergrate(Func, {}, Bounds);
+}
+
 _SCICXX_END
 _CSE_END

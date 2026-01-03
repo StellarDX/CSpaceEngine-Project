@@ -117,6 +117,7 @@
 #include "CSE/Base/MathFuncs.h"
 #include "CSE/Base/GLTypes.h"
 #include "CSE/Base/LinAlg.h"
+#include <stack>
 #include <map>
 #include <functional>
 #include <memory>
@@ -854,22 +855,81 @@ public:
 }RiemannLiouvilleDerivativeFunction;
 
 /**
- * @brief 多重积分(TODO)
+ * @brief 多重积分
+ * @details
+ * 丹霞：这个工具实现的是仅使用一维的积分引擎计算二维甚至更高维的积分。不过它的延迟是非常
+ * 不可控的，积分的维数和使用的积分引擎都可能影响。测试此功能时为它设计了9个用例，如下：
+ * （为了省事，这里直接贴Latex了）
+ *
+ *  [初入江湖]
+ *  (1) \f[\int^4_0 x^2 dx\f]
+ *  (2) \f[\int^\infty_0 e^{-x} dx\f]
+ *
+ *  [小有名气]
+ *  (3) \f[\int^{x=2}_{x=0} \int^{y=1}_{y=0} x y^2 \,dy \,dx\f]
+ *
+ *  [名动一方]
+ *  (4) \f[\int^{x=\pi/4}_{x=0} \int^{y=\cos(x)}_{y=\sin(x)} 1 \,dy \,dx\f]
+ *
+ *  [天下闻名]
+ *  (5) \f[\iint^{+\infty}_{-\infty} e^{-(x^{2} + y^{2})} \,dy\,dx\f]
+ *
+ *  [一代宗师]
+ *  (6) \f[\int^{x=2}_{x=1} \int^{y=3}_{y=2} \int^{z=1}_{z=0} x y z \,dz \,dy \,dx\f]
+ *
+ *  [超凡入圣]
+ *  (7) \f[\int^{x=1}_{x=0} \int^{y=1-2x}_{y=0} \int^{z=1-x-2y}_{z=0} x y z \,dz \,dy \,dx\f]
+ *  (8) \f[\iiint^{+\infty}_{-\infty} e^{-(x^{2} + y^{2} + z^{2})} \,dz \,dy\,dx\f]
+ *
+ *  [天外飞仙]
+ *  (9) \f[\int^{1}_{-0.15} \int^{0.8}_{0.13} \int^{1}_{-1} \int^{1}_{0} f(x_0, x_1, x_2, x_3) \,dx_0 \,dx_1 \,dx_2 \,dx_3\f]
+ *      其中
+ *      \f[\begin{split}f(x_0, x_1, x_2, x_3) = \begin{cases} x_0^2+x_1 x_2-x_3^3+ \sin{x_0}+1 & (x_0-0.2 x_3-0.5-0.25 x_1 > 0) \\ x_0^2+x_1 x_2-x_3^3+ \sin{x_0}+0 & (x_0-0.2 x_3-0.5-0.25 x_1 \leq 0) \end{cases} \end{split}\f]
+ *
+ * 积分引擎使用高斯-克朗罗德积分，前两个不用说了，简单的一维积分，第(3)个同样1毫秒就能解
+ * 决，但是到了第(4)个延迟就来到了8秒，第(5)个延迟直接干到了70秒，第(6)个和第(3)个差不多，
+ * 15毫秒出结果，但是第(7)个延迟又被干到了1分钟，第(8)个和第(9)个甚至跑了一个小时都没出
+ * 结果。将积分引擎更换为牛顿-科特斯引擎，使用33点龙贝格积分计算第(9)个，延迟仅2.5秒左右，
+ * 但精度不高。
+ *
+ * 这就不得不提到一个数值分析和机器学习里头遇到的一个经典问题——炸维度。以上述的第(9)个积
+ * 分为例，四重积分就意味着要嵌套4层，即使每层嵌套只使用10个样本点，嵌套4层就意味着会产生
+ * 10^4=10000个样本点，这意味着如果每层使用更多样本点，总样本数将会很容易飙到天文数字，
+ * 也就是我们所说的，维度“炸”了，而且这个问题用常规的增加线程的办法是“治标不治本”的。对于
+ * 高维积分而言，常用的解决办法是引入主动学习采样或稀疏网格以降低复杂度，或者更简单的随机
+ * 采样，也就是蒙特卡洛算法。此处也将蒙特卡洛算法作为备用解决方案，但是此方法收敛速度较慢，
+ * 需要较多的样本点才能到达较高的精度，但是与常规方法导致的炸维度相比是会快很多。
  */
 class __Multidimensional_Integral
 {
 public:
-    using DefaultEngine = DefaultIntegratingFunction;
+    using DefaultEngine = SciCxx::DefaultIntegratingFunction;
+    using Func1DType    = SciCxx::Function1D;
+    using FuncType      = std::function<float64(std::vector<float64>)>;
+    using BoundaryType  = std::variant<float64, FuncType>;
+    using BoundPairType = std::pair<BoundaryType, BoundaryType>;
 
 protected:
     static const DefaultEngine DefEngine;
-    const DefiniteIntegratingFunction* Engine;
+    const SciCxx::DefiniteIntegratingFunction* Engine;
+
+    float64 UnpackBoundary(const BoundaryType& Func, const std::vector<float64>& Pinned)const;
+    float64 RecursiveIntergrate(FuncType Func, std::vector<float64> Pinned,
+        std::stack<BoundPairType> Remains)const;
 
 public:
     __Multidimensional_Integral() : Engine(&DefEngine) {}
-    __Multidimensional_Integral(const DefiniteIntegratingFunction& IFunc) : Engine(&IFunc) {}
+    __Multidimensional_Integral(const SciCxx::DefiniteIntegratingFunction& IFunc)
+        : Engine(&IFunc) {}
 
-    // TODO...
+    static BoundPairType MakeBound(BoundaryType a, BoundaryType b);
+
+    float64 operator()(Func1DType Func, vec2 BoundaryX)const;
+    float64 operator()(FuncType Func, vec2 BoundaryX,
+        std::vector<BoundPairType> OtherBounds)const;
+
+    static float64 MonteCarlo(FuncType Func, vec2 BoundaryX,
+        std::vector<BoundPairType> OtherBounds, float64 LogSamples = 6); // TODO
 };
 
 
