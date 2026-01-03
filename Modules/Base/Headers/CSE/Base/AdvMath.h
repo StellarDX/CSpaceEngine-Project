@@ -121,6 +121,7 @@
 #include <map>
 #include <functional>
 #include <memory>
+#include <random>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -929,7 +930,8 @@ public:
         std::vector<BoundPairType> OtherBounds)const;
 
     static float64 MonteCarlo(FuncType Func, vec2 BoundaryX,
-        std::vector<BoundPairType> OtherBounds, float64 LogSamples = 6); // TODO
+        std::vector<BoundPairType> OtherBounds, float64 LogSamples = 6,
+        uint64 Seed = std::random_device()()); // TODO
 };
 
 
