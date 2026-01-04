@@ -934,6 +934,9 @@ float64 FluidRocheLimit(float64 PrimaryMass, float64 PrimaryRadius, float64 Prim
 float64 ApproxHillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation);
 float64 HillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separation, const SolvePolyRoutine& SPRoutine = DurandKernerSolvePoly());
 
+void __cdecl MakeOrbit(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args = {});
+std::shared_ptr<Object> __cdecl MakeBinary(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args = {});
+
 _ORBIT_END
 _CSE_END
 

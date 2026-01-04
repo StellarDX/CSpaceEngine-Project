@@ -310,5 +310,71 @@ float64 HillSphere(float64 PrimaryMass, float64 CompanionMass, float64 Separatio
     })->real();
 }
 
+void __cdecl MakeOrbit(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args)
+{
+    if (!Separation && IS_NO_DATA_DBL(Args.PericenterDist))
+    {
+        throw std::logic_error("Failed to make orbit: Separation is not provided.");
+    }
+
+    try {Companion->ParentBody = Primary->Name.at(0);}
+    catch(...) {throw std::logic_error("Failed to make orbit: Primary has no available name.");}
+
+    KeplerianOrbitElems FinalOrbit = Args;
+    if (Separation)
+    {
+        float64 Eccentricity = IS_NO_DATA_DBL(Args.Eccentricity) ? 0 : Args.Eccentricity;
+        FinalOrbit.PericenterDist = GetPericenterDistFromSemiMajorAxis(Eccentricity, Separation.value());
+    }
+    Companion->Orbit = FinalOrbit;
+}
+
+std::shared_ptr<Object> MakeBinary(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args)
+{
+    if (!Separation && IS_NO_DATA_DBL(Args.PericenterDist))
+    {
+        throw std::logic_error("Failed to make binary: Separation is not provided.");
+    }
+    if (IS_NO_DATA_DBL(Primary->Mass) || IS_NO_DATA_DBL(Companion->Mass))
+    {
+        throw std::logic_error("Failed to make binary: Masses of primary and companion must be provided.");
+    }
+
+    Object Barycenter
+    {
+        .Type = "Barycenter",
+        .Name = {"Barycenter"},
+        .ParentBody = Primary->ParentBody,
+        .Orbit = Primary->Orbit
+    };
+
+    Primary->ParentBody = Barycenter.Name.at(0);
+    Companion->ParentBody = Barycenter.Name.at(0);
+
+    float64 Separation0, Eccentricity = 0;
+    if (Separation) {Separation0 = Separation.value();}
+    else
+    {
+        Eccentricity = IS_NO_DATA_DBL(Args.Eccentricity) ? 0 : Args.Eccentricity;
+        Separation = GetSemiMajorAxisFromPericenterDist(Eccentricity, Args.PericenterDist);
+    }
+
+    float64 BarycenterPos = RocheLobe
+        {Primary->Mass, Companion->Mass, Separation0, mat3(1), mat3(1)}
+        .BarycenterPos().x;
+    KeplerianOrbitElems PFinalOrbit = Args;
+    KeplerianOrbitElems CFinalOrbit = Args;
+    PFinalOrbit.PericenterDist =
+        GetPericenterDistFromSemiMajorAxis(Eccentricity, BarycenterPos);
+    CFinalOrbit.PericenterDist =
+        GetPericenterDistFromSemiMajorAxis(Eccentricity, Separation0 - BarycenterPos);
+    PFinalOrbit.ArgOfPericenter = Angle::FromDegrees(PFinalOrbit.ArgOfPericenter.ToDegrees() - 180);
+
+    Primary->Orbit = PFinalOrbit;
+    Companion->Orbit = CFinalOrbit;
+
+    return std::make_shared<Object>(Barycenter);
+}
+
 _ORBIT_END
 _CSE_END
