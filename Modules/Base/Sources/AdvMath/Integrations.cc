@@ -68,7 +68,7 @@ float64 DefiniteIntegratingFunction::operator()(Function1D f, float64 a, float64
 
 float64 SampleBasedIntegratingFunction::Run(Function1D f, float64 a, float64 b)const
 {
-    return Run(GetSamplesFromFunction(f, a, b, 0));
+    return Run(GetSamplesFromFunction(f, a, b, floor(pow(2, LBDefaultSampleCountM1) + 1)));
 }
 
 std::vector<vec2> SampleBasedIntegratingFunction::GetEvenlySpacedSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples)

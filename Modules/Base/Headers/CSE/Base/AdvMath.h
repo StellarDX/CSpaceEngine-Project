@@ -122,6 +122,7 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <variant>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -583,6 +584,9 @@ protected:
     virtual float64 Run(std::vector<vec2> Samples)const = 0;
 
 public:
+    // 默认采样数（lb(DefSampleCount) - 1），用于连续函数兼容，例如设为n就是2^n+1个点 */
+    float64 LBDefaultSampleCountM1 = 5;
+
     //virtual ~SampleBasedIntegratingFunction() {} // “氨醛”
     // 采样函数
     static std::vector<vec2> GetEvenlySpacedSamplesFromFunction(Function1D f, float64 a, float64 b, uint64 Samples); // 一元函数固定步长采样
