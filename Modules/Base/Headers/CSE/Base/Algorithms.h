@@ -48,6 +48,26 @@ _STL_DISABLE_CLANG_WARNINGS
 #define NOMINMAX 1
 #endif
 
+#define _USE_CSE_ALGORITHMS \
+using cse::abs;\
+using cse::sgn;\
+using cse::floor;\
+using cse::ceil;\
+using cse::FractionalPart;\
+using cse::fract;\
+using cse::mod;\
+using cse::min;\
+using cse::max;\
+using cse::clamp;\
+using cse::mix;\
+using cse::step;\
+using cse::smoothstep;\
+using cse::isinf;\
+using cse::isnan;\
+using cse::isfinite;\
+using cse::FPClassify;\
+
+
 _CSE_BEGIN
 
 /**

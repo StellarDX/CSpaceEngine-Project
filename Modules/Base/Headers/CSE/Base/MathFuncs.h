@@ -58,6 +58,29 @@ type##vec<N> _Res;\
 __stelcxx_array_operation_ext(var, N, _Res[var] = expression;)\
 return _Res;\
 
+#define _USE_CSE_MATH_FUNCS \
+using cse::exp;\
+using cse::ln;\
+using cse::log;\
+using cse::pow;\
+using cse::sqrt;\
+using cse::inversesqrt;\
+using cse::cbrt;\
+using cse::yroot;\
+using cse::sin;\
+using cse::cos;\
+using cse::tan;\
+using cse::ctg;\
+using cse::sec;\
+using cse::csc;\
+using cse::arcsin;\
+using cse::arccos;\
+using cse::arctan;\
+using cse::arcctg;\
+using cse::arcsec;\
+using cse::arccsc;\
+
+
 /****************************************************************************************\
 *                                          E X P                                         *
 \****************************************************************************************/
