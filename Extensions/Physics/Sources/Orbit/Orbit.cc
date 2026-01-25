@@ -329,7 +329,7 @@ void __cdecl MakeOrbit(Object* Primary, Object* Companion, std::optional<float64
     Companion->Orbit = FinalOrbit;
 }
 
-std::shared_ptr<Object> MakeBinary(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args)
+std::shared_ptr<Object> __cdecl MakeBinary(Object* Primary, Object* Companion, std::optional<float64> Separation, KeplerianOrbitElems Args)
 {
     if (!Separation && IS_NO_DATA_DBL(Args.PericenterDist))
     {

@@ -49,23 +49,23 @@ _STL_DISABLE_CLANG_WARNINGS
 #endif
 
 #define _USE_CSE_ALGORITHMS \
-using cse::abs;\
-using cse::sgn;\
-using cse::floor;\
-using cse::ceil;\
-using cse::FractionalPart;\
-using cse::fract;\
-using cse::mod;\
-using cse::min;\
-using cse::max;\
-using cse::clamp;\
-using cse::mix;\
-using cse::step;\
-using cse::smoothstep;\
-using cse::isinf;\
-using cse::isnan;\
-using cse::isfinite;\
-using cse::FPClassify;\
+using _CSE abs;\
+using _CSE sgn;\
+using _CSE floor;\
+using _CSE ceil;\
+using _CSE FractionalPart;\
+using _CSE fract;\
+using _CSE mod;\
+using _CSE min;\
+using _CSE max;\
+using _CSE clamp;\
+using _CSE mix;\
+using _CSE step;\
+using _CSE smoothstep;\
+using _CSE isinf;\
+using _CSE isnan;\
+using _CSE isfinite;\
+using _CSE FPClassify;\
 
 
 _CSE_BEGIN

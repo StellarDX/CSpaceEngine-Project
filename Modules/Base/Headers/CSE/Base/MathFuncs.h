@@ -59,26 +59,26 @@ __stelcxx_array_operation_ext(var, N, _Res[var] = expression;)\
 return _Res;\
 
 #define _USE_CSE_MATH_FUNCS \
-using cse::exp;\
-using cse::ln;\
-using cse::log;\
-using cse::pow;\
-using cse::sqrt;\
-using cse::inversesqrt;\
-using cse::cbrt;\
-using cse::yroot;\
-using cse::sin;\
-using cse::cos;\
-using cse::tan;\
-using cse::ctg;\
-using cse::sec;\
-using cse::csc;\
-using cse::arcsin;\
-using cse::arccos;\
-using cse::arctan;\
-using cse::arcctg;\
-using cse::arcsec;\
-using cse::arccsc;\
+using _CSE exp;\
+using _CSE ln;\
+using _CSE log;\
+using _CSE pow;\
+using _CSE sqrt;\
+using _CSE inversesqrt;\
+using _CSE cbrt;\
+using _CSE yroot;\
+using _CSE sin;\
+using _CSE cos;\
+using _CSE tan;\
+using _CSE ctg;\
+using _CSE sec;\
+using _CSE csc;\
+using _CSE arcsin;\
+using _CSE arccos;\
+using _CSE arctan;\
+using _CSE arcctg;\
+using _CSE arcsec;\
+using _CSE arccsc;\
 
 
 /****************************************************************************************\

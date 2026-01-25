@@ -641,7 +641,9 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec);
 #endif
 
 // Object Functions
-_ASOBJ_BEGIN
+// 注: 这些函数仅为一些临时结构，后续将移至物理引擎中
+_ASOBJ_BEGIN __declspec(deprecated("These functions are temporary structures, "
+                                   "and will be moved to Physic module in the future"))
 
 float64 Aphelion(Object Obj);
 float64 Perihelion(Object Obj);

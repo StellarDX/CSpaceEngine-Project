@@ -144,6 +144,7 @@ Object GetObjectFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
             auto RotModelSubTable = RotModelTable->SubTable;
             auto RotModelSubTableEnd = RotModelSubTable->Get().end();
             __Get_Value_From_Table(&Obj.RotationIAU.ValidRange, CurrentTable, L"ValidRange", Obj.RotationIAU.ValidRange);
+            __Get_Value_From_Table(&Obj.Rotation.TidalLocked, CurrentTable, L"TidalLocked", false);
             __Get_Value_From_Table(&Obj.RotationIAU.Epoch, RotModelSubTable, L"Epoch", float64(J2000));
             __Get_Value_From_Table(&Obj.RotationIAU.PoleRA, RotModelSubTable, L"PoleRA", Obj.RotationIAU.PoleRA);
             __Get_Value_From_Table(&Obj.RotationIAU.PoleRARate, RotModelSubTable, L"PoleRARate", Obj.RotationIAU.PoleRARate);
@@ -828,6 +829,7 @@ template<> _SC SCSTable MakeTable(Object Obj, int Fl, std::streamsize Prec)
             __Add_Key_Value(&ContentTable, L"RotationModel", Obj.RotationModel, FixedOutput, Prec);
             _SC SCSTable IAUTable;
             __Add_Key_Value(&IAUTable, L"ValidRange", Obj.RotationIAU.ValidRange, FixedOutput, Prec);
+            __Add_Key_Value(&IAUTable, L"TidalLocked", Obj.Rotation.TidalLocked, 1, Prec);
             __Add_Key_Value(&IAUTable, L"Epoch", Obj.RotationIAU.Epoch, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"PoleRA", Obj.RotationIAU.PoleRA, FixedOutput, Prec);
             __Add_Key_Value(&IAUTable, L"PoleRARate", Obj.RotationIAU.PoleRARate, FixedOutput, Prec);
