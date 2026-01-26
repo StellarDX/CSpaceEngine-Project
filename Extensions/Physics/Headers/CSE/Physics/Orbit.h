@@ -23,6 +23,7 @@
 
 #include "CSE/Base.h"
 #include "CSE/Object.h"
+#include <optional>
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)

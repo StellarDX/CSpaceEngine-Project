@@ -109,7 +109,7 @@ _STL_DISABLE_CLANG_WARNINGS
 
 #ifdef CSE_OS_LINUX
 #define __declspec(attrib) __attribute__((attrib))
-#define __cdecl __declspec(__cdecl__)
+#define __cdecl //__declspec(__cdecl__) // 绝大多数Linux环境使用的是另一套统一的调用约定，__cdecl 声明在Linux的64位GCC下成了“废话”
 #endif
 
 // Include Resources
