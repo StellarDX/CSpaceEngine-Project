@@ -129,6 +129,10 @@ void IAU_WGCCRERotationTracker::SetDate(float64 JD)
         }
     }
 
+    NormalizeCoord(FinalPoleRA, FinalPoleDec);
+    if (FinalPrimeMeri > 360) {FinalPrimeMeri = mod(FinalPrimeMeri, 360);}
+    if (FinalPrimeMeri < 0) {FinalPrimeMeri = mod(FinalPrimeMeri, 360) + 360;}
+
     CurrentState.PoleRA = Angle::FromDegrees(FinalPoleRA);
     CurrentState.PoleDec = Angle::FromDegrees(FinalPoleDec);
     CurrentState.PrimeMeridian = Angle::FromDegrees(FinalPrimeMeri);
@@ -138,6 +142,11 @@ void IAU_WGCCRERotationTracker::SetDate(float64 JD)
 void IAU_WGCCRERotationTracker::Reset()
 {
     CurrentState = InitialState;
+}
+
+IAU_WGCCRERotationTracker::BaseType IAU_WGCCRERotationTracker::GetCurrentState() const
+{
+    return CurrentState;
 }
 
 void IAU_WGCCRERotationTracker::NorthPolePos(Sexagesimal* RA, Sexagesimal* Dec) const

@@ -160,6 +160,49 @@ const struct __Flux_Type __Photometric_Wavelengths_Table[9]
 
 // ----------------------------------------------------------------------------------------------------
 
+void NormalizeCoord(float64& RA, float64& Dec)
+{
+    if (Dec > 90)
+    {
+        Dec = 180 - Dec;
+        RA = mod(RA + 180, 360);
+    }
+    else if (Dec < -90)
+    {
+        Dec = -180 - Dec;
+        RA = mod(RA + 180, 360);
+    }
+
+    if (RA > 360)
+    {
+        RA = mod(RA, 360);
+    }
+    else if (RA < 0)
+    {
+        RA = mod(RA, 360) + 360;
+    }
+}
+
+void NormalizeCoord(Angle& RA, Angle& Dec)
+{
+    float64 FRA = RA.ToDegrees();
+    float64 FDec = Dec.ToDegrees();
+    NormalizeCoord(FRA, FDec);
+    RA = Angle::FromDegrees(FRA);
+    Dec = Angle::FromDegrees(FDec);
+}
+
+void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec)
+{
+    float64 FRA = RA;
+    float64 FDec = Dec;
+    NormalizeCoord(FRA, FDec);
+    RA = Sexagesimal(Angle::FromDegrees(FRA));
+    Dec = Sexagesimal(Angle::FromDegrees(FDec));
+}
+
+// ----------------------------------------------------------------------------------------------------
+
 #if __has_include(<CSE/Parser.h>)
 
 using namespace __scstream_table_helpers;

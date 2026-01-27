@@ -158,6 +158,7 @@ public:
     void SetDate(float64 JD)override;
     void Reset()override;
 
+    BaseType GetCurrentState()const;
     void NorthPolePos(Sexagesimal* RA, Sexagesimal* Dec) const override;
     Angle RotationPhase() const override;
 };

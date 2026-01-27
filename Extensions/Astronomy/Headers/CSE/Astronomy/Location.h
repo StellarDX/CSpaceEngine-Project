@@ -185,6 +185,9 @@ public:
     bool                           GenerateStars  = 0;
 };
 
+void NormalizeCoord(float64& RA, float64& Dec);
+void NormalizeCoord(Angle& RA, Angle& Dec);
+void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec);
 
 #if __has_include(<CSE/Parser.h>)
 #ifdef GetObject
