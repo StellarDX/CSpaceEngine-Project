@@ -185,9 +185,10 @@ public:
     bool                           GenerateStars  = 0;
 };
 
-void NormalizeCoord(float64& RA, float64& Dec);
+// 丹灵：加上Sexagesimal这里就已经有3种方式表示角度了，我觉得这到了后期会是个问题。
+void NormalizeCoord(float64& RA, float64& Dec); // 单位：角度
 void NormalizeCoord(Angle& RA, Angle& Dec);
-void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec);
+void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec); // 均使用360度制
 
 #if __has_include(<CSE/Parser.h>)
 #ifdef GetObject

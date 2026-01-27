@@ -162,6 +162,10 @@ const struct __Flux_Type __Photometric_Wavelengths_Table[9]
 
 void NormalizeCoord(float64& RA, float64& Dec)
 {
+    Dec = mod(Dec, 360);
+    if (Dec > 180) {Dec -= 360;}
+    else if (Dec < -180) {Dec += 360;}
+
     if (Dec > 90)
     {
         Dec = 180 - Dec;
