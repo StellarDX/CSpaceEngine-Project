@@ -143,7 +143,7 @@ Sexagesimal __Convert_24_to_360(bool n, float64 d, float64 m, float64 s)
 Sexagesimal __Convert_360_to_24(Sexagesimal Ang)
 {
     float64 TS = (Ang.Negative ? -1 : 1) *
-                 (Ang.Degrees * 3600 + Ang.Minutes * 60.0 + Ang.Seconds);
+        (Ang.Degrees * 3600 + Ang.Minutes * 60.0 + Ang.Seconds);
     TS /= 15;
     if (TS < 0) {TS += 360;}
     return __Create_Sexagesimal_From_Seconds(TS);
