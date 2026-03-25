@@ -123,7 +123,7 @@ std::wostream& operator<<(std::wostream& os, const Sexagesimal& Ang)
     return os;
 }
 
-Sexagesimal __Create_Sexagesimal_From_Seconds(float64 TS)
+Sexagesimal CreateSexagesimalFromSeconds(float64 TS)
 {
     uint64 D = uint16_t(TS / 3600);
     uint64 RS = int(TS) % 3600;
@@ -132,21 +132,22 @@ Sexagesimal __Create_Sexagesimal_From_Seconds(float64 TS)
     return Sexagesimal(0, D, M, S);
 }
 
-Sexagesimal __Convert_24_to_360(bool n, float64 d, float64 m, float64 s)
+Sexagesimal Convert24To360(Sexagesimal Ang)
 {
-    float64 TS = (n ? -1 : 1) * (d * 3600 + m * 60.0 + s);
+    float64 TS = (Ang.Negative ? -1 : 1) *
+        (Ang.Degrees * 3600 + Ang.Minutes * 60.0 + Ang.Seconds);
     TS *= 15;
     if (TS < 0) {TS += 360;}
-    return __Create_Sexagesimal_From_Seconds(TS);
+    return CreateSexagesimalFromSeconds(TS);
 }
 
-Sexagesimal __Convert_360_to_24(Sexagesimal Ang)
+Sexagesimal Convert360To24(Sexagesimal Ang)
 {
     float64 TS = (Ang.Negative ? -1 : 1) *
         (Ang.Degrees * 3600 + Ang.Minutes * 60.0 + Ang.Seconds);
     TS /= 15;
     if (TS < 0) {TS += 360;}
-    return __Create_Sexagesimal_From_Seconds(TS);
+    return CreateSexagesimalFromSeconds(TS);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -207,8 +208,6 @@ void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec)
 
 // ----------------------------------------------------------------------------------------------------
 
-#if __has_include(<CSE/Parser.h>)
-
 using namespace __scstream_table_helpers;
 
 Location GetLocationFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
@@ -242,7 +241,7 @@ Location GetLocationFromKeyValue(_SC SCSTable::SCKeyValue KeyValue)
                 d = abs(d);
                 RAIt->Value[1].GetQualified(&m);
                 if (RAIt->Value.size() == 3) {RAIt->Value[2].GetQualified(&s);}
-                Loc.RA = __Convert_24_to_360(n, d, m, s);
+                Loc.RA = Convert24To360(Sexagesimal(n, d, m, s));
             }
         }
 
@@ -345,7 +344,7 @@ template<> _SC SCSTable MakeTable(Location Loc, int Fl, std::streamsize Prec)
         __Add_Value(Dec.Seconds);
     };
 
-    __Add_Coordinates(&ContentTable, __Convert_360_to_24(Loc.RA), Loc.Dec);
+    __Add_Coordinates(&ContentTable, Convert360To24(Loc.RA), Loc.Dec);
     __Add_Key_Value(&ContentTable, L"Dist", Loc.Dist, FixedOutput, Prec);
 
     for (auto i : Loc.AppMagn)
@@ -718,7 +717,5 @@ template<> _SC SCSTable MakeTable(Nebula Obj, int Fl, std::streamsize Prec)
 
     return MainTable;
 }
-
-#endif
 
 _CSE_END

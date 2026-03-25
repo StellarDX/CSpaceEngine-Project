@@ -13,7 +13,7 @@ set(SysLogLevel 1 CACHE STRING
     2 - log everything")
 
 add_definitions(-DLOG_TIME_STAMP=${LogTimeStamp})
-add_definitions(-DLOG_THRESAD_STAMP=${LogThreadStamp})
+add_definitions(-DLOG_THREAD_STAMP=${LogThreadStamp})
 add_definitions(-DSYS_LOG_LEVEL=${SysLogLevel})
 
 option(TrigonoUseRadians "Use radians instead of degrees in trigonometry,

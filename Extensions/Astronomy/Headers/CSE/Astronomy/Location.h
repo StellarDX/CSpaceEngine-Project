@@ -23,10 +23,7 @@
 
 #include <CSE/Base.h>
 #include <CSE/Object.h>
-
-#if __has_include(<CSE/Parser.h>)
 #include <CSE/Parser.h>
-#endif
 
 #if defined _MSC_VER
 #pragma pack(push, _CRT_PACKING)
@@ -61,9 +58,9 @@ std::wostream& operator<<(std::wostream& os, const Sexagesimal& Ang);
 
 // 此处为方便计算，经度会由24h制转为360°制储存(会掉精度!!!)，然后输出时再转回24h制。
 
-Sexagesimal __Create_Sexagesimal_From_Seconds(float64 TS);
-Sexagesimal __Convert_24_to_360(bool n, float64 d, float64 m, float64 s);
-Sexagesimal __Convert_360_to_24(Sexagesimal Ang);
+Sexagesimal CreateSexagesimalFromSeconds(float64 TS);
+Sexagesimal Convert24To360(Sexagesimal Ang);
+Sexagesimal Convert360To24(Sexagesimal Ang);
 
 /**
  * @brief 用极坐标表示的一个位置
@@ -190,11 +187,6 @@ void NormalizeCoord(float64& RA, float64& Dec); // 单位：角度
 void NormalizeCoord(Angle& RA, Angle& Dec);
 void NormalizeCoord(Sexagesimal& RA, Sexagesimal& Dec); // 均使用360度制
 
-#if __has_include(<CSE/Parser.h>)
-#ifdef GetObject
-#undef GetObject
-#endif
-
 Location GetLocationFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);
 template<> Location GetObject(_SC SharedTablePointer Table, ustring Name);
 template<> _SC SCSTable MakeTable(Location Loc, int Fl, std::streamsize Prec);
@@ -218,8 +210,6 @@ template<> _SC SCSTable MakeTable(Cluster Obj, int Fl, std::streamsize Prec);
 Nebula GetNebulaFromKeyValue(_SC SCSTable::SCKeyValue KeyValue);
 template<> Nebula GetObject(_SC SharedTablePointer Table, ustring Name);
 template<> _SC SCSTable MakeTable(Nebula Obj, int Fl, std::streamsize Prec);
-
-#endif
 
 _CSE_END
 

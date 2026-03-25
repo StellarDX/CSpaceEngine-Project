@@ -45,7 +45,7 @@ errno_t memcpy_s(void* restrict dest, rsize_t destsz,
 _CSE_BEGIN
 
 // Debugger functions
-CSEDebugger CSESysDebug(cout, LOG_TIME_STAMP, LOG_THRESAD_STAMP, SYS_LOG_LEVEL);
+CSEDebugger CSESysDebug(cout, LOG_TIME_STAMP, LOG_THREAD_STAMP, SYS_LOG_LEVEL);
 
 string CSEDebugger::gettime()
 {

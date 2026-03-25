@@ -5,7 +5,7 @@ _CSE_BEGIN
 _ROT_BEGIN
 
 const Sexagesimal IAU_WGCCRERotationTracker::DefaultNorthEclipticPoleRA
-    = __Convert_24_to_360(0, 18, 0, 0);
+    = Convert24To360(Sexagesimal(0, 18, 0, 0));
 const Sexagesimal IAU_WGCCRERotationTracker::DefaultNorthEclipticPoleDec
     = Sexagesimal(0, 66, 33, 38.55);
 

@@ -57,6 +57,8 @@ _STL_DISABLE_CLANG_WARNINGS
 // CMake boolean definations
 #define ON true
 #define OFF false
+#define TRUE true
+#define FALSE false
 
 // CSE Namespace difinations
 #define _CSE_BEGIN namespace cse {

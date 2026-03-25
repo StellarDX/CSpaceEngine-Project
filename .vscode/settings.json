@@ -1,0 +1,4 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/../CSpaceEngine-Build",
+    "cmake.generator": "Ninja"
+}
