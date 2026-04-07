@@ -186,6 +186,8 @@ public:
         static const wregex LuminosityClassPattern2;
         static const wregex SubLumPattern;
 
+        static const uint16_t U16Npos = ~(uint16_t(0));
+
         struct Details
         {
             enum : uint8_t 
@@ -201,7 +203,7 @@ public:
 
             UncertaintyType::UncertaintySymbols SpecU = UncertaintyType::None;
 
-            uint16_t Sub = 0b11111111111; // *100后存储，问就是先前见过一例O9.75的和380例M10甚至M10.5的（O9.75后续未能查到对应恒星，推测可能为上世纪的论文中出现过的但后来不再分这么细了。M10均为温度只有2000K出头的红超巨星，最低可低至1800K以下，如葫芦星云的中心恒星OH 231.8+04.2(QX Pup)主星的光谱型为M10III，伴星是一颗A型恒星）
+            uint16_t Sub = U16Npos; // *100后存储，问就是先前见过一例O9.75的和380例M10甚至M10.5的（O9.75后续未能查到对应恒星，推测可能为上世纪的论文中出现过的但后来不再分这么细了。M10均为温度只有2000K出头的红超巨星，最低可低至1800K以下，如葫芦星云的中心恒星OH 231.8+04.2(QX Pup)主星的光谱型为M10III，伴星是一颗A型恒星）
 
             UncertaintyType::UncertaintySymbols SubU = UncertaintyType::None;
 

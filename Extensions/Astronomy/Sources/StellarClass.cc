@@ -661,7 +661,7 @@ char NormalStar::ValueType::SpecToChar(decltype(DetailedData.Spec) Data)
 
 ustring NormalStar::ValueType::SubToString(decltype(DetailedData.Sub) Data)
 {
-    if (Data == 0b11111111111) {return ustring();}
+    if (Data == U16Npos) {return ustring();}
     uint32_t Intg = Data / 100ul;
     uint32_t Frac = Data % 100ul;
     if (!Frac) {return ustring(format("{}", Intg));}
@@ -1018,7 +1018,7 @@ void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, Pa
         {
             Output->FloatData = Output->Data;
             Output->FloatData->DetailedData.Spec = decltype(Output->FloatData->DetailedData.Spec)(0);
-            Output->FloatData->DetailedData.Sub = 0b11111111111;
+            Output->FloatData->DetailedData.Sub = ValueType::U16Npos;
         }
         
         ustring Spec2 = __Regex_Str_Str(Source1, ValueType::SpecClassPattern, &Source1);
@@ -1325,7 +1325,7 @@ ustring NormalStar::ExportSub()const
     if (FloatData.has_value()) {Result += ExportSpecSubRange();}
     if (!FloatData.has_value() || (FloatData.has_value() && 
         ((Data.DetailedData.SubU & UncertaintyType::BrakIn) || 
-        (FloatData->DetailedData.Sub == 0b11111111111) ||
+        (FloatData->DetailedData.Sub == ValueType::U16Npos) ||
         (Data.DetailedData.Sub == FloatData->DetailedData.Sub))))
     {
         UncertaintyType::AddUncertainty(&Result, Data.DetailedData.SubU);
@@ -1340,7 +1340,7 @@ ustring NormalStar::ExportSub()const
 ustring NormalStar::ExportSpecSubRange()const
 {
     if (!FloatData.has_value() || (FloatData.has_value() && 
-        ((!FloatData->DetailedData.Spec && (FloatData->DetailedData.Sub == 0b11111111111)) ||
+        ((!FloatData->DetailedData.Spec && (FloatData->DetailedData.Sub == ValueType::U16Npos)) ||
         (FloatData->DetailedData.Spec == Data.DetailedData.Spec &&
         FloatData->DetailedData.Sub == Data.DetailedData.Sub)))) 
     {
