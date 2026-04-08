@@ -131,18 +131,17 @@ class NormalStar : public StellarClassData
 public:
     enum ParserStateType
     {
-        PStart   = 0b000000, 
-        PSpec    = 0b000001, 
-        PCarbon  = 0b000010, 
-        PSub     = 0b000011, 
-        PLum     = 0b000100, 
-        PSLum    = 0b000101, 
-        PPec     = 0b000110, 
-        PChem    = 0b000111, 
-        PBar     = 0b001000,
-        POpMask  = 0b110000,
-        PRange   = 0b010000,
-        PBracket = 0b100000
+        PStart   = 0b00000, 
+        PSpec    = 0b00001, 
+        PSub     = 0b00010, 
+        PLum     = 0b00011, 
+        PSLum    = 0b00100, 
+        PPec     = 0b00101, 
+        PChem    = 0b00110, 
+        PBar     = 0b00111,
+        POpMask  = 0b11000,
+        PRange   = 0b01000,
+        PBracket = 0b10000
     };
 
     using EventQueueType  = std::vector<std::function<void(NormalStar*, ustring, ustring*, ParserStateType*)>>;
@@ -235,7 +234,7 @@ public:
         static void LoadLumImpl(ustring SpecString, ValueType* Destination);
         static void LoadSubLumImpl(ustring SpecString, ValueType* Destination);
 
-        static bool PecularitiesBrakStartPrecheck(ValueType* Destination);
+        static bool PecularitiesBrakStartPrecheck(ValueType* Destination, int Depth = 4);
 
         static char SpecToChar(decltype(DetailedData.Spec) Data);
         static ustring SubToString(decltype(DetailedData.Sub) Data);

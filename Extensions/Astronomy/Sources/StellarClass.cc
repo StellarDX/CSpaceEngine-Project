@@ -106,7 +106,7 @@ void NormalStar::UncertaintyType::BracketEnd(ustring Source, ustring* Remain, Un
 
 bool NormalStar::UncertaintyType::CheckBracketEnd(const UncertaintySymbols& Symbol)
 {
-    return (!(Symbol & UncertaintyType::BrakIn) || Symbol == UncertaintyType::BrakEnd);
+    return (Symbol & UncertaintyType::BrakIn) && ((Symbol & UncertaintyType::BrakEnd) != UncertaintyType::BrakEnd);
 }
 
 void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
@@ -133,9 +133,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                 break;
             case '(':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    BracketStart(Source, Remain, &Data, State);
-                    Output->Data.DetailedData.SubU = Data;
+                    UncertaintySymbols TempData;
+                    BracketStart(Source, Remain, &TempData, State);
                 }
                 break;
             case ')':
@@ -180,9 +179,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                 break;
             case '(':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    BracketStart(Source, Remain, &Data, State);
-                    Output->Data.DetailedData.LumU = Data;
+                    UncertaintySymbols TempData;
+                    BracketStart(Source, Remain, &TempData, State);
                 }
                 break;
             case ')': // ')'后面若还有不确定符号，必为'('
@@ -619,29 +617,34 @@ void NormalStar::ValueType::LoadSubLumImpl(ustring SpecString, ValueType* Destin
     else if (SpecString == "b") {Destination->DetailedData.SLum = ValueType::Details::b;}
 }
 
-bool NormalStar::ValueType::PecularitiesBrakStartPrecheck(ValueType* Destination)
+bool NormalStar::ValueType::PecularitiesBrakStartPrecheck(ValueType* Destination, int Depth)
 {
-    if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SLumU))
+    switch (Depth)
     {
-        return 1;
+    default:
+    case 4:
+        if (Destination->DetailedData.SLum)
+        {
+            if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SLumU)) {return 0;}
+        }
+    case 3:
+        if (Destination->DetailedData.Lum)
+        {
+            if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.LumU)) {return 0;}
+        }
+    case 2:
+        if (Destination->DetailedData.Sub != ValueType::U16Npos)
+        {
+            if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SubU)) {return 0;}
+        }
+    case 1:
+        if (Destination->DetailedData.Spec)
+        {
+            if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SpecU)) {return 0;}
+        }
     }
 
-    if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.LumU))
-    {
-        return 1;
-    }
-
-    if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SubU))
-    {
-        return 1;
-    }
-
-    if (UncertaintyType::CheckBracketEnd(Destination->DetailedData.SpecU))
-    {
-        return 1;
-    }
-
-    return 0;
+    return 1;
 }
 
 char NormalStar::ValueType::SpecToChar(decltype(DetailedData.Spec) Data)
@@ -720,7 +723,7 @@ void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring So
     bool IsStartingBracket = (*State & PBracket) && 
         (Output->BandPecs.empty() ?
             ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
-            UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty));
+            !UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty));
     ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
     while (!Spec.empty())
     {
@@ -741,7 +744,7 @@ void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring So
         }
         if (*State & PBracket)
         {
-            if (UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty))
+            if (!UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty))
             {
                 IsStartingBracket = 1;
             }
@@ -781,7 +784,7 @@ void NormalStar::ChemicalPecularitySpec::LoadChemElems(NormalStar* Output, ustri
     bool IsStartingBracket = (*State & PBracket) && 
         (Output->Pecularities.empty() ?
             ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
-            UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty));
+            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty));
     ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
     while (!Spec.empty())
     {
@@ -802,7 +805,7 @@ void NormalStar::ChemicalPecularitySpec::LoadChemElems(NormalStar* Output, ustri
         }
         if (*State & PBracket)
         {
-            if (UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty))
+            if (!UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty))
             {
                 IsStartingBracket = 1;
             }
@@ -880,9 +883,9 @@ void NormalStar::BandPecularitiesType::LoadBariumOrCN(NormalStar* Output, ustrin
     bool IsStartingBracketPreCheck = ValueType::PecularitiesBrakStartPrecheck(&(Output->Data));
     bool IsStartingBracket = (*State & PBracket) && 
         ((Output->Pecularities.empty() ? IsStartingBracketPreCheck :
-            UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty)) ||
+            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty)) ||
         (Output->ChemicalElems.empty() ? IsStartingBracketPreCheck :
-            UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty)));
+            !UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty)));
     ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
     while (!Spec.empty())
     {
@@ -903,7 +906,7 @@ void NormalStar::BandPecularitiesType::LoadBariumOrCN(NormalStar* Output, ustrin
         }
         if (*State & PBracket)
         {
-            if (UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty))
+            if (!UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty))
             {
                 IsStartingBracket = 1;
             }
@@ -989,7 +992,6 @@ void NormalStar::LoadCarbonType(NormalStar* Output, ustring Source, ustring* Rem
         case 'N': Output->CData->Data = CarbonType::N; break;
     }
     //std::wcout << Spec << '\n';
-    SetState(State, PCarbon);
 }
 
 void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
@@ -998,6 +1000,11 @@ void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, Pa
     UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::NumberPattern, &Source1);
     if (Spec.empty()) {return;}
+    if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 1))
+    {
+        Output->Data.DetailedData.SubU = UncertaintyType::UncertaintySymbols(
+            Output->Data.DetailedData.SubU | UncertaintyType::BrakStart);
+    }
     uint16_t Result;
     ValueType::LoadNumber(Spec, &(Result));
     Output->Data.DetailedData.Sub = Result;
@@ -1068,6 +1075,11 @@ void NormalStar::LoadLum(NormalStar* Output, ustring Source, ustring* Remain, Pa
     UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::LuminosityClassPattern, &Source1);
     if (Spec.empty()) {return;}
+    if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 2))
+    {
+        Output->Data.DetailedData.LumU = UncertaintyType::UncertaintySymbols(
+            Output->Data.DetailedData.LumU | UncertaintyType::BrakStart);
+    }
     ValueType::LoadLumImpl(Spec, &(Output->Data));
     if (*State & PBracket)
     {
@@ -1114,6 +1126,11 @@ void NormalStar::LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain,
     UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::SubLumPattern, &Source1);
     if (Spec.empty()) {return;}
+    if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 3))
+    {
+        Output->Data.DetailedData.SLumU = UncertaintyType::UncertaintySymbols(
+            Output->Data.DetailedData.SLumU | UncertaintyType::BrakStart);
+    }
     ValueType::LoadSubLumImpl(Spec, &(Output->Data));
     if (*State & PBracket)
     {
