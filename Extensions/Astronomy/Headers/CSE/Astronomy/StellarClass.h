@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <unordered_map>
+#include <variant>
 #ifndef __STELCLASS__
 #define __STELCLASS__
 
@@ -26,6 +27,7 @@
 #include <CSE/Object.h>
 #include <CSE/Parser.h>
 #include <set>
+#include <cstdint>
 
 #if _USE_BOOST_REGEX
 #include <boost/regex.hpp>
@@ -61,7 +63,24 @@ _CSE_BEGIN
     的数据字段用一堆Getter访问，这样就可以无视数据结构的具体实现，而且历史兼容性和扩展性也强。
 */
 
-__interface StellarClassData;
+__interface StellarClassData
+{
+    virtual ustring Description()const = 0;
+    virtual ustring ToString()const = 0;
+
+    virtual char SpectralClass(size_t Index = 0)const = 0;
+    virtual uint16_t SpectralClassUncertained(size_t Index = 0)const = 0;
+    virtual uint16_t SpecializedClass(size_t Index = 0)const = 0;
+    virtual uint16_t SpecializedClassUncertained(size_t Index = 0)const = 0;
+    virtual ustring LuminosityClass(size_t Index = 0)const = 0;
+    virtual uint16_t LuminosityClassUncertained(size_t Index = 0)const = 0;
+
+    virtual std::set<ustring> SpectralPeculiarities()const = 0;
+    virtual std::set<ustring> ElementSymbols()const = 0;
+    virtual std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const = 0;
+
+    virtual ustring UnanalyzedString()const = 0;
+};
 
 typedef class StellarClassificationFactoryClass
 {
@@ -99,32 +118,12 @@ public:
     operator ustring()const;
 }StellarClassification;
 
-__interface StellarClassData
-{
-    virtual ustring ToString()const = 0;
-
-    virtual char SpectralClass(size_t Index = 0)const = 0;
-    virtual uint16_t SpectralClassUncertained(size_t Index = 0)const = 0;
-    virtual uint16_t SpecializedClass(size_t Index = 0)const = 0;
-    virtual uint16_t SpecializedClassUncertained(size_t Index = 0)const = 0;
-    virtual ustring LuminosityClass(size_t Index = 0)const = 0;
-    virtual uint16_t LuminosityClassUncertained(size_t Index = 0)const = 0;
-
-    virtual std::set<ustring> SpectralPeculiarities()const = 0;
-    virtual std::set<ustring> ElementSymbols()const = 0;
-    virtual std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const = 0;
-
-    virtual ustring UnanalyzedString()const = 0;
-};
-
 _SPCLS_BEGIN
 
 /**
- * @details
- * 最常见的光谱型，而正式因为它最常见从而导致了最五花八门的写法。
- * 为了最大限度的提高容错率和解决各种历史遗留问题，搞得整个分析的
- * 程序如同水多加面面多加水一般，逻辑也是肆无忌惮的拧麻花。当然这
- * 也意味着后期维护的难度会被提高到丧心病狂的程度。
+ * @brief 最常见的光谱型，而正式因为它最常见从而导致了最五花八门的写法。
+ * @note 为了最大限度的提高容错率和解决各种历史遗留问题，搞得整个分析的程序如同水多加面面多加水一般。
+ * 当然这也意味着后期维护的难度会被提高到丧心病狂的程度。
  */
 class NormalStar : public StellarClassData
 {
@@ -202,7 +201,7 @@ public:
 
             UncertaintyType::UncertaintySymbols SpecU = UncertaintyType::None;
 
-            uint16_t Sub = U16Npos; // *100后存储，问就是先前见过一例O9.75的和380例M10甚至M10.5的（O9.75后续未能查到对应恒星，推测可能为上世纪的论文中出现过的但后来不再分这么细了。M10均为温度只有2000K出头的红超巨星，最低可低至1800K以下，如葫芦星云的中心恒星OH 231.8+04.2(QX Pup)主星的光谱型为M10III，伴星是一颗A型恒星）
+            uint16_t Sub = U16Npos; // *100后存储，问就是先前见过一例O9.75的和380例M10甚至M10.5的，不过O9.75后续未能查到对应恒星，推测可能为上世纪的论文中出现过的但后来不再分这么细了。M10及以下的均为温度只有2000K出头的红超巨星，最低可低至1800K以下，如葫芦星云的中心恒星OH 231.8+04.2(QX Pup)主星的光谱型为M10III，伴星是一颗A型恒星。著名的V* V838 Mon的光谱也是M10（现修正为M5.5I）。
 
             UncertaintyType::UncertaintySymbols SubU = UncertaintyType::None;
 
@@ -226,7 +225,7 @@ public:
                 ab    = 0b11
             } SLum = decltype(SLum)(0);
 
-            UncertaintyType::UncertaintySymbols SLumU = UncertaintyType::None;;
+            UncertaintyType::UncertaintySymbols SLumU = UncertaintyType::None;
         }DetailedData;
 
         static void LoadSpecImpl(ustring SpecString, ValueType* Destination);
@@ -256,7 +255,7 @@ public:
         ustring Element;
         UncertaintyType::UncertaintySymbols Uncertainty = UncertaintyType::None; // 基本用不到，但也可能会出现，如HD 210030为G8/K0II/III(pBa)
 
-        static void LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+        static void LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2 = 0);
     };
     
     struct BandPecularitiesType
@@ -270,7 +269,7 @@ public:
         UncertaintyType::UncertaintySymbols Uncertainty = UncertaintyType::None;
 
         static BandPecularitiesType Load(ustring Source);
-        static void LoadBariumOrCN(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+        static void LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     };
 
     struct ChemicalPecularitySpec
@@ -295,6 +294,7 @@ protected:
     std::vector<PecularityType> Pecularities; // Ex: (n)fp, e, ...
     std::vector<ChemicalPecularitySpec> ChemicalElems; // Ex: SiSrCr, ...
     std::vector<BandPecularitiesType> BandPecs; // Ex: Ba1，Fe-0.5, CNIV, ...
+    bool PecularitiesBehindBandPecs = 0; // 后续发现一例HD 146850的光谱为K3IIICNVp
 
     ustring RemainString; // 剩余无法解析的字符串信息
 
@@ -325,6 +325,94 @@ protected:
     void ExportFullPecString(ustring* MainString)const;
 
 public:
+    ustring Description()const override;
+    static std::shared_ptr<StellarClassData> ParseFunc(ustring StelClassString);
+    ustring ToString()const override;
+
+    const ValueType& GetRawDataByIndex(size_t Index)const;
+
+    char SpectralClass(size_t Index)const override;
+    uint16_t SpectralClassUncertained(size_t Index)const override;
+    uint16_t SpecializedClass(size_t Index)const override;
+    uint16_t SpecializedClassUncertained(size_t Index)const override;
+    ustring LuminosityClass(size_t Index)const override;
+    uint16_t LuminosityClassUncertained(size_t Index)const override;
+
+    std::set<ustring> SpectralPeculiarities()const override;
+    std::set<ustring> ElementSymbols()const override;
+    std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const override;
+
+    ustring UnanalyzedString()const override; // 剩余未能分析成功的字符串，如果为空表示识别成功
+
+    friend class AmStar;
+};
+
+/**
+ * @details 一类缺钙，钪的恒星。这种异常的相对丰度导致根据钙线（即1价钙离子的393.366nm）测定的光谱
+ * 类型系统性地比根据其他金属线测定的光谱类型更早。通常情况下，仅根据氢谱线判断的光谱类型属于中间型。
+ * 因此，此类恒星通常会给出两到三种光谱类型并写作k...h...m...的形式。
+ * 
+ * 例如天狼的完整光谱型为kA0hA0VmA1，意思是其在钙线的光谱型为A0，氢线的光谱型为A0，金属线的光谱型为
+ * A1，不过天狼可能是因为不同的谱线下测得的光谱型差距不大，所以一般简写为A0mA1Va。
+ *
+ * 详见：https://en.wikipedia.org/wiki/Am_star
+ *
+ * @note Am恒星和天弁二变星在赫罗图上大致位于相同的位置，但是这是两种不同的恒星。并且一个恒星既是Am
+ * 恒星又是天弁二变星的情况十分罕见，例如瓠瓜三和弧矢增卅二。
+ */
+class AmStar : public StellarClassData
+{
+public:
+    using VirtualBase            = NormalStar;
+    using KeyType                = ustring;
+    using PecularityType         = VirtualBase::PecularityType;
+    using ChemicalPecularitySpec = VirtualBase::ChemicalPecularitySpec;
+
+    struct ValueType
+    {
+        VirtualBase::ValueType Value;
+        std::optional<VirtualBase::ValueType> FloatValue;
+    };
+    
+    enum SubFmts // 两种子类型中唯一的区别可能也就是有没有主光谱
+    {
+        /**
+         * @details 第一种表示方法类似瓠瓜三：kA7hF1VmF1pSrEuCr:，
+         * 由多个段组成且没有明确的主光谱。
+         */
+        DeltaDelphini,
+
+        /**
+         * @details 第二种表示方法类似弧矢增卅二：F5IIkF2IImF5II，
+         * 有明确的主光谱。这类Am恒星通常被认为演化的更晚且更亮，位
+         * 于主序带上方。
+         */
+        RhoPuppis
+    };
+
+    struct DDelValueType
+    {
+        std::unordered_map<KeyType, ValueType> Segments;
+    };
+
+    struct RPupValueType
+    {
+        ValueType MainSegment;
+        std::vector<PecularityType> MainSegPecs;
+        std::unordered_map<KeyType, ValueType> Segments;
+    };
+
+    static ustringlist LinesTable;
+    static wregex LinesPattern;
+
+protected:
+    std::variant<DDelValueType, RPupValueType> Data;
+    bool AddSuffix = 0; // 部分案例会有"Am"后缀
+    std::vector<PecularityType> Pecularities; // 部分恒星会有Am星与玄戈变星双重身份，位于零龄主序区附近。除Am星的缺钙特征以外还缺铁。见：https://en.wikipedia.org/wiki/Lambda_Bo%C3%B6tis_star
+    std::vector<ChemicalPecularitySpec> ChemElems;
+
+public:
+    ustring Description()const override;
     static std::shared_ptr<StellarClassData> ParseFunc(ustring StelClassString);
     ustring ToString()const override;
 

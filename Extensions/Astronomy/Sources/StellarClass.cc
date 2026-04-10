@@ -88,6 +88,12 @@ ustring __Regex_Str_Str(ustring Source, const wregex& Pattern, ustring* Remain =
 
 _END_EXTERN_C
 
+ustring NormalStar::Description()const
+{
+    static const ustring Descr = L"Star";
+    return Descr;
+}
+
 const wregex NormalStar::UncertaintyType::UncertaintyPattern(LR"(^(:|\+|-|\(|\)|/))");
 
 void NormalStar::UncertaintyType::BracketStart(ustring Source, ustring* Remain, UncertaintySymbols* Data, ParserStateType* State)
@@ -715,7 +721,7 @@ ustringlist NormalStar::PecularityType::SpectralPecularitiesTable
 
 wregex NormalStar::PecularityType::Pattern(L'^' + __List_To_Pattern(PecularityType::SpectralPecularitiesTable));
 
-void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2)
 {
     ustring Src = Source;
     ConsumeSpace(Src, &Src);
@@ -727,6 +733,7 @@ void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring So
     ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
     while (!Spec.empty())
     {
+        if (__2 && !Output->PecularitiesBehindBandPecs) {Output->PecularitiesBehindBandPecs = 1;}
         Output->Pecularities.push_back({Spec});
         if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
         {
@@ -875,7 +882,7 @@ NormalStar::BandPecularitiesType NormalStar::BandPecularitiesType::Load(ustring 
     return AbsData;
 }
 
-void NormalStar::BandPecularitiesType::LoadBariumOrCN(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+void NormalStar::BandPecularitiesType::LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     ustring Src = Source;
     ConsumeSpace(Src, &Src);
@@ -1174,7 +1181,7 @@ void NormalStar::LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain,
         }
 
         UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State); // 这里不加一句，分析HD 144695的光谱O8/9.5(Ib/II)时会报错。
-        // 补充：原以为"()"和不确定符号不会同时存在，但后来发现一例HD 214714的光谱为G3Ib-II:CN-1CH2Fe-1
+        // 补充：原以为范围和不确定符号不会同时存在，但后来发现一例HD 214714的光谱为G3Ib-II:CN-1CH2Fe-1
     }
 
     *Remain = Source1;
@@ -1200,7 +1207,7 @@ void NormalStar::LoadPecularitiesStage2(NormalStar* Output, ustring Source, ustr
     else 
     {
         SetState(State, PBar);
-        BandPecularitiesType::LoadBariumOrCN(Output, Source, Remain, State);
+        BandPecularitiesType::LoadBandPecs(Output, Source, Remain, State);
     }
 }
 
@@ -1209,12 +1216,12 @@ void NormalStar::LoadPecularitiesStage3(NormalStar* Output, ustring Source, ustr
     if ((*State & ~(POpMask)) == PBar && Output->Pecularities.empty()) // 特殊谱线若出现在前面，后续就不会出现了
     {
         SetState(State, PPec);
-        PecularityType::LoadPecularities(Output, Source, Remain, State);
+        PecularityType::LoadPecularities(Output, Source, Remain, State, 1);
     }
     else if ((*State & ~(POpMask)) != PBar)
     {
         SetState(State, PBar);
-        BandPecularitiesType::LoadBariumOrCN(Output, Source, Remain, State);
+        BandPecularitiesType::LoadBandPecs(Output, Source, Remain, State);
     }
 }
 
@@ -1521,15 +1528,8 @@ void NormalStar::ExportFullPecString(ustring* MainString)const
     ustring Combination1 = *MainString + PecString + ChemString + BandString;
     ustring Combination2 = *MainString + BandString + PecString;
 
-    if (!CountBrackets(Combination1)) {*MainString = Combination1;}
-    else if (!CountBrackets(Combination2)) {*MainString = Combination2;}
-    else 
-    {
-        CSESysDebug("NormalStar", CSEDebugger::WARNING, 
-            "Count of left brackets is not equal to right brackets, "
-            "Is the spectral string invalid?");
-        *MainString = Combination1 + RemainString;
-    }
+    if (PecularitiesBehindBandPecs) {*MainString = Combination2;}
+    else {*MainString = Combination1;}
 }
 
 ustring NormalStar::ToString()const
