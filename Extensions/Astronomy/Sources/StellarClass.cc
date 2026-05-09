@@ -15,12 +15,14 @@ using namespace std;
 _CSE_BEGIN
 _SPCLS_BEGIN
 
+// ---------------------------------------- 工具函数 ---------------------------------------- //
+
 _EXTERN_C
 
 ustring __Escape_Special_Chars_Fast(const ustring& input)
 {
     // 使用查找表，128个ASCII字符
-    static const bool special_lookup[128] =
+    /*static const bool special_lookup[128] =
     {
         // 只设置需要转义的字符为true
         [L'\\'] = true, [L'.'] = true, [L'*'] = true,
@@ -28,6 +30,14 @@ ustring __Escape_Special_Chars_Fast(const ustring& input)
         [L'}'] = true, [L'^'] = true, [L'$'] = true,
         [L'('] = true, [L')'] = true, [L'|'] = true,
         [L'['] = true, [L']'] = true
+    };*/ // GCC不支持这种写法
+
+    static auto special_lookup = [](wchar_t c)
+    {
+        return c == L'\\' || c == L'.' || c == L'*' ||
+           c == L'+' || c == L'?' || c == L'{' || c == L'}' ||
+           c == L'^' || c == L'$' || c == L'(' || c == L')' ||
+           c == L'|' || c == L'[' || c == L']';
     };
 
     ustring result;
@@ -36,7 +46,7 @@ ustring __Escape_Special_Chars_Fast(const ustring& input)
     for (auto c : input)
     {
         // 检查是否在ASCII范围内且是需要转义的字符
-        if (c < 128 && special_lookup[c])
+        if (c < 128 && special_lookup(c))
         {
             result.push_back('\\');
         }
@@ -87,6 +97,10 @@ ustring __Regex_Str_Str(ustring Source, const wregex& Pattern, ustring* Remain =
 }
 
 _END_EXTERN_C
+
+
+
+// --------------------------------------- NormalStar --------------------------------------- //
 
 ustring NormalStar::Description()const
 {
@@ -841,8 +855,9 @@ ustringlist NormalStar::BandPecularitiesType::AbsorptionPecularityTable
 // 这个表达式原本可以不这么长的，但后续看到一例HD 12834的光谱型为G(6)IIICNIV/Vp，搞得不得不夹带一些私货
 const std::string NormalStar::BandPecularitiesType::PatternSkeleton(
     R"(^({}(([+-]?[0-9](\.[1-9][1-9]?)?)|((V|IV|III|II|I)/(V|IV|III|II|I))|(I(ab|a|b)/((ab|a|b)|(V|IV|III|II|I)))|((V|IV|III|II|I)(ab|a|b)?))))");
+std::string NormalStar::BandPecularitiesType::AbsorptionPecularityPatternString = __List_To_Pattern(AbsorptionPecularityTable).ToStdString();
 wregex NormalStar::BandPecularitiesType::Pattern(ustring(vformat(BandPecularitiesType::PatternSkeleton, 
-    make_format_args(__List_To_Pattern(BandPecularitiesType::AbsorptionPecularityTable).ToStdString()))));
+    make_format_args(AbsorptionPecularityPatternString))));
 
 NormalStar::BandPecularitiesType NormalStar::BandPecularitiesType::Load(ustring Source)
 {
@@ -1541,6 +1556,14 @@ ustring NormalStar::ToString()const
     ExportFullPecString(&Result);
     return Result;
 }
+
+
+
+// ----------------------------------------- AmStar ----------------------------------------- //
+
+
+
+
 
 _SPCLS_END
 _CSE_END

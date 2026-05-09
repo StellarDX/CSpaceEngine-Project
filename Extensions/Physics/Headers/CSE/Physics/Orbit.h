@@ -352,21 +352,21 @@ protected:
 
     static void ExportKeyValue
         (std::ostream& fout, std::string Key, std::string Value,
-        bool Optional = 0, cstring Fmt = KeyValueFmtString);
+        bool Optional = 0, std::string Fmt = KeyValueFmtString);
     static void ExportEphemeris
         (std::ostream& fout, std::vector<ValueType::EphemerisType> Eph,
-        cstring Fmt = EphemerisFmtString);
+        std::string Fmt = EphemerisFmtString);
     static void ExportCovarianceMatrix
         (std::ostream& fout, std::vector<ValueType::CovarianceMatrixType> Mat,
-        cstring KVFmt = KeyValueFmtString, cstring MatFmt = CovarianceMatFmtString);
+        std::string KVFmt = KeyValueFmtString, std::string MatFmt = CovarianceMatFmtString);
 
 public:
     static void Import(std::istream& fin, OEM* out);
     static OEM FromString(std::string Src);
     static OEM FromFile(std::filesystem::path Path);
 
-    void Export(std::ostream& fout, cstring KVFmt = KeyValueFmtString,
-        cstring EphFmt = EphemerisFmtString, cstring CMFmt = CovarianceMatFmtString)const;
+    void Export(std::ostream& fout, std::string KVFmt = KeyValueFmtString,
+        std::string EphFmt = EphemerisFmtString, std::string CMFmt = CovarianceMatFmtString)const;
     std::string ToString()const;
     void ToFile(std::filesystem::path Path)const;
 

@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <variant>
 #ifndef __STELCLASS__
 #define __STELCLASS__
 
@@ -28,6 +26,8 @@
 #include <CSE/Parser.h>
 #include <set>
 #include <cstdint>
+#include <variant>
+#include <flat_map>
 
 #if _USE_BOOST_REGEX
 #include <boost/regex.hpp>
@@ -143,7 +143,7 @@ public:
         PBracket = 0b10000
     };
 
-    using EventQueueType  = std::vector<std::function<void(NormalStar*, ustring, ustring*, ParserStateType*)>>;
+    using EventQueueType = std::vector<std::function<void(NormalStar*, ustring, ustring*, ParserStateType*)>>;
 
     struct UncertaintyType
     {
@@ -262,6 +262,7 @@ public:
     {
         static const std::string PatternSkeleton;
         static ustringlist AbsorptionPecularityTable;
+        static std::string AbsorptionPecularityPatternString;
         static wregex Pattern;
 
         ustring Key;
@@ -368,6 +369,11 @@ public:
     using PecularityType         = VirtualBase::PecularityType;
     using ChemicalPecularitySpec = VirtualBase::ChemicalPecularitySpec;
 
+    enum ParserStateType
+    {
+        
+    };
+
     struct ValueType
     {
         VirtualBase::ValueType Value;
@@ -392,14 +398,14 @@ public:
 
     struct DDelValueType
     {
-        std::unordered_map<KeyType, ValueType> Segments;
+        std::flat_map<KeyType, ValueType> Segments;
     };
 
     struct RPupValueType
     {
         ValueType MainSegment;
         std::vector<PecularityType> MainSegPecs;
-        std::unordered_map<KeyType, ValueType> Segments;
+        std::flat_map<KeyType, ValueType> Segments;
     };
 
     static ustringlist LinesTable;
@@ -410,6 +416,8 @@ protected:
     bool AddSuffix = 0; // 部分案例会有"Am"后缀
     std::vector<PecularityType> Pecularities; // 部分恒星会有Am星与玄戈变星双重身份，位于零龄主序区附近。除Am星的缺钙特征以外还缺铁。见：https://en.wikipedia.org/wiki/Lambda_Bo%C3%B6tis_star
     std::vector<ChemicalPecularitySpec> ChemElems;
+
+    static void DdelRoutine(NormalStar* Output, ustring Source, ustring* Remain);
 
 public:
     ustring Description()const override;

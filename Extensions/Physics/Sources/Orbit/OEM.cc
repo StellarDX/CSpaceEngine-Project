@@ -10,6 +10,8 @@
 using namespace fmt;
 #else
 #include <format>
+using std::vformat;
+using std::make_format_args;
 #endif
 
 _CSE_BEGIN
@@ -360,7 +362,7 @@ void OEM::TransferCovarianceMatrices(std::vector<ValueType::CovarianceMatrixType
     out->Data.back().CovarianceMatrices = Buf;
 }
 
-void OEM::ExportKeyValue(std::ostream& fout, std::string Key, std::string Value, bool Optional, cstring Fmt)
+void OEM::ExportKeyValue(std::ostream& fout, std::string Key, std::string Value, bool Optional, std::string Fmt)
 {
     using namespace std;
     if ((!Optional) || (Optional && !Value.empty()))
@@ -370,21 +372,21 @@ void OEM::ExportKeyValue(std::ostream& fout, std::string Key, std::string Value,
     }
 }
 
-void OEM::ExportEphemeris(std::ostream& fout, std::vector<ValueType::EphemerisType> Eph, cstring Fmt)
+void OEM::ExportEphemeris(std::ostream& fout, std::vector<ValueType::EphemerisType> Eph, std::string Fmt)
 {
-    using namespace std;
     for (const auto& i : Eph)
     {
-        fout << vformat(Fmt, make_format_args(
-            i.Epoch.ToString(SimplifiedISO8601String).ToStdString(),
-            i.Position.x / 1000., i.Position.y / 1000., i.Position.z / 1000.,
-            i.Velocity.x / 1000., i.Velocity.y / 1000., i.Velocity.z / 1000.,
-            i.Acceleration.x / 1000., i.Acceleration.y / 1000., i.Acceleration.z / 1000.));
+        std::string tstr = i.Epoch.ToString(SimplifiedISO8601String).ToStdString();
+        float64
+            px = i.Position.x / 1000., py = i.Position.y / 1000., pz = i.Position.z / 1000.,
+            vx = i.Velocity.x / 1000., vy = i.Velocity.y / 1000., vz = i.Velocity.z / 1000.,
+            ax = i.Acceleration.x / 1000., ay = i.Acceleration.y / 1000., az = i.Acceleration.z / 1000.;
+        fout << vformat(Fmt, make_format_args(tstr, px, py, pz, vx, vy, vz, ax, ay, az));
         fout << '\n';
     }
 }
 
-void OEM::ExportCovarianceMatrix(std::ostream& fout, std::vector<ValueType::CovarianceMatrixType> Mat, cstring KVFmt, cstring MatFmt)
+void OEM::ExportCovarianceMatrix(std::ostream& fout, std::vector<ValueType::CovarianceMatrixType> Mat, std::string KVFmt, std::string MatFmt)
 {
     using namespace std;
     fout << "COVARIANCE_START\n";
@@ -427,7 +429,7 @@ OEM OEM::FromFile(std::filesystem::path Path)
     return Result;
 }
 
-void OEM::Export(std::ostream& fout, cstring KVFmt, cstring EphFmt, cstring CMFmt)const
+void OEM::Export(std::ostream& fout, std::string KVFmt, std::string EphFmt, std::string CMFmt)const
 {
     // Export header
     ExportKeyValue(fout, "CCSDS_OEM_VERS", OEMVersion, 0, KVFmt);
