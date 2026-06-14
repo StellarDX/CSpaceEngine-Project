@@ -17,6 +17,7 @@
 
 #include "CSE/Base/StelCXXRes/StelCXX-UniString.h"
 #include <cstring>
+#include <malloc.h>
 
 // Member functions for Unicode encoders
 

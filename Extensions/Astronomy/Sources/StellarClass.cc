@@ -129,7 +129,7 @@ bool NormalStar::UncertaintyType::CheckBracketEnd(const UncertaintySymbols& Symb
     return (Symbol & UncertaintyType::BrakIn) && ((Symbol & UncertaintyType::BrakEnd) != UncertaintyType::BrakEnd);
 }
 
-void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+void NormalStar::UncertaintyHandler(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     if (Source.empty()) {return;}
     // 不确定字符可能会出现在任何位置，此处涉及到一个巨大的分类讨论
@@ -138,8 +138,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
     case PStart: // 若一开始就出现不确定字符，只有可能是'('
         if (Source[0] == '(')
         {
-            UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
-            BracketStart(Source, Remain, &Data, State);
+            UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
+            UncertaintyType::BracketStart(Source, Remain, &Data, State);
             Output->Data.DetailedData.SpecU = Data;
         }
         break;
@@ -153,27 +153,27 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                 break;
             case '(':
                 {
-                    UncertaintySymbols TempData;
-                    BracketStart(Source, Remain, &TempData, State);
+                    UncertaintyType::UncertaintySymbols TempData;
+                    UncertaintyType::BracketStart(Source, Remain, &TempData, State);
                 }
                 break;
             case ')':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
-                    BracketEnd(Source, Remain, &Data, State);
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
+                    UncertaintyType::BracketEnd(Source, Remain, &Data, State);
                     Output->Data.DetailedData.SpecU = Data;
                 }
                 break;
             case '?': // 这里不break
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ques));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ques));
                     Output->Data.DetailedData.SpecU = Data;
                 }
             case ':':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Uncertained));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Uncertained));
                     Output->Data.DetailedData.SpecU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -181,8 +181,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             case '/':
                 {
                     *State = ParserStateType(int(*State) | int(PRange));
-                    UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Slash));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SpecU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Slash));
                     Output->Data.DetailedData.SpecU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -199,35 +199,35 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                 break;
             case '(':
                 {
-                    UncertaintySymbols TempData;
-                    BracketStart(Source, Remain, &TempData, State);
+                    UncertaintyType::UncertaintySymbols TempData;
+                    UncertaintyType::BracketStart(Source, Remain, &TempData, State);
                 }
                 break;
             case ')': // ')'后面若还有不确定符号，必为'('
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    BracketEnd(Source, Remain, &Data, State);
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                    UncertaintyType::BracketEnd(Source, Remain, &Data, State);
                     Output->Data.DetailedData.SubU = Data;
                 }
                 break;
             case '?': // 这里不break
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ques));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ques));
                     Output->Data.DetailedData.SubU = Data;
                 }
             case ':':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Uncertained));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Uncertained));
                     Output->Data.DetailedData.SubU = Data;
                     *Remain = Source.erase(0, 1);
                 }
                 break;
             case '+':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(More));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::More));
                     Output->Data.DetailedData.SubU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -237,14 +237,14 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                     if (ustring(L"OBAFGKM").find(Source[1]) != ustring::npos || isdigit(Source[1]))
                     {
                         *State = ParserStateType(int(*State) | int(PRange));
-                        UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ranged));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ranged));
                         Output->Data.DetailedData.SubU = Data;
                     }
                     else
                     {
-                        UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Less));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Less));
                         Output->Data.DetailedData.SubU = Data;
                     }
                     *Remain = Source.erase(0, 1);
@@ -253,8 +253,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             case '/':
                 {
                     *State = ParserStateType(int(*State) | int(PRange));
-                    UncertaintySymbols Data = Output->Data.DetailedData.SubU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Slash));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SubU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Slash));
                     Output->Data.DetailedData.SubU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -273,8 +273,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                 {
                     if (ustring(L"ab").find(Source[1]) != ustring::npos) // 原以为像Ia，Iab，IIIb这类不会把ab放在括号里面，但后续又发现一例HD 54786的光谱为B1/2I(b)
                     {
-                        UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                        BracketStart(Source, Remain, &Data, State);
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                        UncertaintyType::BracketStart(Source, Remain, &Data, State);
                         Output->Data.DetailedData.SLumU = Data;
                         *Remain = Source.erase(0, 1);
                     }
@@ -283,37 +283,37 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
                         == PecularityType::SpectralPecularitiesTable.end())
                     {
-                        UncertaintySymbols TempData;
-                        BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
+                        UncertaintyType::UncertaintySymbols TempData;
+                        UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
                     }
                     // 如果检测结果是特殊谱线的字符串，不进行任何操作
                 }
                 break;
             case ')':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    BracketEnd(Source, Remain, &Data, State);
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                    UncertaintyType::BracketEnd(Source, Remain, &Data, State);
                     Output->Data.DetailedData.LumU = Data;
                 }
                 break;
             case '?': // 这里不break
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ques));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ques));
                     Output->Data.DetailedData.LumU = Data;
                 }
             case ':':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Uncertained));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Uncertained));
                     Output->Data.DetailedData.LumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
                 break;
             case '+': // 这后面可能会跟另一个光谱型，但双星单独分类，此处不考虑。
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(More));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::More));
                     Output->Data.DetailedData.LumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -323,14 +323,14 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                     if (ustring(L"IV").find(Source[1]) != ustring::npos)
                     {
                         *State = ParserStateType(int(*State) | int(PRange));
-                        UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ranged));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ranged));
                         Output->Data.DetailedData.LumU = Data;
                     }
                     else
                     {
-                        UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Less));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Less));
                         Output->Data.DetailedData.LumU = Data;
                     }
                     *Remain = Source.erase(0, 1);
@@ -339,8 +339,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             case '/':
                 {
                     *State = ParserStateType(int(*State) | int(PRange));
-                    UncertaintySymbols Data = Output->Data.DetailedData.LumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Slash));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.LumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Slash));
                     Output->Data.DetailedData.LumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -361,30 +361,30 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
                         == PecularityType::SpectralPecularitiesTable.end())
                     {
-                        UncertaintySymbols TempData;
-                        BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
+                        UncertaintyType::UncertaintySymbols TempData;
+                        UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
                     }
                     // 如果检测结果是特殊谱线的字符串，不进行任何操作
                 }
                 break;
             case ')':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                    BracketEnd(Source, Remain, &Data, State);
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                    UncertaintyType::BracketEnd(Source, Remain, &Data, State);
                     Output->Data.DetailedData.SLumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
                 break;
             case '?': // 这里不break
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ques));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ques));
                     Output->Data.DetailedData.SLumU = Data;
                 }
             case ':':
                 {
-                    UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Uncertained));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Uncertained));
                     Output->Data.DetailedData.SLumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -399,8 +399,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                     }
                     else
                     {
-                        UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(More));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::More));
                         Output->Data.DetailedData.SLumU = Data;
                     }
                     *Remain = Source.erase(0, 1);
@@ -421,14 +421,14 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                     if (ustring(L"IVab0").find(Source[1]) != ustring::npos)
                     {
                         *State = ParserStateType(int(*State) | int(PRange));
-                        UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Ranged));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Ranged));
                         Output->Data.DetailedData.SLumU = Data;
                     }
                     else
                     {
-                        UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Less));
+                        UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                        Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Less));
                         Output->Data.DetailedData.SLumU = Data;
                     }
                     *Remain = Source.erase(0, 1);
@@ -437,8 +437,8 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             case '/':
                 {
                     *State = ParserStateType(int(*State) | int(PRange));
-                    UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
-                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(Slash));
+                    UncertaintyType::UncertaintySymbols Data = Output->Data.DetailedData.SLumU;
+                    Data = UncertaintyType::UncertaintySymbols(uint16_t(Data) | uint16_t(UncertaintyType::Slash));
                     Output->Data.DetailedData.SLumU = Data;
                     *Remain = Source.erase(0, 1);
                 }
@@ -458,15 +458,15 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
                         == PecularityType::SpectralPecularitiesTable.end())
                     {
-                        UncertaintySymbols TempData;
-                        BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
+                        UncertaintyType::UncertaintySymbols TempData;
+                        UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
                     }
                     // 如果检测结果是特殊谱线的字符串，不进行任何操作
                 }
                 break;
             case ')':
                 {
-                    BracketEnd(Source, Remain, &Output->Pecularities.back().Uncertainty, State);
+                    UncertaintyType::BracketEnd(Source, Remain, &Output->Pecularities.back().Uncertainty, State);
                     *Remain = Source.erase(0, 1);
                 }
                 break;
@@ -480,25 +480,25 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             {
             case '(':
                 {
-                    UncertaintySymbols TempData;
-                    BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
+                    UncertaintyType::UncertaintySymbols TempData;
+                    UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
                 }
                 break;
             case ')':
                 {
-                    BracketEnd(Source, Remain, &Output->ChemicalElems.back().Uncertainty, State);
+                    UncertaintyType::BracketEnd(Source, Remain, &Output->ChemicalElems.back().Uncertainty, State);
                     *Remain = Source.erase(0, 1);
                 }
                 break;
             case '?': // 这里不break
                 {
                     Output->ChemicalElems.back().Uncertainty = UncertaintyType::UncertaintySymbols(
-                        uint16_t(Output->ChemicalElems.back().Uncertainty) | uint16_t(Ques));
+                        uint16_t(Output->ChemicalElems.back().Uncertainty) | uint16_t(UncertaintyType::Ques));
                 }
             case ':':
                 {
                     Output->ChemicalElems.back().Uncertainty = UncertaintyType::UncertaintySymbols(
-                        uint16_t(Output->ChemicalElems.back().Uncertainty) | uint16_t(Uncertained));
+                        uint16_t(Output->ChemicalElems.back().Uncertainty) | uint16_t(UncertaintyType::Uncertained));
                     *Remain = Source.erase(0, 1);
                 }
                 break;
@@ -512,25 +512,25 @@ void NormalStar::UncertaintyType::UncertaintyHandler(NormalStar* Output, ustring
             {
             case '(':
                 {
-                    UncertaintySymbols TempData;
-                    BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
+                    UncertaintyType::UncertaintySymbols TempData;
+                    UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
                 }
                 break;
             case ')':
                 {
-                    BracketEnd(Source, Remain, &Output->BandPecs.back().Uncertainty, State);
+                    UncertaintyType::BracketEnd(Source, Remain, &Output->BandPecs.back().Uncertainty, State);
                     *Remain = Source.erase(0, 1);
                 }
                 break;
             case '?': // 这里不break
                 {
                     Output->BandPecs.back().Uncertainty = UncertaintyType::UncertaintySymbols(
-                        uint16_t(Output->BandPecs.back().Uncertainty) | uint16_t(Ques));
+                        uint16_t(Output->BandPecs.back().Uncertainty) | uint16_t(UncertaintyType::Ques));
                 }
             case ':':
                 {
                     Output->BandPecs.back().Uncertainty = UncertaintyType::UncertaintySymbols(
-                        uint16_t(Output->BandPecs.back().Uncertainty) | uint16_t(Uncertained));
+                        uint16_t(Output->BandPecs.back().Uncertainty) | uint16_t(UncertaintyType::Uncertained));
                     *Remain = Source.erase(0, 1);
                 }
                 break;
@@ -735,55 +735,6 @@ ustringlist NormalStar::PecularityType::SpectralPecularitiesTable
 
 wregex NormalStar::PecularityType::Pattern(L'^' + __List_To_Pattern(PecularityType::SpectralPecularitiesTable));
 
-void NormalStar::PecularityType::LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2)
-{
-    ustring Src = Source;
-    ConsumeSpace(Src, &Src);
-    UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-    bool IsStartingBracket = (*State & PBracket) && 
-        (Output->BandPecs.empty() ?
-            ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
-            !UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty));
-    ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    while (!Spec.empty())
-    {
-        if (__2 && !Output->PecularitiesBehindBandPecs) {Output->PecularitiesBehindBandPecs = 1;}
-        Output->Pecularities.push_back({Spec});
-        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
-        {
-            Output->Pecularities.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakIn));
-        }
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        if (IsStartingBracket)
-        {
-            Output->Pecularities.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakStart));
-            IsStartingBracket = 0;
-        }
-        if (*State & PBracket)
-        {
-            if (!UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty))
-            {
-                IsStartingBracket = 1;
-            }
-            else
-            {
-                Output->Pecularities.back().Uncertainty = 
-                    UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
-                    | uint16_t(UncertaintyType::BrakIn));
-            }
-        }
-        //std::wcout << Spec << '\n';
-        ConsumeSpace(Src, &Src);
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    }
-    *Remain = Src;
-}
-
 const ustringlist NormalStar::ChemicalPecularitySpec::ChemicalElementsTable
 {
     L"H",                                                                                                                                                                                                                    L"He",
@@ -796,56 +747,6 @@ const ustringlist NormalStar::ChemicalPecularitySpec::ChemicalElementsTable
 };
 
 wregex NormalStar::ChemicalPecularitySpec::Pattern(L'^' + __List_To_Pattern(ChemicalPecularitySpec::ChemicalElementsTable));
-
-void NormalStar::ChemicalPecularitySpec::LoadChemElems(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
-{
-    ustring Src = Source;
-    ConsumeSpace(Src, &Src);
-    UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-    bool IsStartingBracket = (*State & PBracket) && 
-        (Output->Pecularities.empty() ?
-            ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
-            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty));
-    ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    while (!Spec.empty())
-    {
-        Output->ChemicalElems.push_back({Spec});
-        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
-        {
-            Output->ChemicalElems.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakIn));
-        }
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        if (IsStartingBracket)
-        {
-            Output->ChemicalElems.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakStart));
-            IsStartingBracket = 0;
-        }
-        if (*State & PBracket)
-        {
-            if (!UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty))
-            {
-                IsStartingBracket = 1;
-            }
-            else
-            {
-                Output->ChemicalElems.back().Uncertainty = 
-                    UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
-                    | uint16_t(UncertaintyType::BrakIn));
-            }
-        }
-        //std::wcout << Spec << '\n';
-        ConsumeSpace(Src, &Src);
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        ustring Source1 = Src, Remain1;
-        if (!__Regex_Str_Str(Source1, BandPecularitiesType::Pattern, &Remain1).empty()) {break;}
-        Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    }
-    *Remain = Src;
-}
 
 ustringlist NormalStar::BandPecularitiesType::AbsorptionPecularityTable
 {
@@ -897,56 +798,6 @@ NormalStar::BandPecularitiesType NormalStar::BandPecularitiesType::Load(ustring 
     return AbsData;
 }
 
-void NormalStar::BandPecularitiesType::LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
-{
-    ustring Src = Source;
-    ConsumeSpace(Src, &Src);
-    UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-    bool IsStartingBracketPreCheck = ValueType::PecularitiesBrakStartPrecheck(&(Output->Data));
-    bool IsStartingBracket = (*State & PBracket) && 
-        ((Output->Pecularities.empty() ? IsStartingBracketPreCheck :
-            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty)) ||
-        (Output->ChemicalElems.empty() ? IsStartingBracketPreCheck :
-            !UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty)));
-    ustring Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    while (!Spec.empty())
-    {
-        Output->BandPecs.push_back(Load(Spec));
-        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
-        {
-            Output->BandPecs.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakIn));
-        }
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        if (IsStartingBracket)
-        {
-            Output->BandPecs.back().Uncertainty = 
-                UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
-                | uint16_t(UncertaintyType::BrakStart));
-            IsStartingBracket = 0;
-        }
-        if (*State & PBracket)
-        {
-            if (!UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty))
-            {
-                IsStartingBracket = 1;
-            }
-            else
-            {
-                Output->BandPecs.back().Uncertainty = 
-                    UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
-                    | uint16_t(UncertaintyType::BrakIn));
-            }
-        }
-        ConsumeSpace(Src, &Src);
-        //std::wcout << Spec << '\n';
-        UncertaintyType::UncertaintyHandler(Output, Src, &Src, State);
-        Spec = __Regex_Str_Str(Src, Pattern, &Src);
-    }
-    *Remain = Src;
-}
-
 const NormalStar::EventQueueType NormalStar::ParserEventQueue
 {
     LoadSpec, 
@@ -974,7 +825,7 @@ void NormalStar::ConsumeSpace(ustring Source, ustring* Remain)
 void NormalStar::LoadSpec(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     ustring Source1 = Source;
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::SpecClassPattern, &Source1);
     if (Spec.empty()) {return;}
     ValueType::LoadSpecImpl(Spec, &(Output->Data));
@@ -987,7 +838,7 @@ void NormalStar::LoadSpec(NormalStar* Output, ustring Source, ustring* Remain, P
     //std::wcout << Spec << '\n';
     SetState(State, PSpec);
 
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     if (*State & PRange)
     {
         if (!Output->FloatData.has_value()) {Output->FloatData = Output->Data;}
@@ -1019,7 +870,7 @@ void NormalStar::LoadCarbonType(NormalStar* Output, ustring Source, ustring* Rem
 void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     ustring Source1 = Source;
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::NumberPattern, &Source1);
     if (Spec.empty()) {return;}
     if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 1))
@@ -1040,7 +891,7 @@ void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, Pa
     SetState(State, PSub);
 
     // 这里我也不知道为什么HD 126399的光谱K(3/5)III竟然能分析成功
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     if (*State & PRange)
     {
         if (!Output->FloatData.has_value())
@@ -1074,7 +925,7 @@ void NormalStar::LoadSub(NormalStar* Output, ustring Source, ustring* Remain, Pa
             *State = ParserStateType(int(*State) & (~int(PRange)));
         }
 
-        UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State); // 保险起见在此加一句
+        UncertaintyHandler(Output, Source1, &Source1, State); // 保险起见在此加一句
     }
 
     *Remain = Source1;
@@ -1094,7 +945,7 @@ void NormalStar::LoadSType(NormalStar* Output, ustring Source, ustring* Remain, 
 void NormalStar::LoadLum(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     ustring Source1 = Source;
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::LuminosityClassPattern, &Source1);
     if (Spec.empty()) {return;}
     if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 2))
@@ -1112,7 +963,7 @@ void NormalStar::LoadLum(NormalStar* Output, ustring Source, ustring* Remain, Pa
     //std::wcout << Spec << '\n';
     SetState(State, PLum);
 
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     if (*State & PRange)
     {
         if (!Output->FloatData.has_value())
@@ -1136,7 +987,7 @@ void NormalStar::LoadLum(NormalStar* Output, ustring Source, ustring* Remain, Pa
             *State = ParserStateType(int(*State) & (~int(PRange)));
         }
 
-        UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State); // 保险起见加上
+        UncertaintyHandler(Output, Source1, &Source1, State); // 保险起见加上
     }
 
     *Remain = Source1;
@@ -1145,7 +996,7 @@ void NormalStar::LoadLum(NormalStar* Output, ustring Source, ustring* Remain, Pa
 void NormalStar::LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     ustring Source1 = Source;
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     ustring Spec = __Regex_Str_Str(Source1, ValueType::SubLumPattern, &Source1);
     if (Spec.empty()) {return;}
     if (*State & PBracket && ValueType::PecularitiesBrakStartPrecheck(&Output->Data, 3))
@@ -1163,7 +1014,7 @@ void NormalStar::LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain,
     //std::wcout << Spec << '\n';
     SetState(State, PSLum);
 
-    UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State);
+    UncertaintyHandler(Output, Source1, &Source1, State);
     if (*State & PRange)
     {
         if (!Output->FloatData.has_value())
@@ -1195,17 +1046,166 @@ void NormalStar::LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain,
             *State = ParserStateType(int(*State) & (~int(PRange)));
         }
 
-        UncertaintyType::UncertaintyHandler(Output, Source1, &Source1, State); // 这里不加一句，分析HD 144695的光谱O8/9.5(Ib/II)时会报错。
+        UncertaintyHandler(Output, Source1, &Source1, State); // 这里不加一句，分析HD 144695的光谱O8/9.5(Ib/II)时会报错。
         // 补充：原以为范围和不确定符号不会同时存在，但后来发现一例HD 214714的光谱为G3Ib-II:CN-1CH2Fe-1
     }
 
     *Remain = Source1;
 }
 
+void NormalStar::LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2)
+{
+    ustring Src = Source;
+    ConsumeSpace(Src, &Src);
+    UncertaintyHandler(Output, Src, &Src, State);
+    bool IsStartingBracket = (*State & PBracket) && 
+        (Output->BandPecs.empty() ?
+            ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
+            !UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty));
+    ustring Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    while (!Spec.empty())
+    {
+        if (__2 && !Output->PecularitiesBehindBandPecs) {Output->PecularitiesBehindBandPecs = 1;}
+        Output->Pecularities.push_back({Spec});
+        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
+        {
+            Output->Pecularities.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakIn));
+        }
+        UncertaintyHandler(Output, Src, &Src, State);
+        if (IsStartingBracket)
+        {
+            Output->Pecularities.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakStart));
+            IsStartingBracket = 0;
+        }
+        if (*State & PBracket)
+        {
+            if (!UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty))
+            {
+                IsStartingBracket = 1;
+            }
+            else
+            {
+                Output->Pecularities.back().Uncertainty = 
+                    UncertaintyType::UncertaintySymbols(uint16_t(Output->Pecularities.back().Uncertainty) 
+                    | uint16_t(UncertaintyType::BrakIn));
+            }
+        }
+        //std::wcout << Spec << '\n';
+        ConsumeSpace(Src, &Src);
+        UncertaintyHandler(Output, Src, &Src, State);
+        Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    }
+    *Remain = Src;
+}
+
+void NormalStar::LoadChemElems(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+{
+    ustring Src = Source;
+    ConsumeSpace(Src, &Src);
+    UncertaintyHandler(Output, Src, &Src, State);
+    bool IsStartingBracket = (*State & PBracket) && 
+        (Output->Pecularities.empty() ?
+            ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
+            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty));
+    ustring Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    while (!Spec.empty())
+    {
+        Output->ChemicalElems.push_back({Spec});
+        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
+        {
+            Output->ChemicalElems.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakIn));
+        }
+        UncertaintyHandler(Output, Src, &Src, State);
+        if (IsStartingBracket)
+        {
+            Output->ChemicalElems.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakStart));
+            IsStartingBracket = 0;
+        }
+        if (*State & PBracket)
+        {
+            if (!UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty))
+            {
+                IsStartingBracket = 1;
+            }
+            else
+            {
+                Output->ChemicalElems.back().Uncertainty = 
+                    UncertaintyType::UncertaintySymbols(uint16_t(Output->ChemicalElems.back().Uncertainty) 
+                    | uint16_t(UncertaintyType::BrakIn));
+            }
+        }
+        //std::wcout << Spec << '\n';
+        ConsumeSpace(Src, &Src);
+        UncertaintyHandler(Output, Src, &Src, State);
+        ustring Source1 = Src, Remain1;
+        if (!__Regex_Str_Str(Source1, BandPecularitiesType::Pattern, &Remain1).empty()) {break;}
+        Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    }
+    *Remain = Src;
+}
+
+void NormalStar::LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+{
+    ustring Src = Source;
+    ConsumeSpace(Src, &Src);
+    UncertaintyHandler(Output, Src, &Src, State);
+    bool IsStartingBracketPreCheck = ValueType::PecularitiesBrakStartPrecheck(&(Output->Data));
+    bool IsStartingBracket = (*State & PBracket) && 
+        ((Output->Pecularities.empty() ? IsStartingBracketPreCheck :
+            !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty)) ||
+        (Output->ChemicalElems.empty() ? IsStartingBracketPreCheck :
+            !UncertaintyType::CheckBracketEnd(Output->ChemicalElems.back().Uncertainty)));
+    ustring Spec = __Regex_Str_Str(Src, BandPecularitiesType::Pattern, &Src);
+    while (!Spec.empty())
+    {
+        Output->BandPecs.push_back(BandPecularitiesType::Load(Spec));
+        if ((Output->ChemicalElems.size() == 1) && (*State & PBracket))
+        {
+            Output->BandPecs.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakIn));
+        }
+        UncertaintyHandler(Output, Src, &Src, State);
+        if (IsStartingBracket)
+        {
+            Output->BandPecs.back().Uncertainty = 
+                UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
+                | uint16_t(UncertaintyType::BrakStart));
+            IsStartingBracket = 0;
+        }
+        if (*State & PBracket)
+        {
+            if (!UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty))
+            {
+                IsStartingBracket = 1;
+            }
+            else
+            {
+                Output->BandPecs.back().Uncertainty = 
+                    UncertaintyType::UncertaintySymbols(uint16_t(Output->BandPecs.back().Uncertainty) 
+                    | uint16_t(UncertaintyType::BrakIn));
+            }
+        }
+        ConsumeSpace(Src, &Src);
+        //std::wcout << Spec << '\n';
+        UncertaintyHandler(Output, Src, &Src, State);
+        Spec = __Regex_Str_Str(Src, BandPecularitiesType::Pattern, &Src);
+    }
+    *Remain = Src;
+}
+
 void NormalStar::LoadPecularitiesStage1(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
 {
     SetState(State, PPec);
-    PecularityType::LoadPecularities(Output, Source, Remain, State);
+    LoadPecularities(Output, Source, Remain, State);
 }
 
 void NormalStar::LoadPecularitiesStage2(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
@@ -1217,12 +1217,12 @@ void NormalStar::LoadPecularitiesStage2(NormalStar* Output, ustring Source, ustr
     if (TestStr.empty())
     {
         SetState(State, PChem);
-        ChemicalPecularitySpec::LoadChemElems(Output, Source, Remain, State);
+        LoadChemElems(Output, Source, Remain, State);
     }
     else 
     {
         SetState(State, PBar);
-        BandPecularitiesType::LoadBandPecs(Output, Source, Remain, State);
+        LoadBandPecs(Output, Source, Remain, State);
     }
 }
 
@@ -1231,12 +1231,12 @@ void NormalStar::LoadPecularitiesStage3(NormalStar* Output, ustring Source, ustr
     if ((*State & ~(POpMask)) == PBar && Output->Pecularities.empty()) // 特殊谱线若出现在前面，后续就不会出现了
     {
         SetState(State, PPec);
-        PecularityType::LoadPecularities(Output, Source, Remain, State, 1);
+        LoadPecularities(Output, Source, Remain, State, 1);
     }
     else if ((*State & ~(POpMask)) != PBar)
     {
         SetState(State, PBar);
-        BandPecularitiesType::LoadBandPecs(Output, Source, Remain, State);
+        LoadBandPecs(Output, Source, Remain, State);
     }
 }
 
@@ -1561,7 +1561,1018 @@ ustring NormalStar::ToString()const
 
 // ----------------------------------------- AmStar ----------------------------------------- //
 
+ustring AmStar::Description()const
+{
+    static const ustring Descr = L"Am Star";
+    return Descr;
+}
 
+std::flat_map<ustring, AmStar::KeyType> AmStar::LinesTable
+{
+    {L"k", {.Line = "k", .Element = "Ca+", .WaveLength = 393.366}}, // 1价钙离子K段
+    {L"h", {.Line = "h", .Element = "Hδ", .WaveLength = 410.175}}, // 氢巴耳末系，以氢δ线为例
+    {L"g", {.Line = "g", .Element = "CH", .WaveLength = 430.774}}, // 次甲基G段（如HD 48565的光谱为hF8gF8mF3）
+    {L"m", {.Line = "m", .Element = "Fe", .WaveLength = 495.761}}, // 金属线，以铁c线为例
+    {L"He", {.Line = "He", .Element = "He", .WaveLength = 587.5618}} // 氦线，以氦D3线为例（如青丘一的光谱为kB8hB8HeA0VSi）
+};
+
+wregex AmStar::LinesPattern(L'^' + __List_To_Pattern(LinesTable.keys()));
+
+const AmStar::EventQueueType AmStar::ParserEventQueue
+{
+    {PLine, LoadLine},
+    {PSpec, LoadSpec},
+    {PSub, LoadSub},
+    {PLum, LoadLum},
+    {PSLum, LoadSLum},
+    {PPec, LoadPec},
+    {PChem, LoadChem},
+};
+
+void AmStar::SetState(ParserStateType* State, ParserStateType Value)
+{
+    *State = ParserStateType((*State & POpMask) | (Value & (~POpMask)));
+}
+
+void AmStar::LoadLine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    bool IsBracketStart = 0;
+    if (!Source.empty() && !(*State & PBracket) && Source.front() == '(')
+    {
+        IsBracketStart = 1;
+        *State = ParserStateType(*State | PBracket);
+        Source.erase(Source.begin());
+    }
+    
+    ustring Key = __Regex_Str_Str(Source, LinesPattern, Remain);
+    if (Key.empty())
+    {
+        *State = PEnd;
+        return;
+    }
+
+    if (Output->FmtFlag == DeltaDelphini)
+    {
+        DDelValueType RData = std::get<DeltaDelphini>(Output->Data);
+        auto LineKey = LinesTable.at(Key);
+
+        if (*State & PBracket)
+        {
+            if (IsBracketStart) 
+            {
+                LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                    LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakStart);
+                IsBracketStart = 0;
+            }
+            else
+            {
+                LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                    LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakIn);
+            }
+        }
+
+        if (!Remain->empty() && (*State & PBracket) && Remain->front() == ')')
+        {
+            LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakEnd);
+            *State = ParserStateType(*State & (~PBracket));
+            Remain->erase(Remain->begin());
+        }
+
+        RData.Segments.insert({LineKey, AmStar::ValueType()});
+        Output->Data = RData;
+    }
+    else if (Output->FmtFlag == RhoPuppis)
+    {
+        RPupValueType RData = std::get<RhoPuppis>(Output->Data);
+        auto LineKey = LinesTable.at(Key);
+
+        if (*State & PBracket)
+        {
+            if (IsBracketStart) 
+            {
+                LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                    LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakStart);
+                IsBracketStart = 0;
+            }
+            else
+            {
+                LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                    LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakIn);
+            }
+        }
+
+        if (!Remain->empty() && (*State & PBracket) && Remain->front() == ')')
+        {
+            LineKey.UncertaintyFlags = ImportBase::UncertaintyType::UncertaintySymbols(
+                LineKey.UncertaintyFlags | ImportBase::UncertaintyType::BrakEnd);
+            *State = ParserStateType(*State & (~PBracket));
+            Remain->erase(Remain->begin());
+        }
+
+        RData.Segments.insert({LineKey, AmStar::ValueType()});
+        Output->Data = RData;
+    }
+
+    //std::wcout << Key << '\n';
+    SetState(State, PSpec);
+    *Line = Key;
+}
+
+void AmStar::LoadSpec(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    ustring Spec = __Regex_Str_Str(Source, ImportBase::ValueType::SpecClassPattern, Remain);
+    if (Spec.empty())
+    {
+        *State = PEnd;
+        return;
+    }
+    auto RLine = Output->FmtFlag == KappaOctantis ? L"m2" : *Line;
+    auto RData = Output->GetDataByLine(RLine);
+    ImportBase::ValueType::LoadSpecImpl(Spec, &RData.Value);
+    Output->SetDataByLine(RLine, RData);
+    //std::wcout << Spec << '\n';
+    SetState(State, PSub);
+}
+
+void AmStar::LoadSub(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    bool IsBracketStart = 0;
+    if (!Source.empty() && !(*State & PBracket) && Source.front() == '(')
+    {
+        IsBracketStart = 1;
+        *State = ParserStateType(*State | PBracket);
+        Source.erase(Source.begin());
+    }
+
+    ustring Sub = __Regex_Str_Str(Source, ImportBase::ValueType::NumberPattern, Remain);
+    if (Sub.empty())
+    {
+        *State = PEnd;
+        return;
+    }
+    auto RLine = Output->FmtFlag == KappaOctantis ? L"m2" : *Line;
+    auto RData = Output->GetDataByLine(RLine);
+    if (*State & PBracket)
+    {
+        if (IsBracketStart) 
+        {
+            RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::BrakStart);
+            IsBracketStart = 0;
+        }
+        else
+        {
+            RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::BrakIn);
+        }
+    }
+    ImportBase::ValueType::LoadNumber(Sub, &RData.Value.DetailedData.Sub);
+
+    bool NextTransferToKOct = 0;
+    if (!Remain->empty() && (Remain->front() == '+' || Remain->front() == '-' || Remain->front() == ':'))
+    {
+        switch (Remain->front())
+        {
+        case '+':
+            RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::More);
+            break;
+        case '-':
+            if (Remain->size() >= 3 && ustring(L"OBAFGKM").find((*Remain)[1]) != ustring::npos && isdigit((*Remain)[2]))
+            {
+                NextTransferToKOct = 1;
+            }
+            else
+            {
+                RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+                    RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::Less);
+            }
+            break;
+        case ':':
+            RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::Uncertained);
+            break;
+        }
+        Remain->erase(Remain->begin());
+    }
+    else if (!Remain->empty() && Remain->front() == L'/') // 此处不使用单独的处理函数统一管理了，只会引入一堆不必要的状态量增加复杂度
+    {
+        RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+            RData.Value.DetailedData.SubU | 
+                (ImportBase::UncertaintyType::Ranged | 
+                ImportBase::UncertaintyType::Slash | 
+                ImportBase::UncertaintyType::Simplified));
+        if (!RData.FloatValue.has_value()) {RData.FloatValue = RData.Value;}
+        Remain->erase(Remain->begin());
+
+        if (ustring(L"OBAFGKM").find(Remain->front()) != ustring::npos)
+        {
+            ustring Spec1 = __Regex_Str_Str((*Remain), ImportBase::ValueType::SpecClassPattern, Remain);
+            ImportBase::ValueType::LoadSpecImpl(Spec1, &RData.FloatValue.value());
+            //std::wcout << Spec1 << '\n';
+        }
+        if (isdigit(Remain->front()))
+        {
+            ustring Sub1 = __Regex_Str_Str((*Remain), ImportBase::ValueType::NumberPattern, Remain);
+            ImportBase::ValueType::LoadNumber(Sub1, &RData.FloatValue->DetailedData.Sub);
+            //std::wcout << Sub1 << '\n';
+        }
+    }
+
+    if (!Remain->empty() && (*State & PBracket) && Remain->front() == ')')
+    {
+        RData.Value.DetailedData.SubU = ImportBase::UncertaintyType::UncertaintySymbols(
+            RData.Value.DetailedData.SubU | ImportBase::UncertaintyType::BrakEnd);
+        *State = ParserStateType(*State & (~PBracket));
+        Remain->erase(Remain->begin());
+    }
+
+    Output->SetDataByLine(RLine, RData);
+    //std::wcout << Sub << '\n';
+
+    ustring Src1 = *Remain, Rem1;
+    if (!Src1.empty() && Src1.front() == '(') {Src1.erase(Src1.begin());}
+    if (Output->FmtFlag == RhoPuppis && NextTransferToKOct)
+    {
+        TransferToKOct(Output, State);
+        SetState(State, PSpec);
+    }
+    else if (!__Regex_Str_Str(Src1, ImportBase::ValueType::LuminosityClassPattern, &Rem1).empty())
+    {
+        SetState(State, PLum);
+    }
+    else {NextSegmentCheck(Output, Src1, State);}
+}
+
+void AmStar::LoadLum(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    bool IsBracketStart = 0;
+    if (!Source.empty() && !(*State & PBracket) && Source.front() == '(')
+    {
+        IsBracketStart = 1;
+        *State = ParserStateType(*State | PBracket);
+        Source.erase(Source.begin());
+    }
+
+    ustring Lum = __Regex_Str_Str(Source, ImportBase::ValueType::LuminosityClassPattern, Remain);
+    if (Lum.empty())
+    {
+        *State = PEnd;
+        return;
+    }
+    auto RData = Output->GetDataByLine(*Line);
+    if (*State & PBracket)
+    {
+        if (IsBracketStart) 
+        {
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::BrakStart);
+            IsBracketStart = 0;
+        }
+        else
+        {
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::BrakIn);
+        }
+    }
+    ImportBase::ValueType::LoadLumImpl(Lum, &RData.Value);
+    //std::wcout << Lum << '\n';
+
+    if (!Remain->empty() && (Remain->front() == '+' || Remain->front() == '-' || Remain->front() == ':' || Remain->front() == L'/'))
+    {
+        switch (Remain->front())
+        {
+        case '+':
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::More);
+            break;
+        case '-':
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::Less);
+            break;
+        case ':':
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::Uncertained);
+            break;
+        case '/':
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::Ranged | 
+                ImportBase::UncertaintyType::Slash | ImportBase::UncertaintyType::Simplified);
+            break;
+        }
+        Remain->erase(Remain->begin());
+    }
+
+    ustring Lum1 = __Regex_Str_Str(*Remain, ImportBase::ValueType::LuminosityClassPattern, Remain);
+    if (!Lum1.empty())
+    {
+        if (!(RData.Value.DetailedData.LumU & ImportBase::UncertaintyType::Ranged))
+        {
+            // 进到这里时若Ranged没有被拉起，说明是'-'后面出现了另一个光度级
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU & (~ImportBase::UncertaintyType::Less));
+            RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+                RData.Value.DetailedData.LumU | 
+                    (ImportBase::UncertaintyType::Ranged | 
+                    ImportBase::UncertaintyType::Simplified));
+        }
+
+        if (!RData.FloatValue.has_value()) {RData.FloatValue = RData.Value;}
+        ImportBase::ValueType::LoadLumImpl(Lum1, &RData.FloatValue.value());
+        //std::wcout << Lum1 << '\n';
+    }
+
+    if (!Remain->empty() && (*State & PBracket) && Remain->front() == ')')
+    {
+        RData.Value.DetailedData.LumU = ImportBase::UncertaintyType::UncertaintySymbols(
+            RData.Value.DetailedData.LumU | ImportBase::UncertaintyType::BrakEnd);
+        *State = ParserStateType(*State & (~PBracket));
+        Remain->erase(Remain->begin());
+    }
+
+    Output->SetDataByLine(*Line, RData);
+
+    ustring Src1 = *Remain, Rem1;
+    if (!Src1.empty() && Src1.front() == '(') {Src1.erase(Src1.begin());}
+    if (!__Regex_Str_Str(Src1, ImportBase::ValueType::SubLumPattern, &Rem1).empty())
+    {
+        SetState(State, PSLum);
+    }
+    else {NextSegmentCheck(Output, Src1, State);}
+}
+
+void AmStar::LoadSLum(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    ustring SLum = __Regex_Str_Str(Source, ImportBase::ValueType::SubLumPattern, Remain);
+    if (SLum.empty())
+    {
+        *State = PEnd;
+        return;
+    }
+    auto RData = Output->GetDataByLine(*Line);
+    ImportBase::ValueType::LoadSubLumImpl(SLum, &RData.Value);
+    Output->SetDataByLine(*Line, RData);
+    //std::wcout << SLum << '\n';
+
+    ustring Src1 = *Remain;
+    if (!Src1.empty() && Src1.front() == '(') {Src1.erase(Src1.begin());}
+    NextSegmentCheck(Output, Src1, State);
+}
+
+void AmStar::LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    ustring Src = Source;
+    bool IsBracketStart = 0;
+    if (!Src.empty() && Src.front() == '(') 
+    {
+        ustring Tmp;
+        ustring Spec1 = __Regex_Str_Str(Src, PecularityType::Pattern, &Tmp);
+        if (Spec1.empty())
+        {
+            IsBracketStart = 1;
+            *State = ParserStateType(*State | PBracket);
+            Src.erase(Src.begin());
+        }
+    }
+
+    ustring Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    while (!Spec.empty())
+    {
+        Output->Pecularities.push_back({Spec});
+        //std::wcout << Spec << '\n';
+        if (*State & PBracket)
+        {
+            if (IsBracketStart) 
+            {
+                Output->Pecularities.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                    Output->Pecularities.back().Uncertainty | ImportBase::UncertaintyType::BrakStart);
+                IsBracketStart = 0;
+            }
+            else
+            {
+                Output->Pecularities.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                    Output->Pecularities.back().Uncertainty | ImportBase::UncertaintyType::BrakIn);
+            }
+        }
+        if (!Src.empty() && (*State & PBracket) && Src.front() == ')')
+        {
+            Output->Pecularities.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                Output->Pecularities.back().Uncertainty | ImportBase::UncertaintyType::BrakEnd);
+            *State = ParserStateType(*State & (~PBracket));
+            Src.erase(Src.begin());
+        }
+
+        if (!Src.empty() && Src.front() == '(') 
+        {
+            ustring Tmp;
+            ustring Spec1 = __Regex_Str_Str(Src, PecularityType::Pattern, &Tmp);
+            if (Spec1.empty())
+            {
+                IsBracketStart = 1;
+                *State = ParserStateType(*State | PBracket);
+                Src.erase(Src.begin());
+            }
+        }
+
+        if (__ChkSeg(Src)) {break;}
+        
+        Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    }
+    *Remain = Src;
+    
+    ustring Src1 = *Remain;
+    if (!Src1.empty() && Src1.front() == '(') {Src1.erase(Src1.begin());}
+    NextSegmentCheck(Output, Src, State);
+}
+
+void AmStar::LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line)
+{
+    ustring Src = Source;
+    bool IsBracketStart = 0;
+    if (!Src.empty() && Src.front() == '(') 
+    {
+        ustring Tmp;
+        ustring Spec1 = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Tmp);
+        if (Spec1.empty())
+        {
+            IsBracketStart = 1;
+            *State = ParserStateType(*State | PBracket);
+            Src.erase(Src.begin());
+        }
+    }
+
+    ustring Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    while (!Spec.empty())
+    {
+        Output->ChemElems.push_back({Spec});
+        //std::wcout << Spec << '\n';
+        if (*State & PBracket)
+        {
+            if (IsBracketStart) 
+            {
+                Output->ChemElems.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                    Output->ChemElems.back().Uncertainty | ImportBase::UncertaintyType::BrakStart);
+                IsBracketStart = 0;
+            }
+            else
+            {
+                Output->ChemElems.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                    Output->ChemElems.back().Uncertainty | ImportBase::UncertaintyType::BrakIn);
+            }
+        }
+        if (!Src.empty() && Src.front() == ':')
+        {
+            Output->ChemElems.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                Output->ChemElems.back().Uncertainty | ImportBase::UncertaintyType::Uncertained);
+            Src.erase(Src.begin());
+        }
+        if (!Src.empty() && (*State & PBracket) && Src.front() == ')')
+        {
+            Output->ChemElems.back().Uncertainty = ImportBase::UncertaintyType::UncertaintySymbols(
+                Output->ChemElems.back().Uncertainty | ImportBase::UncertaintyType::BrakEnd);
+            *State = ParserStateType(*State & (~PBracket));
+            Src.erase(Src.begin());
+        }
+
+        if (!Src.empty() && Src.front() == '(') 
+        {
+            ustring Tmp;
+            ustring Spec1 = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Tmp);
+            if (Spec1.empty())
+            {
+                IsBracketStart = 1;
+                *State = ParserStateType(*State | PBracket);
+                Src.erase(Src.begin());
+            }
+        }
+        Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    }
+    *Remain = Src;
+
+    SetState(State, PLine);
+}
+
+bool AmStar::__ChkSeg(ustring Src1)
+{
+    auto S = Src1 | std::views::filter([](char c)  // '('和')'会干扰识别，先把它们去掉
+    {
+        return c != '(' && c != ')';
+    });
+    ustring Rem1(S.begin(), S.end());
+    return !__Regex_Str_Str(Rem1, LinesPattern, &Rem1).empty() && 
+        !__Regex_Str_Str(Rem1, ImportBase::ValueType::SpecClassPattern, &Rem1).empty() &&
+        !__Regex_Str_Str(Rem1, ImportBase::ValueType::NumberPattern, &Rem1).empty();
+}
+
+void AmStar::NextSegmentCheck(AmStar* Output, ustring Source, ParserStateType* State)
+{
+    ustring Src1 = Source, Rem1;
+    if (__ChkSeg(Src1))
+    {
+        SetState(State, PLine);
+        return;
+    }
+    if (!__Regex_Str_Str(Src1, ImportBase::PecularityType::Pattern, &Rem1).empty())
+    {
+        SetState(State, PPec);
+        return;
+    }
+    if (!__Regex_Str_Str(Src1, ImportBase::ChemicalPecularitySpec::Pattern, &Rem1).empty())
+    {
+        SetState(State, PChem);
+        return;
+    }
+    *State = PEnd;
+}
+
+void AmStar::DdelRoutine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+{
+    Output->Data = DDelValueType();
+    ustring Source0 = Source;
+    *State = PLine;
+    Output->FmtFlag = DeltaDelphini;
+    ustring CurrentLine;
+    while (*State != -1)
+    {
+        ParserEventQueue.at(ParserStateType((*State) & (~POpMask)))(Output, Source0, &Source0, State, &CurrentLine);
+    }
+    *Remain = Source0;
+}
+
+void AmStar::RPupRoutine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State)
+{
+    Output->Data = RPupValueType();
+    ustring Source0 = Source;
+    *State = PSpec;
+    Output->FmtFlag = RhoPuppis;
+    ustring CurrentLine;
+    while (*State != -1)
+    {
+        ParserEventQueue.at(ParserStateType((*State) & (~POpMask)))(Output, Source0, &Source0, State, &CurrentLine);
+    }
+    *Remain = Source0;
+}
+
+void AmStar::TransferToKOct(AmStar* Output, ParserStateType* State)
+{
+    Output->FmtFlag = KappaOctantis;
+    auto OldValue = std::get<RPupValueType>(Output->Data);
+    KOctValueType NewValue;
+    NewValue.MainType = OldValue.MainSegment;
+    NewValue.LineUncertaintyFlags = OldValue.Segments.rbegin()->first.UncertaintyFlags;
+    NewValue.MetallicType1 = OldValue.Segments.rbegin()->second; // 此处不会出现除“m”以外的其他线
+    Output->Data = NewValue;
+}
+
+std::shared_ptr<StellarClassData> AmStar::ParseFunc(ustring StelClassString)
+{
+    ParserStateType State = PStart;
+    AmStar Result;
+    ustring Remain;
+    if (!__Regex_Str_Str(StelClassString, LinesPattern).empty())
+    {
+        DdelRoutine(&Result, StelClassString, &Remain, &State);
+    }
+    else if (!__Regex_Str_Str(StelClassString, ImportBase::ValueType::SpecClassPattern).empty())
+    {
+        RPupRoutine(&Result, StelClassString, &Remain, &State);
+    }
+    Result.RemainString = Remain;
+    //std::wcout << Remain << '\n';
+    return std::make_shared<AmStar>(Result);
+}
+
+AmStar::ValueType AmStar::GetDataByLine(ustring Line)
+{
+    if (FmtFlag == DeltaDelphini)
+    {
+        DDelValueType RData = std::get<DeltaDelphini>(Data);
+        using IType = decltype(RData.Segments.begin())::value_type;
+        auto it = std::find_if(RData.Segments.begin(), RData.Segments.end(), 
+            [Line](IType Target)
+        {
+            return Target.first.Line == Line;
+        });
+        if (it == RData.Segments.end()) {it = RData.Segments.begin();}
+        return it->second;
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        RPupValueType RData = std::get<RhoPuppis>(Data);
+        if (Line.empty()) {return RData.MainSegment;}
+        using IType = decltype(RData.Segments.begin())::value_type;
+        auto it = std::find_if(RData.Segments.begin(), RData.Segments.end(), 
+            [Line](IType Target)
+        {
+            return Target.first.Line == Line;
+        });
+        if (it == RData.Segments.end()) {return RData.MainSegment;}
+        return it->second;
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        KOctValueType RData = std::get<KappaOctantis>(Data);
+        if (Line.empty()) {return RData.MainType;}
+        if (Line == "m") {return RData.MetallicType1;}
+        if (Line == "m2") {return RData.MetallicType2;}
+    }
+}
+
+void AmStar::SetDataByLine(ustring Line, ValueType NewValue)
+{
+    if (FmtFlag == DeltaDelphini)
+    {
+        DDelValueType RData = std::get<DeltaDelphini>(Data);
+        using IType = decltype(RData.Segments.begin())::value_type;
+        auto Ptr = std::find_if(RData.Segments.begin(), RData.Segments.end(), 
+            [Line](IType Target)
+        {
+            return Target.first.Line == Line;
+        });
+        Ptr->second = NewValue;
+        Data = RData;
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        RPupValueType RData = std::get<RhoPuppis>(Data);
+        if (Line.empty()) {RData.MainSegment = NewValue;}
+        else 
+        {
+            using IType = decltype(RData.Segments.begin())::value_type;
+            auto Ptr = std::find_if(RData.Segments.begin(), RData.Segments.end(), 
+                [Line](IType Target)
+            {
+                return Target.first.Line == Line;
+            });
+            Ptr->second = NewValue;
+        }
+        Data = RData;
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        // 此状态的前两个段与弧矢增卅二共用解析流程，仅当字符串分析到“-”的时候
+        // 才会切换到此类型（Am恒星的光谱型中表范围的不会出现“-”字符，只会出现
+        // “/”字符），此时已是最后一个光谱段，存储到MetallicType2即可
+        KOctValueType RData = std::get<KOctValueType>(Data);
+        if (Line.empty()) {RData.MainType = NewValue;}
+        else if (Line == L"m") {RData.MetallicType1 = NewValue;}
+        else if (Line == L"m2") {RData.MetallicType2 = NewValue;}
+        Data = RData;
+    }
+}
+
+ustring AmStar::ExportSpec(const ValueType& Value)
+{
+    auto ST = ImportBase::ValueType::SpecToChar(Value.Value.DetailedData.Spec);
+    if (!ST) {return ustring();}
+    ustring Result;
+    Result.push_back(ST);
+    if (!Value.FloatValue.has_value()) 
+    {
+        ImportBase::UncertaintyType::AddUncertainty(&Result, Value.Value.DetailedData.SpecU);
+    }
+    return Result;
+}
+
+ustring AmStar::ExportSub(const ValueType& Value)
+{
+    ustring Result = ImportBase::ValueType::SubToString(Value.Value.DetailedData.Sub);
+    if (Value.FloatValue.has_value()) {Result += ExportSpecSubRange(Value);}
+    if (!Value.FloatValue.has_value() || (Value.FloatValue.has_value() && 
+        ((Value.Value.DetailedData.SubU & ImportBase::UncertaintyType::BrakIn) || 
+        (Value.FloatValue->DetailedData.Sub == ImportBase::ValueType::U16Npos) ||
+        (Value.Value.DetailedData.Sub == Value.FloatValue->DetailedData.Sub))))
+    {
+        ImportBase::UncertaintyType::AddUncertainty(&Result, Value.Value.DetailedData.SubU);
+    }
+    return Result;
+}
+
+ustring AmStar::ExportSpecSubRange(const ValueType& Value)
+{
+    auto Data = Value.Value;
+    auto FloatData = Value.FloatValue;
+    if (!FloatData.has_value() || (FloatData.has_value() && 
+        ((!FloatData->DetailedData.Spec && (FloatData->DetailedData.Sub == ImportBase::ValueType::U16Npos)) ||
+        (FloatData->DetailedData.Spec == Data.DetailedData.Spec &&
+        FloatData->DetailedData.Sub == Data.DetailedData.Sub)))) 
+    {
+        return ustring();
+    }
+    ustring Result;
+    if (Data.DetailedData.SpecU & ImportBase::UncertaintyType::Slash || 
+        Data.DetailedData.SubU & ImportBase::UncertaintyType::Slash)
+    {
+        Result.push_back('/');
+    }
+
+    if (!(Data.DetailedData.SubU & ImportBase::UncertaintyType::Simplified) || 
+        FloatData->DetailedData.Spec != Data.DetailedData.Spec)
+    {
+        Result.push_back(ImportBase::ValueType::SpecToChar(FloatData->DetailedData.Spec));
+    }
+    
+    Result.append(ImportBase::ValueType::SubToString(FloatData->DetailedData.Sub));
+
+    return Result;
+}
+
+ustring AmStar::ExportLum(const ValueType& Value)
+{
+    auto Op1 = [&Value]()
+    {
+        ustring Result;
+        Result = ImportBase::ValueType::LumToString(Value.Value.DetailedData.Lum);
+        ImportBase::UncertaintyType::AddUncertainty(&Result, Value.Value.DetailedData.LumU);
+        if (Value.Value.DetailedData.SLum)
+        {
+            ustring Result2 = ImportBase::ValueType::SLumToString(Value.Value.DetailedData.SLum);
+            ImportBase::UncertaintyType::AddUncertainty(&Result2, Value.Value.DetailedData.SLumU);
+            Result += Result2;
+        }
+        return Result;
+    };
+    
+    auto Op2 = [&Value]() // 这种情况下若出现"()"，只会出现整个在内部的情况
+    {
+        ustring Result;
+        ImportBase::UncertaintyType::UncertaintySymbols LU = 
+            ImportBase::UncertaintyType::UncertaintySymbols(Value.Value.DetailedData.LumU | Value.Value.DetailedData.SLumU);
+        Result = ImportBase::ValueType::LumToString(Value.Value.DetailedData.Lum);
+        if (Value.Value.DetailedData.SLum)
+        {
+            Result += ImportBase::ValueType::SLumToString(Value.Value.DetailedData.SLum);
+        }
+        Result += ExportLumRange(Value);
+        if (LU)
+        {
+            ImportBase::UncertaintyType::AddUncertainty(&Result, LU);
+        }
+        return Result;
+    };
+
+    if (!Value.FloatValue.has_value()) {return Op1();}
+    else
+    {
+        if (!Value.FloatValue->DetailedData.Lum || (Value.FloatValue->DetailedData.Lum == Value.Value.DetailedData.Lum))
+        {
+            if (Value.FloatValue->DetailedData.SLum && 
+                (Value.FloatValue->DetailedData.SLum != Value.Value.DetailedData.SLum))
+            {
+                return Op2();
+            }
+            else {return Op1();}
+        }
+        else {return Op2();}
+    }
+}
+
+ustring AmStar::ExportLumRange(const ValueType& Value)
+{
+    if (!Value.FloatValue.has_value() || (Value.FloatValue.has_value() && 
+        ((!Value.FloatValue->DetailedData.Lum && !Value.FloatValue->DetailedData.SLum) || 
+        (Value.FloatValue->DetailedData.Lum == Value.Value.DetailedData.Lum &&
+        Value.FloatValue->DetailedData.SLum == Value.Value.DetailedData.SLum)))) 
+    {
+        return ustring();
+    }
+    ustring Result;
+    if (Value.Value.DetailedData.LumU & ImportBase::UncertaintyType::Slash || 
+        Value.Value.DetailedData.SLumU & ImportBase::UncertaintyType::Slash)
+    {
+        Result.push_back('/');
+    }
+    else {Result.push_back('-');}
+
+    if (!(Value.Value.DetailedData.SLumU & ImportBase::UncertaintyType::Simplified) || 
+        Value.FloatValue->DetailedData.Lum != Value.Value.DetailedData.Lum)
+    {
+        Result.append(ImportBase::ValueType::LumToString(Value.FloatValue->DetailedData.Lum, 1));
+    }
+
+    Result.append(ImportBase::ValueType::SLumToString(Value.FloatValue->DetailedData.SLum));
+
+    return Result;
+}
+
+ustring AmStar::ExportSegmentString(const SegmentType::value_type& Value)
+{
+    ustring Str = Value.first.Line;
+    ImportBase::UncertaintyType::AddUncertainty(&Str, Value.first.UncertaintyFlags);
+    Str += ExportSpec(Value.second);
+    Str += ExportSub(Value.second);
+    Str += ExportLum(Value.second);
+    return Str;
+}
+
+ustring AmStar::ExportPec(const std::vector<PecularityType>& Table)
+{
+    ustring Result;
+    for (const auto& i : Table)
+    {
+        ustring Pec = i.Element;
+        ImportBase::UncertaintyType::AddUncertainty(&Pec, i.Uncertainty);
+        Result.append(Pec);
+    }
+    return Result;
+}
+
+ustring AmStar::ExportChem(const std::vector<ChemicalPecularitySpec>& Table)
+{
+    ustring Result;
+    for (const auto& i : Table)
+    {
+        ustring Pec = i.Element;
+        ImportBase::UncertaintyType::AddUncertainty(&Pec, i.Uncertainty);
+        Result.append(Pec);
+    }
+    return Result;
+}
+
+ustring AmStar::ToString()const
+{
+    if (FmtFlag == DeltaDelphini)
+    {
+        ustring Str;
+        auto EData = std::get<DeltaDelphini>(Data);
+        for (const auto& i : EData.Segments)
+        {
+            Str += ExportSegmentString(i);
+        }
+        Str += ExportPec(Pecularities);
+        Str += ExportChem(ChemElems);
+        return Str;
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        ustring Str;
+        auto EData = std::get<RhoPuppis>(Data);
+        Str += ExportSpec(EData.MainSegment);
+        Str += ExportSub(EData.MainSegment);
+        Str += ExportLum(EData.MainSegment);
+        Str += ExportPec(Pecularities);
+        for (const auto& i : EData.Segments)
+        {
+            Str += ExportSegmentString(i);
+        }
+        return Str;
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        ustring Str;
+        auto EData = std::get<KappaOctantis>(Data);
+        Str += ExportSpec(EData.MainType);
+        Str += ExportSub(EData.MainType);
+        ustring M = L"m";
+        ImportBase::UncertaintyType::AddUncertainty(&M, EData.LineUncertaintyFlags);
+        Str += M;
+        Str += ExportSpec(EData.MetallicType1);
+        Str += ExportSub(EData.MetallicType1);
+        Str += "-";
+        Str += ExportSpec(EData.MetallicType2);
+        Str += ExportSub(EData.MetallicType2);
+        return Str;
+    }
+}
+
+size_t AmStar::size()const
+{
+    if (FmtFlag == DeltaDelphini)
+    {
+        return std::get<DeltaDelphini>(Data).Segments.size();
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        return std::get<RhoPuppis>(Data).Segments.size() + 1;
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        return 3;
+    }
+}
+
+const AmStar::ValueType& AmStar::GetRawDataByIndex(size_t Index)const
+{
+    if (FmtFlag == DeltaDelphini)
+    {
+        return (std::get<DeltaDelphini>(Data).Segments.begin() + Index)->second;
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        if (Index == 0) {return std::get<RhoPuppis>(Data).MainSegment;}
+        else {return (std::get<RhoPuppis>(Data).Segments.begin() + Index - 1)->second;}
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        if (Index == 0) {return std::get<KappaOctantis>(Data).MainType;}
+        if (Index == 1) {return std::get<KappaOctantis>(Data).MetallicType1;}
+        if (Index == 2) {return std::get<KappaOctantis>(Data).MetallicType2;}
+    }
+}
+
+char AmStar::SpectralClass(size_t Index)const
+{
+    bool PickFloatData = Index >= size();
+    size_t RealIndex = PickFloatData ? Index - size() : Index;
+    auto& RData = GetRawDataByIndex(Index);
+    auto& IData = PickFloatData ? RData.FloatValue.value() : RData.Value;
+    auto Spec = Index && IData.DetailedData.Spec ? IData.DetailedData.Spec : RData.Value.DetailedData.Spec;
+    return ImportBase::ValueType::SpecToChar(Spec);
+}
+
+uint16_t AmStar::SpectralClassUncertained(size_t Index)const
+{
+    auto& RData = GetRawDataByIndex(Index);
+    return RData.Value.DetailedData.SpecU;
+}
+
+uint16_t AmStar::SpecializedClass(size_t Index)const
+{
+    bool PickFloatData = Index >= size();
+    size_t RealIndex = PickFloatData ? Index - size() : Index;
+    auto& RData = GetRawDataByIndex(Index);
+    auto& IData = PickFloatData ? RData.FloatValue.value() : RData.Value;
+    auto Sub = Index && ~(IData.DetailedData.Sub) ? IData.DetailedData.Sub : RData.Value.DetailedData.Sub;
+    return Sub;
+}
+
+uint16_t AmStar::SpecializedClassUncertained(size_t Index)const
+{
+    auto& RData = GetRawDataByIndex(Index);
+    return RData.Value.DetailedData.SubU;
+}
+
+ustring AmStar::LuminosityClass(size_t Index)const
+{
+    bool PickFloatData = Index >= size();
+    size_t RealIndex = PickFloatData ? Index - size() : Index;
+    auto& RData = GetRawDataByIndex(Index);
+    auto& IData = PickFloatData ? RData.FloatValue.value() : RData.Value;
+    
+    ustring Result;
+    Result.append(ImportBase::ValueType::LumToString(IData.DetailedData.Lum));
+    Result.append(ImportBase::ValueType::SLumToString(IData.DetailedData.SLum));
+    if (Result.empty())
+    {
+        Result.append(ImportBase::ValueType::LumToString(RData.Value.DetailedData.Lum));
+        Result.append(ImportBase::ValueType::SLumToString(RData.Value.DetailedData.SLum));
+    }
+    return Result;
+}
+
+uint16_t AmStar::LuminosityClassUncertained(size_t Index)const
+{
+    auto& RData = GetRawDataByIndex(Index);
+    return RData.Value.DetailedData.LumU == ImportBase::UncertaintyType::None ? 
+        RData.Value.DetailedData.SLumU : RData.Value.DetailedData.LumU;
+}
+
+std::set<ustring> AmStar::SpectralPeculiarities()const
+{
+    std::set<ustring> Pec;
+    for (const auto& i : Pecularities)
+    {
+        Pec.insert(i.Element);
+    }
+    return Pec;
+}
+
+std::set<ustring> AmStar::ElementSymbols()const
+{
+    std::set<ustring> Chem;
+    for (const auto& i : ChemElems)
+    {
+        Chem.insert(i.Element);
+    }
+    return Chem;
+}
+
+std::map<ustring, std::variant<int16_t, ustring>> AmStar::BandPecularities()const
+{
+    std::map<ustring, std::variant<int16_t, ustring>> Bands;
+    if (FmtFlag == DeltaDelphini)
+    {
+        auto EData = std::get<DeltaDelphini>(Data);
+        for (const auto& i : EData.Segments)
+        {
+            Bands.insert({i.first.Line, i.first.Element});
+        }
+    }
+    else if (FmtFlag == RhoPuppis)
+    {
+        auto EData = std::get<DeltaDelphini>(Data);
+        for (const auto& i : EData.Segments)
+        {
+            Bands.insert({i.first.Line, i.first.Element});
+        }
+    }
+    else if (FmtFlag == KappaOctantis)
+    {
+        Bands.insert({LinesTable.at("m").Line, LinesTable.at("m").Element});
+    }
+    return Bands;
+}
 
 
 

@@ -121,7 +121,14 @@ public:
 _SPCLS_BEGIN
 
 /**
- * @brief 最常见的光谱型，而正式因为它最常见从而导致了最五花八门的写法。
+ * @details 最常见的光谱型，而因为它最常见从而导致了最五花八门的写法。此类恒星包含主序星，亚巨星，巨
+ * 星，超巨星，特超巨星，带有特殊线的恒星，化学特殊星和CN恒星
+ * 
+ * 详见：
+ * https://en.wikipedia.org/wiki/Stellar_classification
+ * https://en.wikipedia.org/wiki/Chemically_peculiar_star
+ * https://en.wikipedia.org/wiki/CN_star
+ *
  * @note 为了最大限度的提高容错率和解决各种历史遗留问题，搞得整个分析的程序如同水多加面面多加水一般。
  * 当然这也意味着后期维护的难度会被提高到丧心病狂的程度。
  */
@@ -171,7 +178,6 @@ public:
         static void BracketStart(ustring Source, ustring* Remain, UncertaintySymbols* Data, ParserStateType* State);
         static void BracketEnd(ustring Source, ustring* Remain, UncertaintySymbols* Data, ParserStateType* State);
         static bool CheckBracketEnd(const UncertaintySymbols& Symbol);
-        static void UncertaintyHandler(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
         static void AddUncertainty(ustring* In, UncertaintyType::UncertaintySymbols Symbol);
     };
 
@@ -254,8 +260,6 @@ public:
 
         ustring Element;
         UncertaintyType::UncertaintySymbols Uncertainty = UncertaintyType::None; // 基本用不到，但也可能会出现，如HD 210030为G8/K0II/III(pBa)
-
-        static void LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2 = 0);
     };
     
     struct BandPecularitiesType
@@ -270,7 +274,6 @@ public:
         UncertaintyType::UncertaintySymbols Uncertainty = UncertaintyType::None;
 
         static BandPecularitiesType Load(ustring Source);
-        static void LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     };
 
     struct ChemicalPecularitySpec
@@ -280,8 +283,6 @@ public:
 
         ustring Element;
         UncertaintyType::UncertaintySymbols Uncertainty = UncertaintyType::None;
-
-        static void LoadChemElems(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     };
 
 protected:
@@ -304,12 +305,16 @@ protected:
     
     static void SetState(ParserStateType* State, ParserStateType Value);
     static void ConsumeSpace(ustring Source, ustring* Remain);
+    static void UncertaintyHandler(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadSpec(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadCarbonType(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadSub(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadSType(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadLum(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadSubLum(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+    static void LoadPecularities(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State, bool __2 = 0);
+    static void LoadBandPecs(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+    static void LoadChemElems(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadPecularitiesStage1(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadPecularitiesStage2(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
     static void LoadPecularitiesStage3(NormalStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
@@ -332,11 +337,11 @@ public:
 
     const ValueType& GetRawDataByIndex(size_t Index)const;
 
-    char SpectralClass(size_t Index)const override;
+    char SpectralClass(size_t Index)const override; // 0 = Data, not 0 = FloatData
     uint16_t SpectralClassUncertained(size_t Index)const override;
-    uint16_t SpecializedClass(size_t Index)const override;
+    uint16_t SpecializedClass(size_t Index)const override; // 0 = Data, not 0 = FloatData
     uint16_t SpecializedClassUncertained(size_t Index)const override;
-    ustring LuminosityClass(size_t Index)const override;
+    ustring LuminosityClass(size_t Index)const override; // 0 = Data, not 0 = FloatData
     uint16_t LuminosityClassUncertained(size_t Index)const override;
 
     std::set<ustring> SpectralPeculiarities()const override;
@@ -344,8 +349,6 @@ public:
     std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const override;
 
     ustring UnanalyzedString()const override; // 剩余未能分析成功的字符串，如果为空表示识别成功
-
-    friend class AmStar;
 };
 
 /**
@@ -364,21 +367,49 @@ public:
 class AmStar : public StellarClassData
 {
 public:
-    using VirtualBase            = NormalStar;
-    using KeyType                = ustring;
-    using PecularityType         = VirtualBase::PecularityType;
-    using ChemicalPecularitySpec = VirtualBase::ChemicalPecularitySpec;
+    using ImportBase             = StelCls::NormalStar;
+    using PecularityType         = ImportBase::PecularityType;
+    using ChemicalPecularitySpec = ImportBase::ChemicalPecularitySpec;
 
     enum ParserStateType
     {
-        
+        PStart   = 0b00000, 
+        PSpec    = 0b00001, 
+        PSub     = 0b00010, 
+        PLum     = 0b00011, 
+        PSLum    = 0b00100, 
+        PPec     = 0b00101, 
+        PChem    = 0b00110, 
+        PLine    = 0b00111,
+        POpMask  = 0b11000,
+        PRange   = 0b01000,
+        PBracket = 0b10000,
+        PEnd     = -1
+    };
+
+    using EventQueueType = std::map<ParserStateType, std::function<void(AmStar*, ustring, ustring*, ParserStateType*, ustring*)>>;
+
+    struct KeyType
+    {
+        ustring Line;       // 名称
+        ustring Element;    // 元素/化合物
+        float64 WaveLength; // 波长（nm）
+
+        ImportBase::UncertaintyType::UncertaintySymbols UncertaintyFlags = ImportBase::UncertaintyType::None;
+
+        static bool Compare(KeyType A, KeyType B)
+        {
+            return A.WaveLength < B.WaveLength;
+        }
     };
 
     struct ValueType
     {
-        VirtualBase::ValueType Value;
-        std::optional<VirtualBase::ValueType> FloatValue;
+        ImportBase::ValueType Value;
+        std::optional<ImportBase::ValueType> FloatValue; // 如柳宿增三的光谱为kA7VmF0/2III/IVSr
     };
+
+    using SegmentType = std::flat_map<KeyType, ValueType, bool(*)(KeyType, KeyType)>;
     
     enum SubFmts // 两种子类型中唯一的区别可能也就是有没有主光谱
     {
@@ -393,38 +424,89 @@ public:
          * 有明确的主光谱。这类Am恒星通常被认为演化的更晚且更亮，位
          * 于主序带上方。
          */
-        RhoPuppis
+        RhoPuppis,
+
+        /**
+         * @details 还有第三种表示方法类似Kappa Octantis：A2mA5-A8，
+         * 这类Am恒星金属线较强，部分带有X射线
+         */
+        KappaOctantis
     };
 
     struct DDelValueType
     {
-        std::flat_map<KeyType, ValueType> Segments;
+        SegmentType Segments{KeyType::Compare};
     };
 
     struct RPupValueType
     {
         ValueType MainSegment;
         std::vector<PecularityType> MainSegPecs;
-        std::flat_map<KeyType, ValueType> Segments;
+        SegmentType Segments{KeyType::Compare};
     };
 
-    static ustringlist LinesTable;
+    struct KOctValueType
+    {
+        ValueType MainType;
+        ImportBase::UncertaintyType::UncertaintySymbols LineUncertaintyFlags;
+        ValueType MetallicType1;
+        ValueType MetallicType2;
+    };
+
+    static std::flat_map<ustring, KeyType> LinesTable;
     static wregex LinesPattern;
 
 protected:
-    std::variant<DDelValueType, RPupValueType> Data;
+    SubFmts FmtFlag = DeltaDelphini;
+    std::variant<DDelValueType, RPupValueType, KOctValueType> Data;
     bool AddSuffix = 0; // 部分案例会有"Am"后缀
     std::vector<PecularityType> Pecularities; // 部分恒星会有Am星与玄戈变星双重身份，位于零龄主序区附近。除Am星的缺钙特征以外还缺铁。见：https://en.wikipedia.org/wiki/Lambda_Bo%C3%B6tis_star
     std::vector<ChemicalPecularitySpec> ChemElems;
 
-    static void DdelRoutine(NormalStar* Output, ustring Source, ustring* Remain);
+    ustring RemainString;
+
+    static const EventQueueType ParserEventQueue;
+
+    static void SetState(ParserStateType* State, ParserStateType Value);
+
+    static void LoadLine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadSpec(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadSub(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadLum(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadSLum(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    static void LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State, ustring* Line);
+    
+    /**
+     * @brief 波段与特殊标识和化学元素中有重复字符，需要再往后看三个块才能决定下一步
+     * （“上下文有关语言”的复杂度在此体现的淋漓尽致，但目前仍没有足够证据证明光谱字符串属于1型或以下的语言）
+     * 优先级：化学元素 < 特殊标识 < 波段
+     */
+    static bool __ChkSeg(ustring Src1);
+    static void NextSegmentCheck(AmStar* Output, ustring Source, ParserStateType* State);
+
+    static void DdelRoutine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+    static void RPupRoutine(AmStar* Output, ustring Source, ustring* Remain, ParserStateType* State);
+    static void TransferToKOct(AmStar* Output, ParserStateType* State);
+
+    static ustring ExportSpec(const ValueType& Value);
+    static ustring ExportSub(const ValueType& Value);
+    static ustring ExportSpecSubRange(const ValueType& Value);
+    static ustring ExportLum(const ValueType& Value);
+    static ustring ExportLumRange(const ValueType& Value);
+    static ustring ExportSegmentString(const SegmentType::value_type& Value);
+    static ustring ExportPec(const std::vector<PecularityType>& Table);
+    static ustring ExportChem(const std::vector<ChemicalPecularitySpec>& Table);
 
 public:
     ustring Description()const override;
     static std::shared_ptr<StellarClassData> ParseFunc(ustring StelClassString);
     ustring ToString()const override;
 
+    size_t size()const;
     const ValueType& GetRawDataByIndex(size_t Index)const;
+    ValueType GetDataByLine(ustring Line);
+    void SetDataByLine(ustring Line, ValueType NewValue);
 
     char SpectralClass(size_t Index)const override;
     uint16_t SpectralClassUncertained(size_t Index)const override;
@@ -437,7 +519,7 @@ public:
     std::set<ustring> ElementSymbols()const override;
     std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const override;
 
-    ustring UnanalyzedString()const override; // 剩余未能分析成功的字符串，如果为空表示识别成功
+    ustring UnanalyzedString()const override {return ustring();} // 剩余未能分析成功的字符串，如果为空表示识别成功
 };
 
 _SPCLS_END
