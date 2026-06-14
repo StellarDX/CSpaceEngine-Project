@@ -278,10 +278,10 @@ void NormalStar::UncertaintyHandler(NormalStar* Output, ustring Source, ustring*
                         Output->Data.DetailedData.SLumU = Data;
                         *Remain = Source.erase(0, 1);
                     }
-                    else if (std::find_if(PecularityType::SpectralPecularitiesTable.begin(),
-                        PecularityType::SpectralPecularitiesTable.end(),
+                    else if (std::find_if(PeculiarityType::SpectralPecularitiesTable.begin(),
+                        PeculiarityType::SpectralPecularitiesTable.end(),
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
-                        == PecularityType::SpectralPecularitiesTable.end())
+                        == PeculiarityType::SpectralPecularitiesTable.end())
                     {
                         UncertaintyType::UncertaintySymbols TempData;
                         UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
@@ -356,10 +356,10 @@ void NormalStar::UncertaintyHandler(NormalStar* Output, ustring Source, ustring*
                 break;
             case '(': // 若出现，则可能会是特殊谱线标志中的符号，也可能是不确定符号
                 {
-                    if (std::find_if(PecularityType::SpectralPecularitiesTable.begin(),
-                        PecularityType::SpectralPecularitiesTable.end(),
+                    if (std::find_if(PeculiarityType::SpectralPecularitiesTable.begin(),
+                        PeculiarityType::SpectralPecularitiesTable.end(),
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
-                        == PecularityType::SpectralPecularitiesTable.end())
+                        == PeculiarityType::SpectralPecularitiesTable.end())
                     {
                         UncertaintyType::UncertaintySymbols TempData;
                         UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
@@ -453,10 +453,10 @@ void NormalStar::UncertaintyHandler(NormalStar* Output, ustring Source, ustring*
             {
             case '(': // 若出现，则可能会是特殊谱线标志中的符号，也可能是不确定符号
                 {
-                    if (std::find_if(PecularityType::SpectralPecularitiesTable.begin(),
-                        PecularityType::SpectralPecularitiesTable.end(),
+                    if (std::find_if(PeculiarityType::SpectralPecularitiesTable.begin(),
+                        PeculiarityType::SpectralPecularitiesTable.end(),
                         [Source](ustring Match) {return Source.substr(0, Match.size()) == Match;})
-                        == PecularityType::SpectralPecularitiesTable.end())
+                        == PeculiarityType::SpectralPecularitiesTable.end())
                     {
                         UncertaintyType::UncertaintySymbols TempData;
                         UncertaintyType::BracketStart(Source, Remain, &TempData, State); // 由于特殊谱线，化学元素这些是动态数组，这里只改变状态而不动数据，后续设置检测
@@ -721,7 +721,7 @@ ustring NormalStar::ValueType::SLumToString(decltype(DetailedData.SLum) Data)
     return Result;
 }
 
-ustringlist NormalStar::PecularityType::SpectralPecularitiesTable
+ustringlist NormalStar::PeculiarityType::SpectralPecularitiesTable
 {
     L":", L"...", L"!", L"comp", L"[e]", L"er", L"eq", L"e*", L"e", L"f*",
     L"f+", L"f?", L"f", L"(f)", L"(f+)", L"((f))", L"((f*))", //"h", L"ha", L"E", L"L",
@@ -733,9 +733,9 @@ ustringlist NormalStar::PecularityType::SpectralPecularitiesTable
     L"CaIwk", L"c", L"[Swk]", L"[S]", L"d", L"CaII", L"metalweak", L"NWk"
 };
 
-wregex NormalStar::PecularityType::Pattern(L'^' + __List_To_Pattern(PecularityType::SpectralPecularitiesTable));
+wregex NormalStar::PeculiarityType::Pattern(L'^' + __List_To_Pattern(PeculiarityType::SpectralPecularitiesTable));
 
-const ustringlist NormalStar::ChemicalPecularitySpec::ChemicalElementsTable
+const ustringlist NormalStar::ChemicalPeculiaritySpec::ChemicalElementsTable
 {
     L"H",                                                                                                                                                                                                                    L"He",
     L"Li", L"Be",                                                                                                                                                                         L"B",  L"C",  L"N",  L"O",  L"F",  L"Ne",
@@ -746,9 +746,9 @@ const ustringlist NormalStar::ChemicalPecularitySpec::ChemicalElementsTable
     //L"Fr", L"Ra", L"Ac", L"Th", L"Pa", L"U",  L"Np", L"Pu", L"Am", L"Cm", L"Bk", L"Cf", L"Es", L"Fm", L"Md", L"No", L"Lr", L"Rf", L"Db", L"Sg", L"Bh", L"Hs", L"Mt", L"Ds", L"Rg", L"Cn", L"Nh", L"Fl", L"Mc", L"Lv", L"Ts", L"Og" // 放射性元素不会出现
 };
 
-wregex NormalStar::ChemicalPecularitySpec::Pattern(L'^' + __List_To_Pattern(ChemicalPecularitySpec::ChemicalElementsTable));
+wregex NormalStar::ChemicalPeculiaritySpec::Pattern(L'^' + __List_To_Pattern(ChemicalPeculiaritySpec::ChemicalElementsTable));
 
-ustringlist NormalStar::BandPecularitiesType::AbsorptionPecularityTable
+ustringlist NormalStar::BandPecularitiesType::AbsorptionPeculiarityTable
 {
     "Fe", "m", "CH", "Hdel", "Ba", "Ca", "CN", "HK", "Sr", "C2", "He", "MS", "K"
 };
@@ -756,15 +756,15 @@ ustringlist NormalStar::BandPecularitiesType::AbsorptionPecularityTable
 // 这个表达式原本可以不这么长的，但后续看到一例HD 12834的光谱型为G(6)IIICNIV/Vp，搞得不得不夹带一些私货
 const std::string NormalStar::BandPecularitiesType::PatternSkeleton(
     R"(^({}(([+-]?[0-9](\.[1-9][1-9]?)?)|((V|IV|III|II|I)/(V|IV|III|II|I))|(I(ab|a|b)/((ab|a|b)|(V|IV|III|II|I)))|((V|IV|III|II|I)(ab|a|b)?))))");
-std::string NormalStar::BandPecularitiesType::AbsorptionPecularityPatternString = __List_To_Pattern(AbsorptionPecularityTable).ToStdString();
+std::string NormalStar::BandPecularitiesType::AbsorptionPeculiarityPatternString = __List_To_Pattern(AbsorptionPeculiarityTable).ToStdString();
 wregex NormalStar::BandPecularitiesType::Pattern(ustring(vformat(BandPecularitiesType::PatternSkeleton, 
-    make_format_args(AbsorptionPecularityPatternString))));
+    make_format_args(AbsorptionPeculiarityPatternString))));
 
 NormalStar::BandPecularitiesType NormalStar::BandPecularitiesType::Load(ustring Source)
 {
     BandPecularitiesType AbsData;
-    auto Result = std::find_if(AbsorptionPecularityTable.begin(),
-        AbsorptionPecularityTable.end(), [Source](ustring S)
+    auto Result = std::find_if(AbsorptionPeculiarityTable.begin(),
+        AbsorptionPeculiarityTable.end(), [Source](ustring S)
     {
         return Source.substr(0, S.size()) == S;
     });
@@ -1062,7 +1062,7 @@ void NormalStar::LoadPecularities(NormalStar* Output, ustring Source, ustring* R
         (Output->BandPecs.empty() ?
             ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
             !UncertaintyType::CheckBracketEnd(Output->BandPecs.back().Uncertainty));
-    ustring Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    ustring Spec = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Src);
     while (!Spec.empty())
     {
         if (__2 && !Output->PecularitiesBehindBandPecs) {Output->PecularitiesBehindBandPecs = 1;}
@@ -1097,7 +1097,7 @@ void NormalStar::LoadPecularities(NormalStar* Output, ustring Source, ustring* R
         //std::wcout << Spec << '\n';
         ConsumeSpace(Src, &Src);
         UncertaintyHandler(Output, Src, &Src, State);
-        Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+        Spec = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Src);
     }
     *Remain = Src;
 }
@@ -1111,7 +1111,7 @@ void NormalStar::LoadChemElems(NormalStar* Output, ustring Source, ustring* Rema
         (Output->Pecularities.empty() ?
             ValueType::PecularitiesBrakStartPrecheck(&(Output->Data)) :
             !UncertaintyType::CheckBracketEnd(Output->Pecularities.back().Uncertainty));
-    ustring Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    ustring Spec = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Src);
     while (!Spec.empty())
     {
         Output->ChemicalElems.push_back({Spec});
@@ -1147,7 +1147,7 @@ void NormalStar::LoadChemElems(NormalStar* Output, ustring Source, ustring* Rema
         UncertaintyHandler(Output, Src, &Src, State);
         ustring Source1 = Src, Remain1;
         if (!__Regex_Str_Str(Source1, BandPecularitiesType::Pattern, &Remain1).empty()) {break;}
-        Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+        Spec = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Src);
     }
     *Remain = Src;
 }
@@ -1927,7 +1927,7 @@ void AmStar::LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStat
     if (!Src.empty() && Src.front() == '(') 
     {
         ustring Tmp;
-        ustring Spec1 = __Regex_Str_Str(Src, PecularityType::Pattern, &Tmp);
+        ustring Spec1 = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Tmp);
         if (Spec1.empty())
         {
             IsBracketStart = 1;
@@ -1936,7 +1936,7 @@ void AmStar::LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStat
         }
     }
 
-    ustring Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+    ustring Spec = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Src);
     while (!Spec.empty())
     {
         Output->Pecularities.push_back({Spec});
@@ -1966,7 +1966,7 @@ void AmStar::LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStat
         if (!Src.empty() && Src.front() == '(') 
         {
             ustring Tmp;
-            ustring Spec1 = __Regex_Str_Str(Src, PecularityType::Pattern, &Tmp);
+            ustring Spec1 = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Tmp);
             if (Spec1.empty())
             {
                 IsBracketStart = 1;
@@ -1977,7 +1977,7 @@ void AmStar::LoadPec(AmStar* Output, ustring Source, ustring* Remain, ParserStat
 
         if (__ChkSeg(Src)) {break;}
         
-        Spec = __Regex_Str_Str(Src, PecularityType::Pattern, &Src);
+        Spec = __Regex_Str_Str(Src, PeculiarityType::Pattern, &Src);
     }
     *Remain = Src;
     
@@ -1993,7 +1993,7 @@ void AmStar::LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserSta
     if (!Src.empty() && Src.front() == '(') 
     {
         ustring Tmp;
-        ustring Spec1 = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Tmp);
+        ustring Spec1 = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Tmp);
         if (Spec1.empty())
         {
             IsBracketStart = 1;
@@ -2002,7 +2002,7 @@ void AmStar::LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserSta
         }
     }
 
-    ustring Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+    ustring Spec = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Src);
     while (!Spec.empty())
     {
         Output->ChemElems.push_back({Spec});
@@ -2038,7 +2038,7 @@ void AmStar::LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserSta
         if (!Src.empty() && Src.front() == '(') 
         {
             ustring Tmp;
-            ustring Spec1 = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Tmp);
+            ustring Spec1 = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Tmp);
             if (Spec1.empty())
             {
                 IsBracketStart = 1;
@@ -2046,7 +2046,7 @@ void AmStar::LoadChem(AmStar* Output, ustring Source, ustring* Remain, ParserSta
                 Src.erase(Src.begin());
             }
         }
-        Spec = __Regex_Str_Str(Src, ChemicalPecularitySpec::Pattern, &Src);
+        Spec = __Regex_Str_Str(Src, ChemicalPeculiaritySpec::Pattern, &Src);
     }
     *Remain = Src;
 
@@ -2073,12 +2073,12 @@ void AmStar::NextSegmentCheck(AmStar* Output, ustring Source, ParserStateType* S
         SetState(State, PLine);
         return;
     }
-    if (!__Regex_Str_Str(Src1, ImportBase::PecularityType::Pattern, &Rem1).empty())
+    if (!__Regex_Str_Str(Src1, ImportBase::PeculiarityType::Pattern, &Rem1).empty())
     {
         SetState(State, PPec);
         return;
     }
-    if (!__Regex_Str_Str(Src1, ImportBase::ChemicalPecularitySpec::Pattern, &Rem1).empty())
+    if (!__Regex_Str_Str(Src1, ImportBase::ChemicalPeculiaritySpec::Pattern, &Rem1).empty())
     {
         SetState(State, PChem);
         return;
@@ -2366,7 +2366,7 @@ ustring AmStar::ExportSegmentString(const SegmentType::value_type& Value)
     return Str;
 }
 
-ustring AmStar::ExportPec(const std::vector<PecularityType>& Table)
+ustring AmStar::ExportPec(const std::vector<PeculiarityType>& Table)
 {
     ustring Result;
     for (const auto& i : Table)
@@ -2378,7 +2378,7 @@ ustring AmStar::ExportPec(const std::vector<PecularityType>& Table)
     return Result;
 }
 
-ustring AmStar::ExportChem(const std::vector<ChemicalPecularitySpec>& Table)
+ustring AmStar::ExportChem(const std::vector<ChemicalPeculiaritySpec>& Table)
 {
     ustring Result;
     for (const auto& i : Table)

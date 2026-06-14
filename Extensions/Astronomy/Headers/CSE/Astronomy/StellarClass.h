@@ -253,7 +253,7 @@ public:
         enum {C, N, S} Data;
     };
 
-    struct PecularityType
+    struct PeculiarityType
     {
         static ustringlist SpectralPecularitiesTable;
         static wregex Pattern;
@@ -265,8 +265,8 @@ public:
     struct BandPecularitiesType
     {
         static const std::string PatternSkeleton;
-        static ustringlist AbsorptionPecularityTable;
-        static std::string AbsorptionPecularityPatternString;
+        static ustringlist AbsorptionPeculiarityTable;
+        static std::string AbsorptionPeculiarityPatternString;
         static wregex Pattern;
 
         ustring Key;
@@ -276,7 +276,7 @@ public:
         static BandPecularitiesType Load(ustring Source);
     };
 
-    struct ChemicalPecularitySpec
+    struct ChemicalPeculiaritySpec
     {
         static const ustringlist ChemicalElementsTable;
         static wregex Pattern;
@@ -293,8 +293,8 @@ protected:
     std::optional<ValueType> FloatData; // Ex: G2Ib-II, F2/3IV/V, B8Ia/ab
 
     // 原以为以下三种字段有互斥关系，但后来发现一例三种字段同时出现的：辇道四 B8pSi(FeII)
-    std::vector<PecularityType> Pecularities; // Ex: (n)fp, e, ...
-    std::vector<ChemicalPecularitySpec> ChemicalElems; // Ex: SiSrCr, ...
+    std::vector<PeculiarityType> Pecularities; // Ex: (n)fp, e, ...
+    std::vector<ChemicalPeculiaritySpec> ChemicalElems; // Ex: SiSrCr, ...
     std::vector<BandPecularitiesType> BandPecs; // Ex: Ba1，Fe-0.5, CNIV, ...
     bool PecularitiesBehindBandPecs = 0; // 后续发现一例HD 146850的光谱为K3IIICNVp
 
@@ -368,8 +368,8 @@ class AmStar : public StellarClassData
 {
 public:
     using ImportBase             = StelCls::NormalStar;
-    using PecularityType         = ImportBase::PecularityType;
-    using ChemicalPecularitySpec = ImportBase::ChemicalPecularitySpec;
+    using PeculiarityType         = ImportBase::PeculiarityType;
+    using ChemicalPeculiaritySpec = ImportBase::ChemicalPeculiaritySpec;
 
     enum ParserStateType
     {
@@ -441,7 +441,7 @@ public:
     struct RPupValueType
     {
         ValueType MainSegment;
-        std::vector<PecularityType> MainSegPecs;
+        std::vector<PeculiarityType> MainSegPecs;
         SegmentType Segments{KeyType::Compare};
     };
 
@@ -460,8 +460,8 @@ protected:
     SubFmts FmtFlag = DeltaDelphini;
     std::variant<DDelValueType, RPupValueType, KOctValueType> Data;
     bool AddSuffix = 0; // 部分案例会有"Am"后缀
-    std::vector<PecularityType> Pecularities; // 部分恒星会有Am星与玄戈变星双重身份，位于零龄主序区附近。除Am星的缺钙特征以外还缺铁。见：https://en.wikipedia.org/wiki/Lambda_Bo%C3%B6tis_star
-    std::vector<ChemicalPecularitySpec> ChemElems;
+    std::vector<PeculiarityType> Pecularities; // 部分恒星会有Am星与玄戈变星双重身份，位于零龄主序区附近。除Am星的缺钙特征以外还缺铁。见：https://en.wikipedia.org/wiki/Lambda_Bo%C3%B6tis_star
+    std::vector<ChemicalPeculiaritySpec> ChemElems;
 
     ustring RemainString;
 
@@ -495,8 +495,8 @@ protected:
     static ustring ExportLum(const ValueType& Value);
     static ustring ExportLumRange(const ValueType& Value);
     static ustring ExportSegmentString(const SegmentType::value_type& Value);
-    static ustring ExportPec(const std::vector<PecularityType>& Table);
-    static ustring ExportChem(const std::vector<ChemicalPecularitySpec>& Table);
+    static ustring ExportPec(const std::vector<PeculiarityType>& Table);
+    static ustring ExportChem(const std::vector<ChemicalPeculiaritySpec>& Table);
 
 public:
     ustring Description()const override;
