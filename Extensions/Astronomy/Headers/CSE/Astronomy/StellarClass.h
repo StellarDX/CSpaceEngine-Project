@@ -519,7 +519,7 @@ public:
     std::set<ustring> ElementSymbols()const override;
     std::map<ustring, std::variant<int16_t, ustring>> BandPecularities()const override;
 
-    ustring UnanalyzedString()const override {return ustring();} // 剩余未能分析成功的字符串，如果为空表示识别成功
+    ustring UnanalyzedString()const override; // 剩余未能分析成功的字符串，如果为空表示识别成功
 };
 
 _SPCLS_END

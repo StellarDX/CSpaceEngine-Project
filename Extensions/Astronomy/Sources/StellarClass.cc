@@ -2574,6 +2574,11 @@ std::map<ustring, std::variant<int16_t, ustring>> AmStar::BandPecularities()cons
     return Bands;
 }
 
+ustring AmStar::UnanalyzedString()const
+{
+    return RemainString;
+}
+
 
 
 _SPCLS_END
